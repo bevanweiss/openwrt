@@ -701,13 +701,15 @@ irqreturn_t rtl839x_switch_irq(int irq, void *dev_id)
 	struct dsa_switch *ds = dev_id;
 	u32 status = sw_r32(RTL839X_ISR_GLB_SRC_REG);
 	u64 ports = rtl839x_get_port_reg_le(RTL839X_ISR_PORT_LINK_STS_REG(0));
+	u64 ports_m = rtl839x_get_port_reg_le(RTL839X_ISR_PORT_MEDIA_STS_REG(0));
 
 	/* Clear status */
 	rtl839x_isr_port_link_sts_chg(ports);
-	pr_debug("RTL8390 Link change: status: %x, ports %llx\n", status, ports);
+	rtl839x_isr_port_media_sts_chg(ports_m);
+	pr_debug("RTL8390 Link change: status: %x, ports %llx, media_change: 0x%16llx\n", status, ports, ports_m);
 
 	for (int i = 0; i < RTL839X_PORT_CNT; i++) {
-		if (ports & BIT_ULL(i)) {
+		if ((ports & BIT_ULL(i)) || (ports_m && BIT_ULL(i))) {
 			if (rtl839x_mac_link_sts(i) == 1)
 				dsa_port_phylink_mac_change(ds, i, true);
 			else

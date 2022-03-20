@@ -1606,6 +1606,7 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 		break;
 	}
 
+	/* Set IMR mask and clear ISR for all ports for link change IRQ */
 	priv->r->isr_port_link_sts_chg(priv->irq_mask);
 	priv->r->imr_port_link_sts_chg(priv->irq_mask);
 
@@ -1613,18 +1614,54 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 	pr_info("LINK state irq: %d\n", priv->link_state_irq);
 	switch (priv->family_id) {
 	case RTL8380_FAMILY_ID:
+		sw_w32_mask(0, RTL838X_ISR_GLB_SRC_LINK_CHG, priv->r->isr_glb_src);
+
+		sw_w32(priv->irq_mask, RTL838X_IMR_PORT_MEDIA_STS_REG(0));
+		sw_w32(priv->irq_mask, RTL838X_ISR_PORT_MEDIA_STS_REG(0));
+
 		err = request_irq(priv->link_state_irq, rtl838x_switch_irq,
 		                  IRQF_SHARED, "rtl838x-link-state", priv->ds);
 		break;
 	case RTL8390_FAMILY_ID:
+		sw_w32_mask(0, RTL839X_ISR_GLB_SRC_LINK_CHG, priv->r->isr_glb_src);
+		priv->r->set_port_reg_le(priv->irq_mask, RTL839X_IMR_PORT_MEDIA_STS_REG(0));
+		priv->r->set_port_reg_le(priv->irq_mask, RTL839X_ISR_PORT_MEDIA_STS_REG(0));
+
 		err = request_irq(priv->link_state_irq, rtl839x_switch_irq,
 		                  IRQF_SHARED, "rtl839x-link-state", priv->ds);
 		break;
 	case RTL9300_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL930X_ISR_GLB_SDS_RX_SYM_ERR |
+		            RTL930X_ISR_GLB_SDS_UPD_PHY_STS,
+		            priv->r->isr_glb_src);
+
+		sw_w32(priv->irq_mask & priv->used_ports, RTL930X_IMR_SERDES_LINK_FAULT_REG);
+		sw_w32(priv->irq_mask, RTL930X_ISR_SERDES_LINK_FAULT_REG);
+		sw_w32(0, RTL930X_IMR_SERDES_RX_SYM_ERR_REG);
+		sw_w32(priv->irq_mask, RTL930X_ISR_SERDES_RX_SYM_ERR_REG);
+		sw_w32(0, RTL930X_IMR_SERDES_UPD_PHY_STS_REG(0));
+		sw_w32(priv->irq_mask, RTL930X_ISR_SERDES_UPD_PHY_STS_REG(0));
+
 		err = request_irq(priv->link_state_irq, rtl930x_switch_irq,
 				  IRQF_SHARED, "rtl930x-link-state", priv->ds);
 		break;
 	case RTL9310_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL931X_ISR_GLB_SRC_SERDES_RXIDLE |
+		            RTL931X_ISR_GLB_SRC_SERDES_UPD_PHY_STS |
+		            RTL931X_ISR_GLB_SRC_SERDES,
+		            priv->r->isr_glb_src);
+
+		sw_w32(GENMASK(13, 0), RTL931X_IMR_SERDES_ERR_REG);
+		sw_w32(GENMASK(13, 0), RTL931X_ISR_SERDES_ERR_REG);
+
+		rtl931x_imr_serdes_upd_phy_sts(priv->irq_mask);
+		rtl931x_isr_serdes_upd_phy_sts(priv->irq_mask);
+
+		sw_w32(GENMASK(11, 0), RTL931X_IMR_SERDES_RXIDLE_REG);
+		sw_w32(GENMASK(11, 0), RTL931X_ISR_SERDES_RXIDLE_REG);
+
 		err = request_irq(priv->link_state_irq, rtl931x_switch_irq,
 		                  IRQF_SHARED, "rtl931x-link-state", priv->ds);
 		break;

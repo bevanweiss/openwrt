@@ -1863,13 +1863,15 @@ irqreturn_t rtl838x_switch_irq(int irq, void *dev_id)
 	struct dsa_switch *ds = dev_id;
 	u32 status = sw_r32(RTL838X_ISR_GLB_SRC_REG);
 	u32 ports = sw_r32(RTL838X_ISR_PORT_LINK_STS_REG(0));
+	u32 ports_m = sw_r32(RTL838X_ISR_PORT_MEDIA_STS_REG(0));
 
 	/* Clear status */
 	rtl838x_isr_port_link_sts_chg(ports);
-	pr_info("RTL8380 Link change: status: %x, ports %x\n", status, ports);
+	rtl838x_isr_port_media_sts_chg(ports_m);
+	pr_info("RTL8380 Link change: status: %x, ports %x, media_change %08x\n", status, ports, ports_m);
 
 	for (int i = 0; i < RTL838X_PORT_CNT; i++) {
-		if (ports & BIT(i)) {
+		if ((ports & BIT(i)) || (ports_m & BIT(i))) {
 			if (rtl838x_mac_link_sts(i) == 1)
 				dsa_port_phylink_mac_change(ds, i, true);
 			else

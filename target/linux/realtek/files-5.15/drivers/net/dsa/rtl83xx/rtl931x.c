@@ -453,6 +453,7 @@ irqreturn_t rtl931x_switch_irq(int irq, void *dev_id)
 	struct dsa_switch *ds = dev_id;
 	u32 status = sw_r32(RTL931X_ISR_GLB_SRC_REG);
 	u64 ports = rtl839x_get_port_reg_le(RTL931X_ISR_PORT_LINK_STS_REG(0));
+	u32 sds;
 
 	/* Clear status */
 	rtl931x_isr_port_link_sts_chg(ports);

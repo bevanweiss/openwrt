@@ -867,6 +867,27 @@ irqreturn_t rtl930x_switch_irq(int irq, void *dev_id)
 		}
 	}
 
+	/* Handle SDS link faults */
+	ports = sw_r32(RTL930X_ISR_SERDES_LINK_FAULT_REG);
+	if (ports) {
+		pr_info("%s link faults: %08x\n", __func__, ports);
+		sw_w32(ports, RTL930X_ISR_SERDES_LINK_FAULT_REG);
+	}
+
+	/* Handle SDS RX symbol errors */
+	ports = sw_r32(RTL930X_ISR_SERDES_RX_SYM_ERR_REG);
+	if (ports) {
+		pr_info("%s RX symbol errors: %08x\n", __func__, ports);
+		sw_w32(ports, RTL930X_ISR_SERDES_RX_SYM_ERR_REG);
+	}
+
+	/* Handle SDS PHYSTS errors */
+	ports = sw_r32(RTL930X_ISR_SERDES_UPD_PHY_STS_REG(0));
+	if (ports) {
+		pr_info("%s SDS_UPD_PHYSTS: %08x\n", __func__, ports);
+		sw_w32(ports, RTL930X_ISR_SERDES_UPD_PHY_STS_REG(0));
+	}
+
 	return IRQ_HANDLED;
 }
 
