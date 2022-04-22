@@ -799,6 +799,16 @@ static void rtl930x_phylink_mac_config(struct dsa_switch *ds, int port,
 		break;
 	}
 
+	if (state->interface == PHY_INTERFACE_MODE_HSGMII) {
+		int forced_mode = rtl9300_sds_field_r(sds_num, 0x1f, 9, 11, 7);
+		pr_info("%s CURRENT FORCED MODE %d\n", __func__, forced_mode);
+
+		if ((state->speed == SPEED_2500) && (forced_mode != 0x12))
+			rtl9300_rtl8226_mode_set(port, sds_num, PHY_INTERFACE_MODE_HSGMII);
+		if ((state->speed != SPEED_2500) && (forced_mode == 0x12))
+			rtl9300_rtl8226_mode_set(port, sds_num, PHY_INTERFACE_MODE_SGMII);
+	}
+
 	if (state->link)
 		reg |= RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN;
 
