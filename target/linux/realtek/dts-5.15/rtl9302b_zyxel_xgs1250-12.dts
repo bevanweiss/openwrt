@@ -419,21 +419,15 @@
 		port@27 {
 			reg = <27>;
 			label = "lan12";
-			phy-mode = "10gbase-r";
+			phy-mode = "1000base-x";
 			phy-handle = <&phy27>;
+			managed = "in-band-status";
 			sfp = <&sfp0>;
 			led-set = <3>;
 			led-num = <(
 				RTL93XX_LED_NUM0 | /* Blue */
 				RTL93XX_LED_NUM1   /* Lime */
 			)>;
-
-			fixed-link {
-				speed = <10000>;
-				full-duplex;
-				pause;
-			};
-
 		};
 
 		port@28 {
