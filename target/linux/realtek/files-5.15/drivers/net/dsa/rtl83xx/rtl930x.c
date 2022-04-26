@@ -870,8 +870,12 @@ irqreturn_t rtl930x_switch_irq(int irq, void *dev_id)
 	/* Handle SDS link faults */
 	ports = sw_r32(RTL930X_ISR_SERDES_LINK_FAULT_REG);
 	if (ports) {
+		static unsigned int irq_retry = 3;
+
 		pr_info("%s link faults: %08x\n", __func__, ports);
 		sw_w32(ports, RTL930X_ISR_SERDES_LINK_FAULT_REG);
+		if (irq_retry-- == 0)
+			sw_w32(0, RTL930X_IMR_SERDES_LINK_FAULT_REG);
 	}
 
 	/* Handle SDS RX symbol errors */
