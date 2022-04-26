@@ -295,6 +295,7 @@
 #define RTL930X_ISR_SERDES_UPD_PHY_STS_CLR(r) \
         (_RTL930X_ISR_SERDES_UPD_PHY_STS_MASK << ((p) % 32))
 
+int rtl9300_configure_serdes(const int port, const int sds_num, phy_interface_t phy_mode);
 void rtl930x_dbgfs_init(struct rtl838x_switch_priv *priv);
 u32 rtl930x_hash(struct rtl838x_switch_priv *priv, u64 seed);
 void rtl930x_imr_port_link_sts_chg(const u64 ports);
