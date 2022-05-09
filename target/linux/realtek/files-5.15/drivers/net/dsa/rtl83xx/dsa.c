@@ -1067,6 +1067,21 @@ static void rtl930x_phylink_mac_link_up(struct dsa_switch *ds, int port,
 	            RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
 	            priv->r->mac_port_ctrl(port));
 
+	if (port == RTL930X_PORT_CPU) {
+		sw_w32(RTL930X_MAC_FORCE_MODE_CTRL_FC_EN |
+		       FIELD_PREP(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+		       RTL930X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+		       RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN |
+		       RTL930X_MAC_FORCE_MODE_CTRL_EN,
+		       RTL930X_MAC_FORCE_MODE_CTRL_REG(port));
+	}
+
+	sw_w32_mask(0, RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN, RTL930X_MAC_FORCE_MODE_CTRL_REG(port));
+	if (priv->ports[port].phy_is_integrated) /* Clear MAC_FORCE_EN to allow SDS-MAC link */
+		sw_w32_mask(RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN, 0, RTL930X_MAC_FORCE_MODE_CTRL_REG(port));
+	else
+		sw_w32_mask(0, RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN, RTL930X_MAC_FORCE_MODE_CTRL_REG(port));
+
 	/* TODO: Set speed/duplex/pauses */
 }
 
@@ -1082,6 +1097,23 @@ static void rtl931x_phylink_mac_link_up(struct dsa_switch *ds, int port,
 	sw_w32_mask(0,
 	            RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
 	            priv->r->mac_port_ctrl(port));
+
+	if (port == RTL931X_PORT_CPU) {
+		sw_w32(FIELD_PREP(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+		       RTL931X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+		       RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_FC_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_SPD_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_DUP_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_EN,
+		       RTL931X_MAC_FORCE_MODE_CTRL_REG(port));
+	}
+
+	sw_w32_mask(0, RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN, RTL931X_MAC_FORCE_MODE_CTRL_REG(port));
+	if (priv->ports[port].phy_is_integrated) /* Clear MAC_FORCE_EN to allow SDS-MAC link */
+		sw_w32_mask(RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN, 0, RTL931X_MAC_FORCE_MODE_CTRL_REG(port));
+	else
+		sw_w32_mask(0, RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN, RTL931X_MAC_FORCE_MODE_CTRL_REG(port));
 
 	/* TODO: Set speed/duplex/pauses */
 }
