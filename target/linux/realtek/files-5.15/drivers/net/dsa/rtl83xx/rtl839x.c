@@ -1005,6 +1005,9 @@ int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 	if (port >= RTL839X_PORT_ETH)
 		return 0;
 
+	if (priv->ports[port].phy_is_integrated)
+		return 0;
+
 	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
@@ -1019,6 +1022,34 @@ int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 		e->lp_advertised = ADVERTISED_100baseT_Full;
 		e->lp_advertised |= ADVERTISED_1000baseT_Full;
 		return 1;
+	}
+
+	(void)sw_r32(RTL839X_EEE_CTRL_REG(port)); /* Read latch */
+	if (sw_r32(RTL839X_EEE_CTRL_REG(port)) & RTL839X_EEE_CTRL_TX_EN) {
+		int speed = priv->r->mac_link_spd_sts(port);
+		u32 v = 0;
+
+		switch(speed) {
+		case RTL839X_MAC_LINK_SPD_STS_10G:
+			v = FIELD_GET(RTL839X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_10G, sw_r32(RTL839X_EEE_TX_SEL_CTRL1_REG));
+			break;
+		case RTL839X_MAC_LINK_SPD_STS_1000M:
+			v = FIELD_GET(RTL839X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M, sw_r32(RTL839X_EEE_TX_SEL_CTRL1_REG));
+			break;
+		case RTL839X_MAC_LINK_SPD_STS_100M:
+			v = FIELD_GET(RTL839X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_100M, sw_r32(RTL839X_EEE_TX_SEL_CTRL0_REG));
+			break;
+		case RTL839X_MAC_LINK_SPD_STS_10M:
+			/* EEE is not applicable to 10M */
+			break;
+		default:
+			pr_warn("%s: Unsupported speed: %d\n", __func__, speed);
+			break;
+		}
+		e->tx_lpi_timer = v;
+
+		if (v)
+			e->tx_lpi_enabled = true;
 	}
 
 	return 0;

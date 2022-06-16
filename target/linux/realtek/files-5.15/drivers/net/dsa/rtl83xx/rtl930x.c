@@ -1154,14 +1154,40 @@ int rtl930x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 	if (priv->ports[port].is10G && (reg & RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_10G))
 		e->advertised |= ADVERTISED_10000baseT_Full;
 
-	(void)sw_r32(RTL930X_MAC_EEE_ABLTY_REG(port)); /* Read latch */
-	if (RTL930X_MAC_EEE_ABLTY_ABLE(sw_r32(RTL930X_MAC_EEE_ABLTY_REG(port), port) == RTL930X_MAC_EEE_ABLTY_ALBE_ON)) {
-		e->lp_advertised = ADVERTISED_100baseT_Full;
-		e->lp_advertised |= ADVERTISED_1000baseT_Full;
-		if (priv->ports[port].is2G5)
-			e->lp_advertised |= ADVERTISED_2500baseX_Full;
-		if (priv->ports[port].is10G)
-			e->lp_advertised |= ADVERTISED_10000baseT_Full;
+	(void)sw_r32(RTL930X_EEE_CTRL_REG(port)); /* Read latch */
+	if (sw_r32(RTL930X_EEE_CTRL_REG(port)) & RTL930X_EEE_CTRL_TX_EN) {
+		int speed = priv->r->mac_link_spd_sts(port);
+		u32 v = 0;
+
+		switch (speed) {
+		case RTL930X_MAC_LINK_SPD_STS_10G:
+			v = FIELD_GET(RTL930X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_10G, sw_r32(RTL930X_EEE_TX_SEL_CTRL1_REG));
+			break;
+		case RTL930X_MAC_LINK_SPD_STS_5G:
+			v = FIELD_GET(RTL930X_EEE_TX_SEL_CTRL2_TX_LPI_MINIPG_5G, sw_r32(RTL930X_EEE_TX_SEL_CTRL2_REG));
+			break;
+		case RTL930X_MAC_LINK_SPD_STS_2G5_ALT: fallthrough;
+		case RTL930X_MAC_LINK_SPD_STS_2G5:
+			v = FIELD_GET(RTL930X_EEE_TX_SEL_CTRL2_TX_LPI_MINIPG_2G5, sw_r32(RTL930X_EEE_TX_SEL_CTRL2_REG));
+			break;
+		case RTL930X_MAC_LINK_SPD_STS_1000M_ALT: fallthrough;
+		case RTL930X_MAC_LINK_SPD_STS_1000M:
+			v = FIELD_GET(RTL930X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M, sw_r32(RTL930X_EEE_TX_SEL_CTRL1_REG));
+			break;
+		case RTL930X_MAC_LINK_SPD_STS_100M:
+			v = FIELD_GET(RTL930X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_100M, sw_r32(RTL930X_EEE_TX_SEL_CTRL0_REG));
+			break;
+		case RTL930X_MAC_LINK_SPD_STS_10M:
+			/* EEE is not applicable to 10M */
+			break;
+		default:
+			pr_warn("%s: Unsupported speed: %d\n", __func__, speed);
+			break;
+		}
+		e->tx_lpi_timer = v;
+
+		if (v)
+			e->tx_lpi_enabled = true;
 	}
 
 	(void)sw_r32(RTL930X_MAC_EEE_ABLTY_REG(port)); /* Read latch */

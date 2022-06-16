@@ -708,7 +708,7 @@ static void rtl838x_port_eee_set(struct rtl838x_switch_priv *priv, int port, boo
 }
 
 
-/* Get EEE own capabilities and negotiation result */
+/* Get EEE own capabilities and negotiation result for MAC */
 static int rtl838x_eee_port_ability(struct rtl838x_switch_priv *priv,
 				    struct ethtool_eee *e, int port)
 {
@@ -733,13 +733,39 @@ static int rtl838x_eee_port_ability(struct rtl838x_switch_priv *priv,
 		return 1;
 	}
 
+	(void)sw_r32(RTL838X_EEE_PORT_RX_REG(port)); /* Read latch */
+	if (RTL838X_EEE_PORT_RX_GET(sw_r32(RTL838X_EEE_PORT_RX_REG(port)), port)) {
+		int speed = priv->r->mac_link_spd_sts(port);
+		u32 v = 0;
+
+		switch (speed) {
+		case RTL838X_MAC_LINK_SPD_STS_1000M:
+			v = FIELD_GET(RTL838X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M, sw_r32(RTL838X_EEE_TX_SEL_CTRL1_REG));
+			break;
+		case RTL838X_MAC_LINK_SPD_STS_100M:
+			v = FIELD_GET(RTL838X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_100M, sw_r32(RTL838X_EEE_TX_SEL_CTRL0_REG));
+			break;
+		case RTL838X_MAC_LINK_SPD_STS_10M:
+			/* EEE is not applicable to 10M */
+			break;
+		default:
+			pr_warn("%s: Unsupported speed: %d\n", __func__, speed);
+			break;
+		}
+		e->tx_lpi_timer = v;
+
+		if (v)
+			e->tx_lpi_enabled = true;
+	}
+
 	return 0;
 }
 
 static void rtl838x_init_eee(struct rtl838x_switch_priv *priv, bool enable)
 {
 	pr_info("Setting up EEE, state: %d\n", enable);
-	sw_w32_mask(0x4, 0, RTL838X_SMI_GLB_CTRL);
+	/* To enable clear SMI_DISEEE_ALLPORT */
+	sw_w32_mask(0x4, enable ? 0 : 0x4, RTL838X_SMI_GLB_CTRL);
 
 	sw_w32(FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE, 5) |
 	       FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_LOW_Q_DELAY, 20) |
