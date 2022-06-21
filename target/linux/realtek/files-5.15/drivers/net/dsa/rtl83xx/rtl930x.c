@@ -1453,7 +1453,7 @@ static int rtl930x_route_lookup_hw(struct rtl83xx_route *rt)
 	if (rt->attr.type == RTL930X_L3_HW_LU_KEY_CTRL_ROUTE_TYPE_IPV6UC) {
 		rtl930x_net6_mask(rt->prefix_len, &ip6_m);
 		for (int i = 0; i < 4; i++)
-			sw_w32(rt->dst_ip6.s6_addr32[0] & ip6_m.s6_addr32[0],
+			sw_w32(rt->dst_ip6.s6_addr32[i] & ip6_m.s6_addr32[i],
 			       RTL930X_L3_HW_LU_KEY_IP_CTRL + (i << 2));
 	} else { /* RTL930X_L3_HW_LU_KEY_CTRL_ROUTE_TYPE_IPV4UC */
 		ip4_m = inet_make_mask(rt->prefix_len);
