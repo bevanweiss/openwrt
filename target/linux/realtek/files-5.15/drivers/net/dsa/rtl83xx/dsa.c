@@ -3,6 +3,7 @@
 #include <asm/mach-realtek/otto.h>
 #include <net/dsa.h>
 #include <linux/if_bridge.h>
+#include <uapi/linux/ethtool.h>
 
 #include "rtl838x.h"
 #include "rtl839x.h"
