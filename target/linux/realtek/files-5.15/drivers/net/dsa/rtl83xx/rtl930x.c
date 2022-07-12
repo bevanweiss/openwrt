@@ -1106,7 +1106,7 @@ void rtl930x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 	if (port >= RTL930X_PORT_ETH)
 		return;
 
-	pr_debug("In %s: setting port %d to %d\n", __func__, port, enable);
+	pr_info("In %s: setting port %d to %d\n", __func__, port, enable);
 
 	v = RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_10G |
 	    RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_5G |
@@ -2700,6 +2700,9 @@ static void rtl930x_led_init(struct rtl838x_switch_priv *priv)
 		sw_w32(port_mask_fiber[i], RTL930X_LED_PORT_FIB_MASK_CTRL_REG(REALTEK_INDEX_ARRAY_PORT(i, 1)));
 		sw_w32(port_mask_combo[i], RTL930X_LED_PORT_COMBO_MASK_CTRL_REG(REALTEK_INDEX_ARRAY_PORT(i, 1)));
 	}
+
+	for (int i = 0; i < 24; i++)
+		pr_info("%s %08x: %08x\n",__func__, 0xbb00cc00 + i * 4, sw_r32(0xcc00 + i * 4));
 }
 
 const struct rtl838x_reg rtl930x_reg = {

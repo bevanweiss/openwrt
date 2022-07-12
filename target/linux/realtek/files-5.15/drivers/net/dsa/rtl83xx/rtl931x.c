@@ -1805,6 +1805,9 @@ static void rtl931x_led_init(struct rtl838x_switch_priv *priv)
 		sw_w32(port_mask_fiber[i], RTL931X_LED_PORT_FIB_MASK_CTRL_REG(REALTEK_INDEX_ARRAY_PORT(i, 1)));
 		sw_w32(port_mask_combo[i], RTL931X_LED_PORT_COMBO_MASK_CTRL_REG(REALTEK_INDEX_ARRAY_PORT(i, 1)));
 	}
+
+	for (int i = 0; i < 32; i++)
+		pr_info("%s %08x: %08x\n",__func__, 0xbb000600 + i * 4, sw_r32(0x0600 + i * 4));
 }
 
 const struct rtl838x_reg rtl931x_reg = {

@@ -979,7 +979,7 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 		return;
 
 	enable = true;
-	pr_debug("In %s: setting port %d to %d\n", __func__, port, enable);
+	pr_info("In %s: setting port %d to %d\n", __func__, port, enable);
 
 	v = RTL839X_MAC_FORCE_MODE_CTRL_EEE_10G_EN |
 	    RTL839X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN |

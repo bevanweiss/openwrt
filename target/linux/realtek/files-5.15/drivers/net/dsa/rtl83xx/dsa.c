@@ -663,6 +663,10 @@ static void rtl838x_phylink_mac_config(struct dsa_switch *ds, int port,
 	reg &= ~RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN;
 
 	sw_w32(reg, priv->r->mac_force_mode_ctrl(port));
+
+	pr_debug("%s port %d mac_port_ctrl %08x, mac_force_mode_ctrl %08x\n",
+	         __func__, port, sw_r32(priv->r->mac_port_ctrl(port)),
+	         sw_r32(priv->r->mac_force_mode_ctrl(port)));
 }
 
 static void rtl839x_phylink_mac_config(struct dsa_switch *ds, int port,
@@ -727,6 +731,10 @@ static void rtl839x_phylink_mac_config(struct dsa_switch *ds, int port,
 		        RTL839X_MAC_FORCE_MODE_CTRL_LINK_EN);
 
 	sw_w32(reg, priv->r->mac_force_mode_ctrl(port));
+
+	pr_debug("%s port %d mac_port_ctrl %08x, mac_force_mode_ctrl %08x\n",
+	         __func__, port, sw_r32(priv->r->mac_port_ctrl(port)),
+	         sw_r32(priv->r->mac_force_mode_ctrl(port)));
 }
 
 static void rtl930x_phylink_mac_config(struct dsa_switch *ds, int port,
@@ -806,6 +814,10 @@ static void rtl930x_phylink_mac_config(struct dsa_switch *ds, int port,
 		reg |= RTL930X_MAC_FORCE_MODE_CTRL_EN;
 
 	sw_w32(reg, priv->r->mac_force_mode_ctrl(port));
+
+	pr_debug("%s port %d mac_port_ctrl %08x, mac_force_mode_ctrl %08x\n",
+	         __func__, port, sw_r32(priv->r->mac_port_ctrl(port)),
+	         sw_r32(priv->r->mac_force_mode_ctrl(port)));
 }
 
 static void rtl931x_phylink_mac_config(struct dsa_switch *ds, int port,
