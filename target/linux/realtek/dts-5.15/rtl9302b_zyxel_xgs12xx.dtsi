@@ -1,0 +1,372 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/leds/leds-realtek.h>
+
+#include "rtl9302b.dtsi"
+
+/ {
+	memory@0 {
+		reg = <0x0 0x8000000>; /* 128 MiB */
+		device_type = "memory";
+	};
+
+	led_sets {
+		compatible = "realtek,rtl9302b-leds", "realtek,rtl9302-leds", "realtek,rtl930x-leds";
+
+		/* 1Gbit ports */
+		led_set0 = /bits/ 16 <
+			/* LED0 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_500M_LINK |
+				RTL93XX_LED_SET_100M_LINK |
+				RTL93XX_LED_SET_10M_LINK
+			)
+			/* LED1 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_2P_1G_LINK |
+				RTL93XX_LED_SET_1000M_LINK
+			)
+			/* LED2 */
+			RTL93XX_LED_SET_NONE
+			/* LED3 */
+			RTL93XX_LED_SET_NONE
+		>;
+		/* 2G5 ports */
+		led_set1 = /bits/ 16 <
+			/* LED0 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_2G5_LINK
+			)
+			/* LED1 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_2G5_LINK
+			)
+			/* LED2 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_1000M_LINK
+			)
+			/* LED3 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_100M_LINK |
+				RTL93XX_LED_SET_10M_LINK
+			)
+		>;
+		/* 10G ports */
+		led_set2 = /bits/ 16 <
+			/* LED0 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_10G_LINK |
+				RTL93XX_LED_SET_5G_LINK |
+				RTL93XX_LED_SET_2G5_LINK
+			)
+			/* LED1 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_5G_LINK |
+				RTL93XX_LED_SET_100M_LINK
+			)
+			/* LED2 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_2G5_LINK |
+				RTL93XX_LED_SET_1000M_LINK
+			)
+			/* LED3 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_10G_LINK |
+				RTL93XX_LED_SET_5G_LINK |
+				RTL93XX_LED_SET_2G5_LINK
+			)
+		>;
+		/* SFP+ ports */
+		led_set3 = /bits/ 16 <
+			/* LED0 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_10G_LINK
+			)
+			/* LED1 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_1000M_LINK
+			)
+			/* LED2 */
+			RTL93XX_LED_SET_NONE
+			/* LED3 */
+			RTL93XX_LED_SET_NONE
+		>;
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	flash@0 {
+		reg = <0>;
+		compatible = "macronix,mx25l12833f", "mxicy,mx25l12833f", "jedec,spi-nor";
+		spi-max-frequency = <133000000>;
+
+		partitions: partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				reg = <0x0 0xe0000>;
+				label = "u-boot";
+				read-only;
+			};
+
+			partition@e0000 {
+				reg = <0xe0000 0x10000>;
+				label = "u-boot-env";
+			};
+
+			firmware_partition: partition@f0000 {
+				reg = <0xf0000 0xf10000>;
+				label = "firmware";
+				compatible = "openwrt,uimage", "denx,uimage";
+			};
+		};
+	};
+};
+
+&ethernet0 {
+	mdio0: mdio-bus {
+		regmap = <&ethernet0>;
+		compatible = "realtek,rtl9302b-mdio", "realtek,rtl9302-mdio", "realtek,rtl930x-mdio", "realtek,rtl838x-mdio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* External 8 port 10/100/1000Mbit RTL8218D PHY (XGMII) */
+		phy0: ethernet-phy@0 {
+			reg = <0>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 0>;
+			sds = <2>;
+			/* Disabled because we do not know how to bring up again */
+			/* reset-gpios = <&gpio0 21 GPIO_ACTIVE_LOW>; */
+		};
+
+		phy1: ethernet-phy@1 {
+			reg = <1>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 1>;
+		};
+
+		phy2: ethernet-phy@2 {
+			reg = <2>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 2>;
+		};
+
+		phy3: ethernet-phy@3 {
+			reg = <3>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 3>;
+		};
+
+		phy4: ethernet-phy@4 {
+			reg = <4>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 4>;
+		};
+
+		phy5: ethernet-phy@5 {
+			reg = <5>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 5>;
+		};
+
+		phy6: ethernet-phy@6 {
+			reg = <6>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 6>;
+		};
+
+		phy7: ethernet-phy@7 {
+			reg = <7>;
+			compatible = "ethernet-phy-ieee802.3-c22";
+			rtl9300,smi-address = <0 7>;
+		};
+	};
+};
+
+&reset_button {
+	gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+
+	status = "okay";
+};
+
+&status_led {
+	status = "okay";
+};
+
+&spi0 {
+	status = "okay";
+
+	flash@0 {
+		reg = <0>;
+		compatible = "macronix,mx25l12833f", "mxicy,mx25l12833f", "jedec,spi-nor";
+		spi-max-frequency = <133000000>;
+
+		partitions: partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				reg = <0x0 0xe0000>;
+				label = "u-boot";
+				read-only;
+			};
+
+			partition@e0000 {
+				reg = <0xe0000 0x10000>;
+				label = "u-boot-env";
+			};
+
+			firmware_partition: partition@f0000 {
+				reg = <0xf0000 0xf10000>;
+				label = "firmware";
+				compatible = "openwrt,uimage", "denx,uimage";
+			};
+		};
+	};
+};
+
+&switch0 {
+	switch0_ports: ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			label = "lan1";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy0>;
+			phy-mode = "xgmii";
+		};
+
+		port@1 {
+			reg = <1>;
+			label = "lan2";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy1>;
+			phy-mode = "xgmii";
+		};
+
+		port@2 {
+			reg = <2>;
+			label = "lan3";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy2>;
+			phy-mode = "xgmii";
+		};
+
+		port@3 {
+			reg = <3>;
+			label = "lan4";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy3>;
+			phy-mode = "xgmii";
+		};
+
+		port@4 {
+			reg = <4>;
+			label = "lan5";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy4>;
+			phy-mode = "xgmii";
+		};
+
+		port@5 {
+			reg = <5>;
+			label = "lan6";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy5>;
+			phy-mode = "xgmii";
+		};
+
+		port@6 {
+			reg = <6>;
+			label = "lan7";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy6>;
+			phy-mode = "xgmii";
+		};
+
+		port@7 {
+			reg = <7>;
+			label = "lan8";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Amber */
+				RTL93XX_LED_NUM1   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy7>;
+			phy-mode = "xgmii";
+		};
+
+		/* Internal SoC <-> Switch ethernet connection */
+		port@28 {
+			reg = <28>;
+			ethernet = <&ethernet0>;
+			phy-mode = "internal";
+
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+			};
+		};
+	};
+};
