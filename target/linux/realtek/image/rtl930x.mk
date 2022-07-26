@@ -34,22 +34,17 @@ define Device/zyxel_xgs1200
 endef
 
 define Device/zyxel_xgs1250-12
-  SOC := rtl9302
-  UIMAGE_MAGIC := 0x93001250
-  ZYXEL_VERS := ABWE
-  DEVICE_VENDOR := Zyxel
+  $(Device/zyxel_xgs1200)
   DEVICE_MODEL := XGS1250-12
-  IMAGE_SIZE := 13312k
-  KERNEL := \
-	kernel-bin | \
-	append-dtb | \
-	lzma | \
-	uImage lzma
-  KERNEL_INITRAMFS := \
-	kernel-bin | \
-	append-dtb | \
-	lzma | \
-	zyxel-vers $$$$(ZYXEL_VERS) | \
-	uImage lzma
+  UIMAGE_MAGIC := 0x93001250
 endef
 TARGET_DEVICES += zyxel_xgs1250-12
+
+define Device/zyxel_xgs1250-12_vendor
+  $(Device/zyxel_xgs1250-12)
+  $(Device/zyxel_initramfs)
+  DEVICE_MODEL := XGS1250-12_vendor
+  IMAGE_SIZE := 13184k
+  ZYXEL_VERS := ABWE
+endef
+TARGET_DEVICES += zyxel_xgs1250-12_vendor
