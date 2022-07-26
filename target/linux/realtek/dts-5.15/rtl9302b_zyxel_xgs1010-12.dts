@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later or MIT)
+
+/dts-v1/;
+
+#include "rtl9302b_zyxel_xgs1210-12.dts"
+
+/ {
+	compatible = "zyxel,xgs1010-12", "realtek,rtl9302b-soc", "realtek,rtl9302-soc", "realtek,rtl930x-soc";
+	model = "Zyxel XGS1010-12 Switch";
+};
+
+&reset_button {
+	status = "disabled";
+};
+
+&firmware_partition {
+	openwrt,ih-magic = <0x93001010>;
+};

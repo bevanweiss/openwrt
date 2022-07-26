@@ -1,0 +1,64 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+
+/ {
+	virtual_flash {
+		compatible = "mtd-concat";
+		devices = <&_concat0 &_concat1 &_concat2>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			firmware_partition: partition@0 {
+				reg = <0x0 0x0>;
+				compatible = "openwrt,uimage", "denx,uimage";
+				label = "firmware";
+			};
+		};
+	};
+};
+
+&partitions {
+	/delete-node/ partition@f0000;
+
+	partition@f0000 {
+		reg = <0xf0000 0x10000>;
+		label = "u-boot-sysenv";
+	};
+
+	_concat0: partition@100000 {
+		reg = <0x100000 0x710000>;
+		label = "_firmware_concat0";
+	};
+
+	partition@810000 {
+		/*
+		 * This partition gets written to by the
+		 * U-Boot built-in realtek HTP self-test!
+		 * Do not use for critical data!
+		 */
+		reg = <0x810000 0x10000>;
+		label = "HTP_logs";
+	};
+
+	_concat1: partition@820000 {
+		reg = <0x820000 0xd0000>;
+		label = "_firmware_concat1";
+	};
+
+	partition@8f0000 {
+		/*
+		 * This partition gets written to by the
+		 * U-Boot built-in realtek HTP flash write
+		 * test! Do not use for critical data!
+		 */
+		reg = <0x8f0000 0x10000>;
+		label = "flash_write_test";
+	};
+
+	_concat2: partition@900000 {
+		reg = <0x900000 0x700000>;
+		label = "_firmware_concat2";
+	};
+};

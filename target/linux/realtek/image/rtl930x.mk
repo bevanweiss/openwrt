@@ -33,6 +33,22 @@ define Device/zyxel_xgs1200
   SOC := rtl9302b
 endef
 
+define Device/zyxel_xgs1010-12
+  $(Device/zyxel_xgs1200)
+  UIMAGE_MAGIC := 0x93001010
+  DEVICE_MODEL := XGS1010-12
+endef
+TARGET_DEVICES += zyxel_xgs1010-12
+
+define Device/zyxel_xgs1010-12_vendor
+  $(Device/zyxel_xgs1010-12)
+  $(Device/zyxel_initramfs)
+  DEVICE_MODEL := XGS1010-12_vendor
+  IMAGE_SIZE := 15232k
+  ZYXEL_VERS := ABTY
+endef
+TARGET_DEVICES += zyxel_xgs1010-12_vendor
+
 define Device/zyxel_xgs1210-12
   $(Device/zyxel_xgs1200)
   DEVICE_MODEL := XGS1210-12
