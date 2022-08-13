@@ -7,11 +7,16 @@ define Device/zyxel_xgs1250-12
   DEVICE_VENDOR := Zyxel
   DEVICE_MODEL := XGS1250-12
   IMAGE_SIZE := 13312k
+  KERNEL := \
+	kernel-bin | \
+	append-dtb | \
+	lzma | \
+	uImage lzma
   KERNEL_INITRAMFS := \
 	kernel-bin | \
 	append-dtb | \
-	gzip | \
+	lzma | \
 	zyxel-vers $$$$(ZYXEL_VERS) | \
-	uImage gzip
+	uImage lzma
 endef
 TARGET_DEVICES += zyxel_xgs1250-12
