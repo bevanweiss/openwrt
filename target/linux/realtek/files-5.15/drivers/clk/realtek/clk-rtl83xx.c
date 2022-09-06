@@ -644,11 +644,12 @@ int rtcl_init_sram(void)
 		return -ENXIO;
 	}
 
-	sram_pool = gen_pool_get(&pdev->dev, NULL);
+	sram_pool = gen_pool_get(&pdev->dev, NULL); // TODO NULL -> "realtek, scratch_clk_pll"
 	if (!sram_pool) {
 		dev_warn(&rtcl_ccu->pdev->dev, "SRAM pool unavailable%s", wrn);
 		goto err_put_device;
 	}
+        dev_err(&rtcl_ccu->pdev->dev, "SRAM pool name: %s\n", sram_pool->name);
 
 	sram_vbase = gen_pool_alloc(sram_pool, dram_size);
 	if (!sram_vbase) {
