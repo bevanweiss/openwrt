@@ -19,7 +19,8 @@
 #define rSLP2	$t4
 #define rSLP3	$t5
 #define rTMP	$t6
-#define rCP0	$t7
+#define rSEL	$t7
+#define rCP0	$t8
 
 .set	noreorder
 
@@ -81,11 +82,8 @@ pre_cpu:
 	ori	rMSK, $0, RTL839X_PLL_GLB_CTRL_CPU_CLKSEL
 main_set:
 	/* switch to fixed clock */
-	sync
 	lw	rTMP, 0(rGLB)
-	sync
 	or	rTMP, rTMP, rMSK
-	sync
 	sw	rTMP, 0(rGLB)
 
 	/* wait until fixed clock in use */
@@ -95,10 +93,16 @@ wait_fixclock:
 	addiu	rTMP, rTMP, -1                     /* Note branch delay slot */
 
 	/* set new PLL values */
-	sync
-	sw	$a1, 0(rCTR)
-	sw	$a2, 4(rCTR)
-	sync
+	lw	rTMP, 0(rCTR)                     /* RTL839X_PLL_*_CTRL0_REG */
+	li	rSEL, 0xfff0000f /* !(RTL839X_PLL_CMU_CTRL0_DIVN2 | RTL839X_PLL_CMU_CTRL0_NCODE_IN) */
+	and	rTMP, rTMP, rSEL
+	or	rTMP, rTMP, $a1                            /* argv[1]: ctrl0 */
+	sw	rTMP, 0(rCTR)
+	lw	rTMP, 4(rCTR)                     /* RTL839X_PLL_*_CTRL1_REG */
+	li	rSEL, 0xfffffff8 /* !(RTL839X_PLL_CMU_CTRL1_DIVN2_SELB | RTL839X_PLL_CMU_CTRL1_DIVN3_SEL) */
+	and	rTMP, rTMP, rSEL
+	or	rTMP, rTMP, $a2                            /* argv[2]: ctrl1 */
+	sw	rTMP, 4(rCTR)
 
 	/* wait for value takeover */
 	or	rTMP, rSLP2, $0
@@ -108,11 +112,8 @@ wait_pll:
 
 	/* switch back to PLL clock*/
 	nor	rMSK, rMSK, $0
-	sync
 	lw	rTMP, 0(rGLB)
-	sync
 	and	rTMP, rTMP, rMSK
-	sync
 	sw	rTMP, 0(rGLB)
 
 	/* wait until PLL clock in use */

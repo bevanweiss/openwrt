@@ -16,6 +16,7 @@
 #define rMSK	$t2
 #define rSLP	$t3
 #define rTMP	$t4
+#define rSEL	$t5
 
 .set	noreorder
 
@@ -64,11 +65,9 @@ pre_cpu:
 	/* switch CPU to LXB clock */
 	ori	rMSK, $0, RTL838X_PLL_GLB_CTRL_CPU_PLL_SC_MUX
 	nor	rMSK, rMSK, $0
-	sync
 	lw	rTMP, 0(rGLB)
 	and	rTMP, rTMP, rMSK
 	sw	rTMP, 0(rGLB)
-	sync
 
 	ori	rSLP, $0, RTL838X_PLL_GLB_CTRL_CPU_PLL_READY
 	addiu	rCTR, rCTR, RTL838X_PLL_CPU_CTRL0_REG
@@ -76,26 +75,26 @@ pre_cpu:
 main_set:
 	/* disable PLL */
 	nor	rMSK, rMSK, 0
-	sync
 	lw	rTMP, 0(rGLB)
-	sync
 	and	rTMP, rTMP, rMSK
-	sync
 	sw	rTMP, 0(rGLB)
 
 	/* set new PLL values */
-	sync
-	sw	$a1, 0(rCTR)
-	sw	$a2, 4(rCTR)
-	sync
+	lw	rTMP, 0(rCTR)                     /* RTL838X_PLL_*_CTRL0_REG */
+	li	rSEL, 0xfff0000f /* !(RTL838X_PLL_CMU_CTRL0_DIVN2 | RTL838X_PLL_CMU_CTRL0_NCODE_IN) */
+	and	rTMP, rTMP, rSEL
+	or	rTMP, rTMP, $a1                            /* argv[1]: ctrl0 */
+	sw	rTMP, 0(rCTR)
+	lw	rTMP, 4(rCTR)                     /* RTL838X_PLL_*_CTRL1_REG */
+	li	rSEL, 0xe3ffffff /* !(RTL838X_PLL_CMU_CTRL1_DIVN3_SEL | RTL838X_PLL_CMU_CTRL1_DIVN2_SELB) */
+	and	rTMP, rTMP, rSEL
+	or	rTMP, rTMP, $a2                            /* argv[2]: ctrl1 */
+	sw	rTMP, 4(rCTR)
 
 	/* enable PLL (will reset it and clear ready status) */
 	nor	rMSK, rMSK, 0
-	sync
 	lw	rTMP, 0(rGLB)
-	sync
 	or	rTMP, rTMP, rMSK
-	sync
 	sw	rTMP, 0(rGLB)
 
 	/* wait for PLL to become ready */
