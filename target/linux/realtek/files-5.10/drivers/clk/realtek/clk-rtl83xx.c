@@ -686,6 +686,8 @@ void rtcl_ccu_log_late(void)
 
 	for (clk_idx = 0; clk_idx < CLK_COUNT; clk_idx++) {
 		rclk = &rtcl_ccu->clks[clk_idx];
+		if (rclk->min rclk->max)
+			continue;
 		overclock |= rclk->max > rclk->startup;
 		sprintf(clkinfo, ", %s %lu-%lu MHz", rtcl_clk_info[clk_idx].display_name,
 			rclk->min / 1000000, rclk->max / 1000000);
