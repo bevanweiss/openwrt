@@ -293,18 +293,19 @@ static const struct rtcl_round_set rtcl_round_set[SOC_COUNT][CLK_COUNT] = {
  * module data structures
  */
 
-#define RTCL_CLK_INFO(_idx, _name, _pname, _dname)	\
+#define RTCL_CLK_INFO(_idx, _name, _pname0, _pname1, _dname) \
 	{						\
 		.idx = _idx,				\
 		.name = _name,				\
-		.parent_name = _pname,			\
+		.parent_name[SOC_RTL838X] = _pname0,	\
+		.parent_name[SOC_RTL839X] = _pname1,	\
 		.display_name = _dname,			\
 	}
 
 struct rtcl_clk_info {
 	unsigned int idx;
 	const char *name;
-	const char *parent_name;
+	const char *parent_name[SOC_COUNT];
 	const char *display_name;
 };
 
@@ -317,9 +318,9 @@ struct rtcl_clk {
 };
 
 static const struct rtcl_clk_info rtcl_clk_info[CLK_COUNT] = {
-	RTCL_CLK_INFO(CLK_CPU, "cpu_clk", "ref_clk", "CPU"),
-	RTCL_CLK_INFO(CLK_MEM, "mem_clk", "ref_clk", "MEM"),
-	RTCL_CLK_INFO(CLK_LXB, "lxb_clk", "ref_clk", "LXB")
+	RTCL_CLK_INFO(CLK_CPU, "cpu_clk", "ref_clk", "ref_clk", "CPU"),
+	RTCL_CLK_INFO(CLK_MEM, "mem_clk", "ref_clk", "ref_clk", "MEM"),
+	RTCL_CLK_INFO(CLK_LXB, "lxb_clk", "ref_clk", "ref_clk", "LXB")
 };
 
 struct rtcl_sram {
@@ -548,7 +549,7 @@ int rtcl_register_clkhw(int clk_idx)
 	struct clk *clk;
 	struct clk_init_data hw_init = { };
 	struct rtcl_clk *rclk = &rtcl_ccu->clks[clk_idx];
-	struct clk_parent_data parent_data = { .fw_name = rtcl_clk_info[clk_idx].parent_name };
+	struct clk_parent_data parent_data = { .fw_name = rtcl_clk_info[clk_idx].parent_name[rtcl_ccu->soc] };
 
 	rclk->idx = clk_idx;
 	rclk->hw.init = &hw_init;
