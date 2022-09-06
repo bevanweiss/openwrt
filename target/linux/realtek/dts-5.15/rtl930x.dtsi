@@ -13,14 +13,53 @@
 
 	compatible = "realtek,rtl930x-soc";
 
+	ccu: clock-controller {
+		compatible = "realtek,rtl9300-clock";
+		#clock-cells = <1>;
+		clocks = <&osc25M>;
+		clock-names = "ref_clk";
+		pll-reclock-sram = <&sram0>;
+	};
+
 	cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		frequency = <800000000>;
 
 		cpu@0 {
 			compatible = "mips,mips34Kc";
 			reg = <0>;
+			clocks = <&ccu CLK_CPU>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
+	};
+
+	cpu_opp_table: opp-table-0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		opp00 {
+			opp-hz = /bits/ 64 <625000000>;
+		};
+		opp01 {
+			opp-hz = /bits/ 64 <650000000>;
+		};
+		opp02 {
+			opp-hz = /bits/ 64 <675000000>;
+		};
+		opp03 {
+			opp-hz = /bits/ 64 <700000000>;
+		};
+		opp04 {
+			opp-hz = /bits/ 64 <725000000>;
+		};
+		opp05 {
+			opp-hz = /bits/ 64 <750000000>;
+		};
+		opp06 {
+			opp-hz = /bits/ 64 <775000000>;
+		};
+		opp07 {
+			opp-hz = /bits/ 64 <800000000>;
 		};
 	};
 
@@ -71,12 +110,6 @@
 
 			status = "disabled";
 		};
-	};
-
-	lx_clk: lx_clk {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency  = <175000000>;
 	};
 
 	soc: soc {
@@ -288,14 +321,14 @@
 
 			interrupt-parent = <&intc>;
 			interrupts = <7 4>, <8 4>, <9 4>, <10 4>, <11 4>;
-			clocks = <&lx_clk>;
+			clocks = <&ccu CLK_LXB>;
 		};
 
 		uart0: uart@2000 {
 			compatible = "ns16550a";
 			reg = <0x2000 0x100>;
 
-			clocks = <&lx_clk>;
+			clocks = <&ccu CLK_LXB>;
 
 			interrupt-parent = <&intc>;
 			interrupts = <30 1>;
@@ -310,7 +343,7 @@
 			compatible = "ns16550a";
 			reg = <0x2100 0x100>;
 
-			clocks = <&lx_clk>;
+			clocks = <&ccu CLK_LXB>;
 
 			interrupt-parent = <&intc>;
 			interrupts = <31 0>;
@@ -329,7 +362,7 @@
 
 			realtek,reset-mode = "soc";
 
-			clocks = <&lx_clk>;
+			clocks = <&ccu CLK_LXB>;
 			timeout-sec = <30>;
 
 			interrupt-parent = <&intc>;
@@ -381,6 +414,13 @@
 			speed = <1000>;
 			full-duplex;
 		};
+	};
+
+	osc25M: clk-25M {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <25000000>;
+		clock-output-names = "ref_clk";
 	};
 
 	sram0: sram@9f000000 {
