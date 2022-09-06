@@ -114,28 +114,28 @@
 static const int rtcl_regs[SOC_COUNT][REG_COUNT][CLK_COUNT] = {
 	{
 		{
-			RTL838X_PLL_SW_CTRL0_REG,
-                        RTL838X_PLL_CPU_CTRL0_REG,
-                        RTL838X_PLL_MEM_CTRL0_REG,
-                        RTL838X_PLL_LXB_CTRL0_REG,
-                }, {
-			RTL838X_PLL_SW_CTRL1_REG,
-                        RTL838X_PLL_CPU_CTRL1_REG,
-                        RTL838X_PLL_MEM_CTRL1_REG,
-                        RTL838X_PLL_LXB_CTRL1_REG,
-                },
-        }, {
+			RTL_SW_CORE_BASE + RTL838X_PLL_SW_CTRL0_REG,
+			RTL_SW_CORE_BASE + RTL838X_PLL_CPU_CTRL0_REG,
+			RTL_SW_CORE_BASE + RTL838X_PLL_MEM_CTRL0_REG,
+			RTL_SW_CORE_BASE + RTL838X_PLL_LXB_CTRL0_REG,
+		}, {
+			RTL_SW_CORE_BASE + RTL838X_PLL_SW_CTRL1_REG,
+			RTL_SW_CORE_BASE + RTL838X_PLL_CPU_CTRL1_REG,
+			RTL_SW_CORE_BASE + RTL838X_PLL_MEM_CTRL1_REG,
+			RTL_SW_CORE_BASE + RTL838X_PLL_LXB_CTRL1_REG,
+		},
+	}, {
 		{
-			RTL839X_PLL_SW_CTRL_REG,
-                        RTL839X_PLL_CPU_CTRL0_REG,
-                        RTL839X_PLL_MEM_CTRL0_REG,
-                        RTL839X_PLL_LXB_CTRL0_REG,
-                }, {
-			RTL839X_PLL_SW_CTRL_REG,
-                        RTL839X_PLL_CPU_CTRL1_REG,
-                        RTL839X_PLL_MEM_CTRL1_REG,
-                        RTL839X_PLL_LXB_CTRL1_REG,
-                },
+			RTL_SW_CORE_BASE + RTL839X_PLL_SW_CTRL_REG,
+			RTL_SW_CORE_BASE + RTL839X_PLL_CPU_CTRL0_REG,
+			RTL_SW_CORE_BASE + RTL839X_PLL_MEM_CTRL0_REG,
+			RTL_SW_CORE_BASE + RTL839X_PLL_LXB_CTRL0_REG,
+		}, {
+			RTL_SW_CORE_BASE + RTL839X_PLL_SW_CTRL_REG,
+			RTL_SW_CORE_BASE + RTL839X_PLL_CPU_CTRL1_REG,
+			RTL_SW_CORE_BASE + RTL839X_PLL_MEM_CTRL1_REG,
+			RTL_SW_CORE_BASE + RTL839X_PLL_LXB_CTRL1_REG,
+		},
 	}
 };
 
@@ -390,8 +390,8 @@ static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_ra
 	if ((clk->idx >= CLK_COUNT) || (!rtcl_ccu) || (rtcl_ccu->soc >= SOC_COUNT))
 		return 0;
 
-	ctrl0 = read_sw(rtcl_regs[rtcl_ccu->soc][REG_CTRL0][clk->idx]);
-	ctrl1 = read_sw(rtcl_regs[rtcl_ccu->soc][REG_CTRL1][clk->idx]);
+	ctrl0 = ioread32((void __iomem *)CKSEG1ADDR(rtcl_regs[rtcl_ccu->soc][REG_CTRL0][clk->idx]));
+	ctrl1 = ioread32((void __iomem *)CKSEG1ADDR(rtcl_regs[rtcl_ccu->soc][REG_CTRL1][clk->idx]));
 
 	switch (RTCL_SOC_CLK(rtcl_ccu->soc, clk->idx)) {
 	case RTCL_SOC_CLK(SOC_RTL838X, CLK_CPU):
