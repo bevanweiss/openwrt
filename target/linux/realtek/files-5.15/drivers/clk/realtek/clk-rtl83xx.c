@@ -349,14 +349,14 @@ struct rtcl_ccu *rtcl_ccu;
 extern void	rtcl_838x_dram_start(void);
 extern int	rtcl_838x_dram_size;
 
-extern void	(*rtcl_838x_dram_set_rate)(int clk_idx, int ctrl0, int ctrl1);
-static void	(*rtcl_838x_sram_set_rate)(int clk_idx, int ctrl0, int ctrl1);
+extern void	rtcl_838x_dram_set_rate(u32 clk_idx, u32 ctrl0, u32 ctrl1);
+static void	(*rtcl_838x_sram_set_rate)(u32 clk_idx, u32 ctrl0, u32 ctrl1);
 
 extern void	rtcl_839x_dram_start(void);
 extern int	rtcl_839x_dram_size;
 
-extern void	(*rtcl_839x_dram_set_rate)(int clk_idx, int ctrl0, int ctrl1);
-static void	(*rtcl_839x_sram_set_rate)(int clk_idx, int ctrl0, int ctrl1);
+extern void	rtcl_839x_dram_set_rate(u32 clk_idx, u32 ctrl0, u32 ctrl1);
+static void	(*rtcl_839x_sram_set_rate)(u32 clk_idx, u32 ctrl0, u32 ctrl1);
 
 /*
  * clock setter/getter functions
