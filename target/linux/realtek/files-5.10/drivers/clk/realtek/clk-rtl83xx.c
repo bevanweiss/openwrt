@@ -122,7 +122,7 @@ static const int rtcl_regs[SOC_COUNT][REG_COUNT][CLK_COUNT] = {
 	}
 
 struct rtcl_reg_set {
-	unsigned int rate;
+	unsigned long rate;
 	unsigned int ctrl0;
 	unsigned int ctrl1;
 };
