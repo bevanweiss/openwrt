@@ -68,6 +68,7 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
 +config REALTEK_SOC
 +	bool "Support boards based on Realtek SoCs"
 +	select ARCH_HAS_RESET_CONTROLLER
++	select CPU_SUPPORTS_CPUFREQ
 +	select MIPS_EXTERNAL_TIMER
 +	select PINCTRL
 +	select RESET_CONTROLLER
@@ -94,12 +95,10 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
 +	config RTL838X
 +		bool "Realtek RTL838X based platforms"
 +		depends on REALTEK_SOC
-+		select CPU_SUPPORTS_CPUFREQ
 +
 +	config RTL839X
 +		bool "Realtek RTL839X based platforms"
 +		depends on REALTEK_SOC
-+		select CPU_SUPPORTS_CPUFREQ
 +
 +	config RTL930X
 +		bool "Realtek RTL930X based platforms"
