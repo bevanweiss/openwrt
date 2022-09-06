@@ -109,6 +109,8 @@
 
 #define OSC_RATE		25000000
 
+#define RTCL_SOC_CLK(soc,clk)	((soc << 8) + clk)
+
 static const int rtcl_regs[SOC_COUNT][REG_COUNT][CLK_COUNT] = {
 	{
 		{
@@ -287,9 +289,6 @@ static const struct rtcl_round_set rtcl_round_set[SOC_COUNT][CLK_COUNT] = {
 	}
 };
 
-static const int rtcl_divn3[] = { 2, 3, 4, 6 };
-static const int rtcl_xdiv[] = { 2, 4, 2 };
-
 /*
  * module data structures
  */
@@ -365,8 +364,9 @@ static void	(*rtcl_839x_sram_set_rate)(u32 clk_idx, u32 ctrl0, u32 ctrl1);
 static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 {
 	struct rtcl_clk *clk = rtcl_hw_to_clk(hw);
-	unsigned int ctrl0, ctrl1, div1, div2, cmu_ncode_in;
-	unsigned int cmu_sel_prediv, cmu_sel_div4, cmu_divn2, cmu_divn2_selb, cmu_divn3_sel;
+	unsigned int ctrl0, ctrl1;
+	unsigned int mul1 = 1, mul2 = 1, div1 = 1, div2 = 1, div3 = 1;
+	unsigned int cmu_divn2, cmu_divn2_selb, cmu_divn3_sel;
 
 	if ((clk->idx >= CLK_COUNT) || (!rtcl_ccu) || (rtcl_ccu->soc >= SOC_COUNT))
 		return 0;
@@ -374,26 +374,45 @@ static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_ra
 	ctrl0 = read_sw(rtcl_regs[rtcl_ccu->soc][REG_CTRL0][clk->idx]);
 	ctrl1 = read_sw(rtcl_regs[rtcl_ccu->soc][REG_CTRL1][clk->idx]);
 
-	cmu_sel_prediv = 1 << RTL_PLL_CTRL0_CMU_SEL_PREDIV(ctrl0);
-	cmu_sel_div4 = RTL_PLL_CTRL0_CMU_SEL_DIV4(ctrl0) ? 4 : 1;
-	cmu_ncode_in = RTL_PLL_CTRL0_CMU_NCODE_IN(ctrl0) + 4;
-	cmu_divn2 = RTL_PLL_CTRL0_CMU_DIVN2(ctrl0) + 4;
+	switch (RTCL_SOC_CLK(rtcl_ccu->soc, clk->idx)) {
+	case RTCL_SOC_CLK(SOC_RTL838X, CLK_CPU):
+		div3 = 2;
+		fallthrough;
+	case RTCL_SOC_CLK(SOC_RTL838X, CLK_LXB):
+		div3 = 2;
+		fallthrough;
+	case RTCL_SOC_CLK(SOC_RTL838X, CLK_MEM):
+		cmu_divn2 = RTL838X_PLL_CMU_CTRL0_DIVN2_DIV(FIELD_GET(RTL838X_PLL_CMU_CTRL0_DIVN2, ctrl0));
+		cmu_divn2_selb = FIELD_GET(RTL838X_PLL_CMU_CTRL1_DIVN2_SELB, ctrl1);
+		cmu_divn3_sel = RTL838X_PLL_CMU_CTRL1_DIVN3_SEL_DIV(FIELD_GET(RTL838X_PLL_CMU_CTRL1_DIVN3_SEL, ctrl1));
 
-	switch (rtcl_ccu->soc) {
-	case SOC_RTL838X:
-		cmu_divn2_selb = FIELD_GET(RTL838X_PLL_CTRL1_CMU_DIVN2_SELB, ctrl1);
-		cmu_divn3_sel = rtcl_divn3[FIELD_GET(RTL838X_PLL_CTRL1_CMU_DIVN3_SEL, ctrl1)];
+		mul1 = RTL838X_PLL_CMU_CTRL0_NCODE_IN_CODE(FIELD_GET(RTL838X_PLL_CMU_CTRL0_NCODE_IN, ctrl0));
+		mul2 = RTL838X_PLL_CMU_CTRL0_SEL_DIV4_DIV(FIELD_GET(RTL838X_PLL_CMU_CTRL0_SEL_DIV4, ctrl0));
+		div1 = RTL838X_PLL_CMU_CTRL0_SEL_PREDIV_DIV((FIELD_GET(RTL838X_PLL_CMU_CTRL0_SEL_PREDIV, ctrl0)));
+		div2 = cmu_divn2_selb ? cmu_divn3_sel : cmu_divn2;
+		div3 = 4;
 		break;
-	case SOC_RTL839X:
-		cmu_divn2_selb = FIELD_GET(RTL839X_PLL_CTRL1_CMU_DIVN2_SELB, ctrl1);
-		cmu_divn3_sel = rtcl_divn3[FIELD_GET(RTL839X_PLL_CTRL1_CMU_DIVN3_SEL, ctrl1)];
+	case RTCL_SOC_CLK(SOC_RTL839X, CLK_CPU):
+		div3 = 2;
+		fallthrough;
+	case RTCL_SOC_CLK(SOC_RTL839X, CLK_LXB):
+		div3 = 2;
+		fallthrough;
+	case RTCL_SOC_CLK(SOC_RTL839X, CLK_MEM):
+		cmu_divn2 = RTL839X_PLL_CMU_CTRL0_DIVN2_DIV(FIELD_GET(RTL839X_PLL_CMU_CTRL0_DIVN2, ctrl0));
+		cmu_divn2_selb = FIELD_GET(RTL839X_PLL_CMU_CTRL1_DIVN2_SELB, ctrl1);
+		cmu_divn3_sel = RTL839X_PLL_CMU_CTRL1_DIVN3_SEL_DIV(FIELD_GET(RTL839X_PLL_CMU_CTRL1_DIVN3_SEL, ctrl1));
+
+		mul1 = RTL839X_PLL_CMU_CTRL0_NCODE_IN_CODE(FIELD_GET(RTL839X_PLL_CMU_CTRL0_NCODE_IN, ctrl0));
+		mul2 = RTL839X_PLL_CMU_CTRL0_SEL_DIV4_DIV(FIELD_GET(RTL839X_PLL_CMU_CTRL0_SEL_DIV4, ctrl0));
+		div1 = RTL839X_PLL_CMU_CTRL0_SEL_PREDIV_DIV((FIELD_GET(RTL839X_PLL_CMU_CTRL0_SEL_PREDIV, ctrl0)));
+		div2 = cmu_divn2_selb ? cmu_divn3_sel : cmu_divn2;
+		div3 = 4;
 		break;
 	}
-	div1 = cmu_divn2_selb ? cmu_divn3_sel : cmu_divn2;
-	div2 = rtcl_xdiv[clk->idx];
 
-	return (((parent_rate / 16) * cmu_ncode_in) / (div1 * div2)) *
-		cmu_sel_prediv * cmu_sel_div4 * 16;
+	/* Ensure all intermittent values always fit in 32 bits by shifting 4 */
+	return ((((parent_rate >> 4) * mul1) / (div1 * div2 * div3)) * mul2) << 4;
 }
 
 static int rtcl_838x_set_rate(int clk_idx, const struct rtcl_reg_set *reg)
