@@ -114,20 +114,24 @@
 static const int rtcl_regs[SOC_COUNT][REG_COUNT][CLK_COUNT] = {
 	{
 		{
+			RTL838X_PLL_SW_CTRL0_REG,
                         RTL838X_PLL_CPU_CTRL0_REG,
                         RTL838X_PLL_MEM_CTRL0_REG,
                         RTL838X_PLL_LXB_CTRL0_REG,
                 }, {
+			RTL838X_PLL_SW_CTRL1_REG,
                         RTL838X_PLL_CPU_CTRL1_REG,
                         RTL838X_PLL_MEM_CTRL1_REG,
                         RTL838X_PLL_LXB_CTRL1_REG,
                 },
         }, {
 		{
+			RTL839X_PLL_SW_CTRL_REG,
                         RTL839X_PLL_CPU_CTRL0_REG,
                         RTL839X_PLL_MEM_CTRL0_REG,
                         RTL839X_PLL_LXB_CTRL0_REG,
                 }, {
+			RTL839X_PLL_SW_CTRL_REG,
                         RTL839X_PLL_CPU_CTRL1_REG,
                         RTL839X_PLL_MEM_CTRL1_REG,
                         RTL839X_PLL_LXB_CTRL1_REG,
@@ -252,12 +256,20 @@ struct rtcl_rtab_set {
 		.rset = _rset,			\
 	}
 
+#define RTCL_RTAB_SET_NONE                                                    \
+	{                                                                     \
+		.count = 0,                                                   \
+		.rset = NULL,                                                 \
+	}
+
 static const struct rtcl_rtab_set rtcl_rtab_set[SOC_COUNT][CLK_COUNT] = {
 	{
+		RTCL_RTAB_SET_NONE,
 		RTCL_RTAB_SET(rtcl_838x_cpu_reg_set),
 		RTCL_RTAB_SET(rtcl_838x_mem_reg_set),
 		RTCL_RTAB_SET(rtcl_838x_lxb_reg_set)
 	}, {
+		RTCL_RTAB_SET_NONE,
 		RTCL_RTAB_SET(rtcl_839x_cpu_reg_set),
 		RTCL_RTAB_SET(rtcl_839x_mem_reg_set),
 		RTCL_RTAB_SET(rtcl_839x_lxb_reg_set)
@@ -271,6 +283,9 @@ static const struct rtcl_rtab_set rtcl_rtab_set[SOC_COUNT][CLK_COUNT] = {
 		.step = _step,			\
 	}
 
+#define RTCL_ROUND_SET_NONE \
+        RTCL_ROUND_SET(0, 0, 1)
+
 struct rtcl_round_set {
 	unsigned long min;
 	unsigned long max;
@@ -279,10 +294,12 @@ struct rtcl_round_set {
 
 static const struct rtcl_round_set rtcl_round_set[SOC_COUNT][CLK_COUNT] = {
 	{
+		RTCL_ROUND_SET_NONE,
 		RTCL_ROUND_SET(300000000, 625000000, 25000000),
 		RTCL_ROUND_SET(200000000, 375000000, 25000000),
 		RTCL_ROUND_SET(100000000, 200000000, 25000000)
 	}, {
+		RTCL_ROUND_SET_NONE,
 		RTCL_ROUND_SET(400000000, 850000000, 25000000),
 		RTCL_ROUND_SET(100000000, 400000000, 25000000),
 		RTCL_ROUND_SET(50000000, 200000000, 50000000)
@@ -318,6 +335,7 @@ struct rtcl_clk {
 };
 
 static const struct rtcl_clk_info rtcl_clk_info[CLK_COUNT] = {
+	RTCL_CLK_INFO(CLK_SW, "swcore_clk", "ref_clk", "ref_clk", "SW"),
 	RTCL_CLK_INFO(CLK_CPU, "cpu_clk", "ref_clk", "ref_clk", "CPU"),
 	RTCL_CLK_INFO(CLK_MEM, "mem_clk", "ref_clk", "ref_clk", "MEM"),
 	RTCL_CLK_INFO(CLK_LXB, "lxb_clk", "ref_clk", "ref_clk", "LXB")
@@ -393,6 +411,12 @@ static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_ra
 		div2 = cmu_divn2_selb ? cmu_divn3_sel : cmu_divn2;
 		div3 = 4;
 		break;
+	case RTCL_SOC_CLK(SOC_RTL838X, CLK_SW):
+		mul1 = RTL838X_PLL_CMU_CTRL0_NCODE_IN_CODE(FIELD_GET(RTL838X_PLL_CMU_CTRL0_NCODE_IN, ctrl0));
+		mul2 = RTL838X_PLL_CMU_CTRL0_SEL_DIV4_DIV(FIELD_GET(RTL838X_PLL_CMU_CTRL0_SEL_DIV4, ctrl0));
+		div1 = RTL838X_PLL_CMU_CTRL0_SEL_PREDIV_DIV((FIELD_GET(RTL838X_PLL_CMU_CTRL0_SEL_PREDIV, ctrl0)));
+		div3 = 1;
+		break;
 	case RTCL_SOC_CLK(SOC_RTL839X, CLK_CPU):
 		div3 = 2;
 		fallthrough;
@@ -406,9 +430,15 @@ static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_ra
 
 		mul1 = RTL839X_PLL_CMU_CTRL0_NCODE_IN_CODE(FIELD_GET(RTL839X_PLL_CMU_CTRL0_NCODE_IN, ctrl0));
 		mul2 = RTL839X_PLL_CMU_CTRL0_SEL_DIV4_DIV(FIELD_GET(RTL839X_PLL_CMU_CTRL0_SEL_DIV4, ctrl0));
-		div1 = RTL839X_PLL_CMU_CTRL0_SEL_PREDIV_DIV((FIELD_GET(RTL839X_PLL_CMU_CTRL0_SEL_PREDIV, ctrl0)));
+		div1 = RTL839X_PLL_CMU_CTRL0_SEL_PREDIV_DIV(FIELD_GET(RTL839X_PLL_CMU_CTRL0_SEL_PREDIV, ctrl0));
 		div2 = cmu_divn2_selb ? cmu_divn3_sel : cmu_divn2;
 		div3 = 4;
+		break;
+	case RTCL_SOC_CLK(SOC_RTL839X, CLK_SW):
+		mul1 = RTL839X_PLL_CMU_CTRL0_NCODE_IN_CODE(FIELD_GET(RTL839X_PLL_CMU_CTRL0_NCODE_IN, ctrl0));
+		mul2 = RTL839X_PLL_CMU_CTRL0_SEL_DIV4_DIV(FIELD_GET(RTL839X_PLL_CMU_CTRL0_SEL_DIV4, ctrl0));
+		div1 = RTL839X_PLL_CMU_CTRL0_SEL_PREDIV_DIV(FIELD_GET(RTL839X_PLL_CMU_CTRL0_SEL_PREDIV, ctrl0));
+		div3 = 1;
 		break;
 	}
 
