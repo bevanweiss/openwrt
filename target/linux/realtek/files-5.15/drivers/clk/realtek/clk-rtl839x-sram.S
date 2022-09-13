@@ -36,8 +36,6 @@ rtcl_839x_dram_start:
 .ent	rtcl_839x_dram_set_rate
 rtcl_839x_dram_set_rate:
 
-#ifdef CONFIG_RTL839X
-
 	/* disable MIPS 34K branch and return prediction */
         mfc0    rCP0, CP0_CONFIG, 7
         ori     rTMP, rCP0, 0xc
@@ -126,13 +124,6 @@ wait_pllclock:
 	mtc0    rCP0, CP0_CONFIG, 7
 	jr	$ra
 	nop                                        /* Note branch delay slot */
-
-#else /* !CONFIG_RTL839X */
-
-	jr	$ra
-	nop                                        /* Note branch delay slot */
-
-#endif
 
 .end	rtcl_839x_dram_set_rate
 

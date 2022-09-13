@@ -32,8 +32,6 @@ rtcl_838x_dram_start:
 .ent	rtcl_838x_dram_set_rate
 rtcl_838x_dram_set_rate:
 
-#ifdef CONFIG_RTL838X
-
 	li	rCTR, RTL838X_SWITCHCORE_BASE_ADDR
 	addiu	rGLB, rCTR, RTL838X_PLL_GLB_CTRL_REG
 	ori	rTMP, $0, CLK_CPU
@@ -132,13 +130,6 @@ wait_cpu:
 	sync
 	jr	$ra
 	nop                                        /* Note branch delay slot */
-
-#else /* !CONFIG_RTL838X */
-
-	jr	$ra
-	nop                                        /* Note branch delay slot */
-
-#endif
 
 .end	rtcl_838x_dram_set_rate
 

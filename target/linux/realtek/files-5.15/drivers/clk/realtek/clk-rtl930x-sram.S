@@ -36,8 +36,6 @@ rtcl_930x_dram_start:
 .ent	rtcl_930x_dram_set_rate
 rtcl_930x_dram_set_rate:
 
-#ifdef CONFIG_RTL930X
-
 	/* disable MIPS 34K branch and return prediction */
 	mfc0	rCP0, CP0_CONFIG, 7
 	ori	rTMP1, rTMP1, 0xc
@@ -124,13 +122,6 @@ wait_clock:
 	mtc0	rCP0, CP0_CONFIG, 7
 	jr	$ra
 	nop                                        /* Note branch delay slot */
-
-#else /* !CONFIG_RTL930X */
-
-	jr	$ra
-	nop                                        /* Note branch delay slot */
-
-#endif
 
 .end	rtcl_930x_dram_set_rate
 
