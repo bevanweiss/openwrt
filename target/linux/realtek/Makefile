@@ -4,15 +4,16 @@ include $(TOPDIR)/rules.mk
 
 ARCH:=mips
 BOARD:=realtek
-BOARDNAME:=Realtek MIPS
-DEVICE_TYPE:=basic
+BOARDNAME:=Realtek SoC based boards
+DEVICE_TYPE:=switch
+SUBTARGETS:=otto-4kec otto-24kc rtl931x
+
 FEATURES:=ramdisk squashfs
-SUBTARGETS:=rtl838x rtl839x rtl930x rtl931x
 
 KERNEL_PATCHVER:=5.15
 
 define Target/Description
-	Build firmware images for Realtek RTL83xx based boards.
+       Build firmware images for Realtek RTL83xx/RTL93xx based boards.
 endef
 
 include $(INCLUDE_DIR)/target.mk

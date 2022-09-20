@@ -95,6 +95,19 @@ define Device/Default
 	append-metadata
 endef
 
-include $(SUBTARGET).mk
+include common.mk
+
+ifeq ($(SUBTARGET),otto-4kec)
+  include rtl838x.mk
+endif
+
+ifeq ($(SUBTARGET),otto-24kc)
+  include rtl839x.mk
+  include rtl930x.mk
+endif
+
+ifeq ($(SUBTARGET),rtl931x)
+  include rtl931x.mk
+endif
 
 $(eval $(call BuildImage))
