@@ -79,6 +79,7 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
 +	select SYS_SUPPORTS_BIG_ENDIAN
 +	select SYS_SUPPORTS_HIGHMEM
 +	select SYS_SUPPORTS_MIPS16
++	select SYS_SUPPORTS_VPE_LOADER
 +	select USE_GENERIC_EARLY_PRINTK_8250
 +	help
 +	  Support for Realtek based SoCs such as RTL838x, RTL839x,

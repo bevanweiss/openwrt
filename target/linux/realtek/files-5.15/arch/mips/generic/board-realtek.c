@@ -247,7 +247,7 @@ static void __init realtek_register_smp_ops(void)
 #ifdef CONFIG_MIPS_MT_SMP
 	if (cpu_has_mipsmt) {
 		extern const struct plat_smp_ops vsmp_smp_ops;
-		struct plat_smp_ops rtl_smp_ops;
+		static struct plat_smp_ops rtl_smp_ops;
 
 		rtl_smp_ops = vsmp_smp_ops;
 		rtl_smp_ops.init_secondary = rtl_init_secondary;

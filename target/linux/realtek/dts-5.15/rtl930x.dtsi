@@ -31,6 +31,13 @@
 			clocks = <&ccu CLK_CPU>;
 			operating-points-v2 = <&cpu_opp_table>;
 		};
+
+		cpu@1 {
+			compatible = "mips,mips34Kc";
+			reg = <1>;
+			clocks = <&ccu CLK_CPU>;
+			operating-points-v2 = <&cpu_opp_table>;
+		};
 	};
 
 	cpu_opp_table: opp-table-0 {
