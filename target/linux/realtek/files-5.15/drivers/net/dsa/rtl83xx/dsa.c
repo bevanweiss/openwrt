@@ -747,8 +747,13 @@ static void rtl930x_phylink_mac_config(struct dsa_switch *ds, int port,
 	sds_num = priv->ports[port].sds_num;
 	pr_info("%s SDS is %d\n", __func__, sds_num);
 	if ((state->interface == PHY_INTERFACE_MODE_1000BASEX) ||
-	    (state->interface == PHY_INTERFACE_MODE_10GBASER))
-		rtl9300_configure_serdes(port, sds_num, state->interface);
+	    (state->interface == PHY_INTERFACE_MODE_10GBASER)) {
+		struct dsa_port *dp = dsa_to_port(ds, port);
+		rtl9300_configure_serdes(port,
+		                         phylink_sfp_port(dp->pl),
+		                         phylink_sfp_link_len_cm(dp->pl),
+		                         sds_num, state->interface);
+	}
 
 	reg = sw_r32(priv->r->mac_force_mode_ctrl(port));
 	reg &= ~(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL);
@@ -886,8 +891,13 @@ static void rtl931x_phylink_mac_config(struct dsa_switch *ds, int port,
 	pr_info("%s SDS is %d\n", __func__, sds_num);
 
 	if ((state->interface == PHY_INTERFACE_MODE_1000BASEX) ||
-	    (state->interface == PHY_INTERFACE_MODE_10GBASER))
-		rtl9300_configure_serdes(port, sds_num, state->interface);
+	    (state->interface == PHY_INTERFACE_MODE_10GBASER)) {
+		struct dsa_port *dp = dsa_to_port(ds, port);
+		rtl9300_configure_serdes(port,
+		                         phylink_sfp_port(dp->pl),
+		                         phylink_sfp_link_len_cm(dp->pl),
+		                         sds_num, state->interface);
+	}
 
 	reg = sw_r32(priv->r->mac_force_mode_ctrl(port));
 	reg &= ~(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL);
