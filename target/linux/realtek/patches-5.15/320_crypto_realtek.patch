@@ -1,0 +1,49 @@
+From fce11f68491b46b93df69de0630cd9edb90bc772 Mon Sep 17 00:00:00 2001
+From: Markus Stockhausen <markus.stockhausen@gmx.de>
+Date: Thu, 13 Oct 2022 20:40:25 +0200
+Subject: [PATCH 5/6] crypto/realtek: enable module
+
+Add new Realtek crypto device to the kernel configuration.
+
+Signed-off-by: Markus Stockhausen <markus.stockhausen@gmx.de>
+---
+ drivers/crypto/Kconfig          | 13 +++++++++++++
+ drivers/crypto/Makefile         |  1 +
+ 2 files changed, 14 insertions(+)
+
+diff --git a/drivers/crypto/Kconfig b/drivers/crypto/Kconfig
+index 55e75fbb658e..990a74f7ad97 100644
+--- a/drivers/crypto/Kconfig
++++ b/drivers/crypto/Kconfig
+@@ -769,6 +769,19 @@ config CRYPTO_DEV_IMGTEC_HASH
+ 	  hardware hash accelerator. Supporting MD5/SHA1/SHA224/SHA256
+ 	  hashing algorithms.
+ 
++config CRYPTO_DEV_REALTEK
++	tristate "Realtek's Cryptographic Engine driver"
++	depends on OF && MIPS && CPU_BIG_ENDIAN
++	select CRYPTO_MD5
++	select CRYPTO_SHA1
++	select CRYPTO_AES
++	help
++	  This driver adds support for the Realtek crypto engine. It provides
++	  hardware accelerated AES, SHA1 & MD5 algorithms. It is included in
++	  SoCs of the RTL838x series, such as RTL8380, RTL8381, RTL8382, as
++	  well as SoCs from the RTL930x series, such as RTL9301, RTL9302 and
++	  RTL9303.
++
+ config CRYPTO_DEV_ROCKCHIP
+ 	tristate "Rockchip's Cryptographic Engine driver"
+ 	depends on OF && ARCH_ROCKCHIP
+diff --git a/drivers/crypto/Makefile b/drivers/crypto/Makefile
+index 116de173a66c..df4b4b7d7302 100644
+--- a/drivers/crypto/Makefile
++++ b/drivers/crypto/Makefile
+@@ -34,6 +34,7 @@ obj-$(CONFIG_CRYPTO_DEV_PPC4XX) += amcc/
+ obj-$(CONFIG_CRYPTO_DEV_QAT) += qat/
+ obj-$(CONFIG_CRYPTO_DEV_QCE) += qce/
+ obj-$(CONFIG_CRYPTO_DEV_QCOM_RNG) += qcom-rng.o
++obj-$(CONFIG_CRYPTO_DEV_REALTEK) += realtek/
+ obj-$(CONFIG_CRYPTO_DEV_ROCKCHIP) += rockchip/
+ obj-$(CONFIG_CRYPTO_DEV_S5P) += s5p-sss.o
+ obj-$(CONFIG_CRYPTO_DEV_SA2UL) += sa2ul.o
