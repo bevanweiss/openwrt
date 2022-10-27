@@ -886,7 +886,6 @@ static int rtl930x_smi_wait_op(const int timeout)
 
 int rtl930x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 {
-	u32 v;
 	int err = 0;
 
 	pr_debug("%s: port %d, page: %d, reg: %x, val: %x\n", __func__, port, page, reg, val);
@@ -894,20 +893,27 @@ int rtl930x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 	if (port > 63 || page > 4095 || reg > 31)
 		return -ENOTSUPP;
 
-	val &= 0xffff;
 	mutex_lock(&smi_lock);
 
-	sw_w32(BIT(port), RTL930X_SMI_ACCESS_PHY_CTRL_0);
-	sw_w32_mask(0xffff << 16, val << 16, RTL930X_SMI_ACCESS_PHY_CTRL_2);
-	v = reg << 20 | page << 3 | 0x1f << 15 | BIT(2) | BIT(0);
-	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32(RTL930X_SMI_PHY_PORT_CTRL_PHY(port), RTL930X_SMI_PHY_PORT_CTRL_REG(port));
+
+	sw_w32_mask(RTL930X_SMI_PHY_DATA_CTRL_INDATA,
+	            FIELD_PREP(RTL930X_SMI_PHY_DATA_CTRL_INDATA, val),
+	            RTL930X_SMI_PHY_DATA_CTRL_REG);
+
+	sw_w32(FIELD_PREP(RTL930X_SMI_ACCESS_PHY_CTRL_REG_ADDR, reg) |
+	       FIELD_PREP(RTL930X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE, page) |
+	       FIELD_PREP(RTL930X_SMI_ACCESS_PHY_CTRL_PARK_PAGE, RTL930X_SMI_ACCESS_PHY_CTRL_PARK_PAGE_NO_PARK) |
+	       RTL930X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       RTL930X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL930X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl930x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
-	v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
-	if (v & BIT(25))
+	if ((sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_REG) & RTL930X_SMI_ACCESS_PHY_CTRL_FAIL) ==
+	    RTL930X_SMI_ACCESS_PHY_CTRL_FAIL)
 		err = -EIO;
 
 errout:
@@ -918,7 +924,6 @@ errout:
 
 int rtl930x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 {
-	u32 v;
 	int err = 0;
 
 	if (port > 63 || page > 4095 || reg > 31)
@@ -926,21 +931,26 @@ int rtl930x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 
 	mutex_lock(&smi_lock);
 
-	sw_w32_mask(0xffff << 16, port << 16, RTL930X_SMI_ACCESS_PHY_CTRL_2);
-	v = reg << 20 | page << 3 | 0x1f << 15 | 1;
-	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32(FIELD_PREP(RTL930X_SMI_PHY_DATA_CTRL_PORT_ID, port),
+	       RTL930X_SMI_PHY_DATA_CTRL_REG);
 
+	sw_w32(FIELD_PREP(RTL930X_SMI_ACCESS_PHY_CTRL_REG_ADDR, reg) |
+	       FIELD_PREP(RTL930X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE, page) |
+	       FIELD_PREP(RTL930X_SMI_ACCESS_PHY_CTRL_PARK_PAGE, RTL930X_SMI_ACCESS_PHY_CTRL_PARK_PAGE_NO_PARK) |
+	       RTL930X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL930X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl930x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
-	v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
-	if (v & BIT(25)) {
+	if ((sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_REG) & RTL930X_SMI_ACCESS_PHY_CTRL_FAIL) ==
+	    RTL930X_SMI_ACCESS_PHY_CTRL_FAIL) {
 		pr_debug("Error reading phy %d, register %d\n", port, reg);
 		err = -EIO;
 	}
-	*val = (sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_2) & 0xffff);
+
+	*val = FIELD_GET(RTL930X_SMI_PHY_DATA_CTRL_DATA, sw_r32(RTL930X_SMI_PHY_DATA_CTRL_REG));
 
 	pr_debug("%s: port %d, page: %d, reg: %x, val: %x\n", __func__, port, page, reg, *val);
 
@@ -954,21 +964,23 @@ errout:
 int rtl930x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 {
 	int err = 0;
-	u32 v;
 
 	mutex_lock(&smi_lock);
 
-	/* Set PHY to access */
-	sw_w32(BIT(port), RTL930X_SMI_ACCESS_PHY_CTRL_0);
+	sw_w32(RTL930X_SMI_PHY_PORT_CTRL_PHY(port), RTL930X_SMI_PHY_PORT_CTRL_REG(port));
 
-	/* Set data to write */
-	sw_w32_mask(0xffff << 16, val << 16, RTL930X_SMI_ACCESS_PHY_CTRL_2);
+	sw_w32_mask(RTL930X_SMI_PHY_DATA_CTRL_INDATA,
+	            FIELD_PREP(RTL930X_SMI_PHY_DATA_CTRL_INDATA, val),
+	            RTL930X_SMI_PHY_DATA_CTRL_REG);
 
-	/* Set MMD device number and register to write to */
-	sw_w32(devnum << 16 | (regnum & 0xffff), RTL930X_SMI_ACCESS_PHY_CTRL_3);
+	sw_w32(FIELD_PREP(RTL930X_SMI_PHY_MMD_CTRL_DEVAD, devnum) |
+	       FIELD_PREP(RTL930X_SMI_PHY_MMD_CTRL_REGAD, regnum),
+	       RTL930X_SMI_PHY_MMD_CTRL_REG);
 
-	v = BIT(2) | BIT(1) | BIT(0); /* WRITE | MMD-access | EXEC */
-	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32(RTL930X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       RTL930X_SMI_ACCESS_PHY_CTRL_TYPE |
+	       RTL930X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL930X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl930x_smi_wait_op(100000);
 	if (err)
@@ -985,25 +997,28 @@ errout:
 int rtl930x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 {
 	int err = 0;
-	u32 v;
 
 	mutex_lock(&smi_lock);
 
-	/* Set PHY to access */
-	sw_w32_mask(0xffff << 16, port << 16, RTL930X_SMI_ACCESS_PHY_CTRL_2);
+	sw_w32(FIELD_PREP(RTL930X_SMI_PHY_DATA_CTRL_PORT_ID, port),
+	       RTL930X_SMI_PHY_DATA_CTRL_REG);
 
-	/* Set MMD device number and register to write to */
-	sw_w32(devnum << 16 | (regnum & 0xffff), RTL930X_SMI_ACCESS_PHY_CTRL_3);
+	sw_w32(FIELD_PREP(RTL930X_SMI_PHY_MMD_CTRL_DEVAD, devnum) |
+	       FIELD_PREP(RTL930X_SMI_PHY_MMD_CTRL_REGAD, regnum),
+	       RTL930X_SMI_PHY_MMD_CTRL_REG);
 
-	v = BIT(1) | BIT(0); /* MMD-access | EXEC */
-	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32(RTL930X_SMI_ACCESS_PHY_CTRL_TYPE |
+	       RTL930X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL930X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl930x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
 	/* There is no error-checking via BIT 25 of v, as it does not seem to be set correctly */
-	*val = (sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_2) & 0xffff);
+
+	*val = FIELD_GET(RTL930X_SMI_PHY_DATA_CTRL_DATA, sw_r32(RTL930X_SMI_PHY_DATA_CTRL_REG));
+
 	pr_debug("%s: port %d, regnum: %x, val: %x (err %d)\n", __func__, port, regnum, *val, err);
 
 errout:

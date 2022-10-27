@@ -489,35 +489,39 @@ static int rtl931x_smi_wait_op(const int timeout)
 
 int rtl931x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 {
-	u32 v;
 	int err = 0;
 
-	val &= 0xffff;
 	if (port > 63 || page > 4095 || reg > 31)
 		return -ENOTSUPP;
 
 	mutex_lock(&smi_lock);
 	pr_debug("%s: writing to phy %d %d %d %d\n", __func__, port, page, reg, val);
+
 	/* Clear both port registers */
-	sw_w32(0, RTL931X_SMI_INDRT_ACCESS_CTRL_2);
-	sw_w32(0, RTL931X_SMI_INDRT_ACCESS_CTRL_2 + 4);
-	sw_w32_mask(0, BIT(port % 32), RTL931X_SMI_INDRT_ACCESS_CTRL_2 + (port / 32) * 4);
+	sw_w32(0, RTL931X_SMI_PHY_PORT_CTRL_REG(0));
+	sw_w32(0, RTL931X_SMI_PHY_PORT_CTRL_REG(32));
+	sw_w32_mask(0, RTL931X_SMI_PHY_PORT_CTRL_PHY(port), RTL931X_SMI_PHY_PORT_CTRL_REG(port));
 
-	sw_w32_mask(0xffff, val, RTL931X_SMI_INDRT_ACCESS_CTRL_3);
+	sw_w32_mask(RTL931X_SMI_PHY_DATA_CTRL_INDATA,
+	            FIELD_PREP(RTL931X_SMI_PHY_DATA_CTRL_INDATA, val),
+	            RTL931X_SMI_PHY_DATA_CTRL_REG);
 
-	v = reg << 6 | page << 11 ;
-	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
+	sw_w32(FIELD_PREP(RTL931X_SMI_ACCESS_PHY_CTRL_REG_ADDR, reg) |
+	       FIELD_PREP(RTL931X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE, page),
+	       RTL931X_SMI_ACCESS_PHY_CTRL_REG);
 
-	sw_w32(0x1ff, RTL931X_SMI_INDRT_ACCESS_CTRL_1);
+	sw_w32(RTL931X_SMI_PHY_CTRL_EXT_PAGE, RTL931X_SMI_PHY_CTRL_REG);
 
-	v |= BIT(4) | 1; /* Write operation and execute */
-	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
+	sw_w32(RTL931X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       RTL931X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL931X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl931x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
-	if (sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0) & 0x2)
+	if ((sw_r32(RTL931X_SMI_ACCESS_PHY_CTRL_REG) & RTL931X_SMI_ACCESS_PHY_CTRL_FAIL) ==
+	    RTL931X_SMI_ACCESS_PHY_CTRL_FAIL)
 		err = -EIO;
 
 errout:
@@ -528,27 +532,25 @@ errout:
 
 int rtl931x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 {
-	u32 v;
-
 	if (port > 63 || page > 4095 || reg > 31)
 		return -ENOTSUPP;
 
 	mutex_lock(&smi_lock);
 
-	sw_w32(port << 5, RTL931X_SMI_INDRT_ACCESS_BC_PHYID_CTRL);
+	sw_w32(FIELD_PREP(RTL931X_SMI_PHY_BC_PHYID_CTRL_PORT_ID, port), RTL931X_SMI_PHY_BC_PHYID_CTRL_REG);
 
-	v = reg << 6 | page << 11 | 1;
-	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
+	sw_w32(FIELD_PREP(RTL931X_SMI_ACCESS_PHY_CTRL_REG_ADDR, reg) |
+	       FIELD_PREP(RTL931X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE, page) |
+	       RTL931X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL931X_SMI_ACCESS_PHY_CTRL_REG);
 
 	if (rtl931x_smi_wait_op(100000))
 		goto errout;
 
-	v = sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0);
-	*val = sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_3);
-	*val = (*val & 0xffff0000) >> 16;
+	*val = FIELD_GET(RTL931X_SMI_PHY_DATA_CTRL_INDATA, sw_r32(RTL931X_SMI_PHY_DATA_CTRL_REG));
 
 	pr_debug("%s: port %d, page: %d, reg: %x, val: %x, v: %08x\n",
-		__func__, port, page, reg, *val, v);
+		 __func__, port, page, reg, *val, sw_r32(RTL931X_SMI_ACCESS_PHY_CTRL_REG));
 
 errout:
 	mutex_unlock(&smi_lock);
@@ -560,35 +562,32 @@ errout:
 int rtl931x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 {
 	int err = 0;
-	u32 v;
-	/* Select PHY register type
-	 * If select 1G/10G MMD register type, registers EXT_PAGE, MAIN_PAGE and REG settings are don’t care.
-	 * 0x0  Normal register (Clause 22)
-	 * 0x1: 1G MMD register (MMD via Clause 22 registers 13 and 14)
-	 * 0x2: 10G MMD register (MMD via Clause 45)
-	 */
-	int type = (regnum & MII_ADDR_C45)?2:1;
+	int type;
 
 	mutex_lock(&smi_lock);
 
-	/* Set PHY to access via port-number */
-	sw_w32(port << 5, RTL931X_SMI_INDRT_ACCESS_BC_PHYID_CTRL);
+	sw_w32(FIELD_PREP(RTL931X_SMI_PHY_BC_PHYID_CTRL_PORT_ID, port), RTL931X_SMI_PHY_BC_PHYID_CTRL_REG);
 
-	/* Set MMD device number and register to write to */
-	sw_w32(devnum << 16 | mdiobus_c45_regad(regnum), RTL931X_SMI_INDRT_ACCESS_MMD_CTRL);
+	sw_w32(FIELD_PREP(RTL931X_SMI_PHY_MMD_CTRL_DEVAD, devnum) |
+	       FIELD_PREP(RTL931X_SMI_PHY_MMD_CTRL_REGAD, regnum),
+	       RTL931X_SMI_PHY_MMD_CTRL_REG);
 
-	v = type << 2 | BIT(0); /* MMD-access-type | EXEC */
-	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
+	type = (regnum & MII_ADDR_C45) ?
+	       RTL931X_SMI_ACCESS_PHY_CTRL_TYPE_C45_10G :
+	       RTL931X_SMI_ACCESS_PHY_CTRL_TYPE_C45_1G;
+	sw_w32(FIELD_PREP(RTL931X_SMI_ACCESS_PHY_CTRL_TYPE, type) |
+	       RTL931X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL931X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl931x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
-	/* Check for error condition */
-	if (v & BIT(1))
+	if ((sw_r32(RTL931X_SMI_ACCESS_PHY_CTRL_REG) & RTL931X_SMI_ACCESS_PHY_CTRL_FAIL) ==
+	    RTL931X_SMI_ACCESS_PHY_CTRL_FAIL)
 		err = -EIO;
 
-	*val = sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_3) >> 16;
+	*val = FIELD_GET(RTL931X_SMI_PHY_DATA_CTRL_DATA, sw_r32(RTL931X_SMI_PHY_DATA_CTRL_REG));
 
 	pr_debug("%s: port %d, dev: %x, regnum: %x, val: %x (err %d)\n", __func__,
 		 port, devnum, mdiobus_c45_regad(regnum), *val, err);
@@ -603,25 +602,29 @@ errout:
 int rtl931x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 {
 	int err = 0;
-	u32 v;
-	int type = (regnum & MII_ADDR_C45)?2:1;
-	u64 pm;
+	int type;
 
 	mutex_lock(&smi_lock);
 
-	/* Set PHY to access via port-mask */
-	pm = (u64)1 << port;
-	sw_w32((u32)pm, RTL931X_SMI_INDRT_ACCESS_CTRL_2);
-	sw_w32((u32)(pm >> 32), RTL931X_SMI_INDRT_ACCESS_CTRL_2 + 4);
+	sw_w32(0, RTL931X_SMI_PHY_PORT_CTRL_REG(0));
+	sw_w32(0, RTL931X_SMI_PHY_PORT_CTRL_REG(32));
+	sw_w32_mask(0, RTL931X_SMI_PHY_PORT_CTRL_PHY(port), RTL931X_SMI_PHY_PORT_CTRL_REG(port));
 
-	/* Set data to write */
-	sw_w32_mask(0xffff, val, RTL931X_SMI_INDRT_ACCESS_CTRL_3);
+	sw_w32_mask(RTL931X_SMI_PHY_DATA_CTRL_INDATA,
+	            FIELD_PREP(RTL931X_SMI_PHY_DATA_CTRL_INDATA, val),
+	            RTL931X_SMI_PHY_DATA_CTRL_REG);
 
-	/* Set MMD device number and register to write to */
-	sw_w32(devnum << 16 | mdiobus_c45_regad(regnum), RTL931X_SMI_INDRT_ACCESS_MMD_CTRL);
+	sw_w32(FIELD_PREP(RTL931X_SMI_PHY_MMD_CTRL_DEVAD, devnum) |
+	       FIELD_PREP(RTL931X_SMI_PHY_MMD_CTRL_REGAD, regnum),
+	       RTL931X_SMI_PHY_MMD_CTRL_REG);
 
-	v = BIT(4) | type << 2 | BIT(0); /* WRITE | MMD-access-type | EXEC */
-	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
+	type = (regnum & MII_ADDR_C45) ?
+	       RTL931X_SMI_ACCESS_PHY_CTRL_TYPE_C45_10G :
+	       RTL931X_SMI_ACCESS_PHY_CTRL_TYPE_C45_1G;
+	sw_w32(RTL931X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       FIELD_PREP(RTL931X_SMI_ACCESS_PHY_CTRL_TYPE, type) |
+	       RTL931X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL931X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl931x_smi_wait_op(100000);
 	if (err)

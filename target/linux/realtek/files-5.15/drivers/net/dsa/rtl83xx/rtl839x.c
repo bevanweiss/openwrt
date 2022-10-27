@@ -742,8 +742,9 @@ static int rtl839x_smi_wait_op(int timeout)
 	int ret = 0;
 	u32 val;
 
-	ret = readx_poll_timeout(sw_r32, RTL839X_PHYREG_ACCESS_CTRL,
-				 val, !(val & 0x1), 20, timeout);
+	ret = readx_poll_timeout(sw_r32, RTL839X_SMI_ACCESS_PHY_CTRL_REG,
+				 val, !(val & RTL839X_SMI_ACCESS_PHY_CTRL_CMD),
+				 20, timeout);
 	if (ret)
 		pr_err("%s: timeout\n", __func__);
 
@@ -752,7 +753,6 @@ static int rtl839x_smi_wait_op(int timeout)
 
 int rtl839x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 {
-	u32 v;
 	int err = 0;
 
 	if (port > 63 || page > 4095 || reg > 31)
@@ -764,20 +764,30 @@ int rtl839x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 
 	mutex_lock(&smi_lock);
 
-	sw_w32_mask(0xffff0000, port << 16, RTL839X_PHYREG_DATA_CTRL);
-	v = reg << 5 | page << 10 | ((page == 0x1fff) ? 0x1f : 0) << 23;
-	sw_w32(v, RTL839X_PHYREG_ACCESS_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_PHY_DATA_CTRL_PORT_ID, port),
+	       RTL839X_SMI_PHY_DATA_CTRL_REG);
 
-	sw_w32(0x1ff, RTL839X_PHYREG_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_REG_ADDR, reg) |
+	       FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE, page) |
+	       (page == GENMASK(12, 0) ? FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_PARK_PAGE, RTL839X_SMI_ACCESS_PHY_CTRL_PARK_PAGE) : 0),
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
 
-	v |= 1;
-	sw_w32(v, RTL839X_PHYREG_ACCESS_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_REG_ADDR, GENMASK(3, 0)) |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_BROADCAST |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_TYPE |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_FAIL |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
+
+	sw_w32(RTL839X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl839x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
-	*val = sw_r32(RTL839X_PHYREG_DATA_CTRL) & 0xffff;
+	*val = FIELD_GET(RTL839X_SMI_PHY_DATA_CTRL_DATA, sw_r32(RTL839X_SMI_PHY_DATA_CTRL_REG));
 
 errout:
 	mutex_unlock(&smi_lock);
@@ -787,10 +797,8 @@ errout:
 
 int rtl839x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 {
-	u32 v;
 	int err = 0;
 
-	val &= 0xffff;
 	if (port > 63 || page > 4095 || reg > 31)
 		return -ENOTSUPP;
 
@@ -800,24 +808,34 @@ int rtl839x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 
 	mutex_lock(&smi_lock);
 
-	/* Set PHY to access */
-	rtl839x_set_port_reg_le(BIT_ULL(port), RTL839X_PHYREG_PORT_CTRL);
+	sw_w32(RTL839X_SMI_PHY_PORT_CTRL_PHY(port), RTL839X_SMI_PHY_PORT_CTRL_REG(port));
 
-	sw_w32_mask(0xffff0000, val << 16, RTL839X_PHYREG_DATA_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_PHY_DATA_CTRL_INDATA, val),
+	       RTL839X_SMI_PHY_DATA_CTRL_REG);
 
-	v = reg << 5 | page << 10 | ((page == 0x1fff) ? 0x1f : 0) << 23;
-	sw_w32(v, RTL839X_PHYREG_ACCESS_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_REG_ADDR, reg) |
+	       FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE, page) |
+	       (page == GENMASK(12, 0) ? FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_PARK_PAGE, RTL839X_SMI_ACCESS_PHY_CTRL_PARK_PAGE) : 0),
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
 
-	sw_w32(0x1ff, RTL839X_PHYREG_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_ACCESS_PHY_CTRL_REG_ADDR, GENMASK(3, 0)) |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_BROADCAST |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_TYPE |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_FAIL |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
 
-	v |= BIT(3) | 1; /* Write operation and execute */
-	sw_w32(v, RTL839X_PHYREG_ACCESS_CTRL);
+	sw_w32(RTL839X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl839x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
-	if (sw_r32(RTL839X_PHYREG_ACCESS_CTRL) & 0x2)
+	if ((sw_r32(RTL839X_SMI_ACCESS_PHY_CTRL_REG) & RTL839X_SMI_ACCESS_PHY_CTRL_FAIL) ==
+	    RTL839X_SMI_ACCESS_PHY_CTRL_FAIL)
 		err = -EIO;
 
 errout:
@@ -830,7 +848,6 @@ errout:
 int rtl839x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 {
 	int err = 0;
-	u32 v;
 
 	/* Take bug on RTL839x Rev <= C into account */
 	if (port >= RTL839X_PORT_END)
@@ -838,21 +855,23 @@ int rtl839x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 
 	mutex_lock(&smi_lock);
 
-	/* Set PHY to access */
-	sw_w32_mask(0xffff << 16, port << 16, RTL839X_PHYREG_DATA_CTRL);
+	sw_w32(RTL839X_SMI_PHY_PORT_CTRL_PHY(port), RTL839X_SMI_PHY_PORT_CTRL_REG(port));
 
-	/* Set MMD device number and register to write to */
-	sw_w32(devnum << 16 | (regnum & 0xffff), RTL839X_PHYREG_MMD_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_PHY_MMD_CTRL_DEVAD, devnum) |
+	       FIELD_PREP(RTL839X_SMI_PHY_MMD_CTRL_REGAD, regnum),
+	       RTL839X_SMI_PHY_MMD_CTRL_REG);
 
-	v = BIT(2) | BIT(0); /* MMD-access | EXEC */
-	sw_w32(v, RTL839X_PHYREG_ACCESS_CTRL);
+	sw_w32(RTL839X_SMI_ACCESS_PHY_CTRL_TYPE |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl839x_smi_wait_op(100000);
 	if (err)
 		goto errout;
 
 	/* There is no error-checking via BIT 1 of v, as it does not seem to be set correctly */
-	*val = (sw_r32(RTL839X_PHYREG_DATA_CTRL) & 0xffff);
+
+	*val = FIELD_GET(RTL839X_SMI_PHY_DATA_CTRL_DATA, sw_r32(RTL839X_SMI_PHY_DATA_CTRL_REG));
 	pr_debug("%s: port %d, regnum: %x, val: %x (err %d)\n", __func__, port, regnum, *val, err);
 
 errout:
@@ -865,7 +884,6 @@ errout:
 int rtl839x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 {
 	int err = 0;
-	u32 v;
 
 	/* Take bug on RTL839x Rev <= C into account */
 	if (port >= RTL839X_PORT_END)
@@ -873,17 +891,19 @@ int rtl839x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 
 	mutex_lock(&smi_lock);
 
-	/* Set PHY to access */
-	rtl839x_set_port_reg_le(BIT_ULL(port), RTL839X_PHYREG_PORT_CTRL);
+	sw_w32(RTL839X_SMI_PHY_PORT_CTRL_PHY(port), RTL839X_SMI_PHY_PORT_CTRL_REG(port));
 
-	/* Set data to write */
-	sw_w32_mask(0xffff << 16, val << 16, RTL839X_PHYREG_DATA_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_PHY_DATA_CTRL_INDATA, val),
+	       RTL839X_SMI_PHY_DATA_CTRL_REG);
 
-	/* Set MMD device number and register to write to */
-	sw_w32(devnum << 16 | (regnum & 0xffff), RTL839X_PHYREG_MMD_CTRL);
+	sw_w32(FIELD_PREP(RTL839X_SMI_PHY_MMD_CTRL_DEVAD, devnum) |
+	       FIELD_PREP(RTL839X_SMI_PHY_MMD_CTRL_REGAD, regnum),
+	       RTL839X_SMI_PHY_MMD_CTRL_REG);
 
-	v = BIT(3) | BIT(2) | BIT(0); /* WRITE | MMD-access | EXEC */
-	sw_w32(v, RTL839X_PHYREG_ACCESS_CTRL);
+	sw_w32(RTL839X_SMI_ACCESS_PHY_CTRL_RWOP |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_TYPE |
+	       RTL839X_SMI_ACCESS_PHY_CTRL_CMD,
+	       RTL839X_SMI_ACCESS_PHY_CTRL_REG);
 
 	err = rtl839x_smi_wait_op(100000);
 	if (err)
