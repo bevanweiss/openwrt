@@ -3,10 +3,65 @@
 #ifndef _RTL931X_H
 #define _RTL931X_H __FILE__
 
+#include <linux/bitops.h>
 #include <linux/types.h>
 #include <linux/phy.h>
 
 /* MAC port control */
+#define RTL931X_MAC_FORCE_MODE_CTRL_REG(p)              (0x0dcc + ((p) * 0x4))
+/* Reserved                                                     31 - 28 */
+#define RTL931X_MAC_FORCE_MODE_CTRL_SDS_ABLTY                   BIT(27)
+/* Reserved                                                     26 */
+#define RTL931X_MAC_FORCE_MODE_CTRL_FEFI_SEL                    BIT(25)
+#define RTL931X_MAC_FORCE_MODE_CTRL_MSTR_SLV                    BIT(24)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EEE_10G_EN                  BIT(23)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EEE_5G_EN                   BIT(22)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EEE_2G5_EN                  BIT(21)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN                BIT(20)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EEE_500M_EN                 BIT(19)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EEE_100M_EN                 BIT(18)
+#define RTL931X_MAC_FORCE_MODE_CTRL_RX_PAUSE_EN                 BIT(17)
+#define RTL931X_MAC_FORCE_MODE_CTRL_TX_PAUSE_EN                 BIT(16)
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL                     GENMASK(15, 12)
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_5G                          0x6
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_2G5                         0x5
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_10G                         0x4
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_500M                        0x3
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M                       0x2
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M                        0x1
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M                         0x0
+#define RTL931X_MAC_FORCE_MODE_CTRL_DUP_SEL                     BIT(11)
+#define RTL931X_MAC_FORCE_MODE_CTRL_MEDIA                       BIT(10)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EN                          BIT(9)
+/* Reserved                                                     8 */
+#define RTL931X_MAC_FORCE_MODE_CTRL_FEFI_EN                     BIT(7)
+#define RTL931X_MAC_FORCE_MODE_CTRL_MSTR_SLV_EN                 BIT(6)
+#define RTL931X_MAC_FORCE_MODE_CTRL_EEE_EN                      BIT(5)
+#define RTL931X_MAC_FORCE_MODE_CTRL_FC_EN                       BIT(4)
+#define RTL931X_MAC_FORCE_MODE_CTRL_SPD_EN                      BIT(3)
+#define RTL931X_MAC_FORCE_MODE_CTRL_DUP_EN                      BIT(2)
+#define RTL931X_MAC_FORCE_MODE_CTRL_MEDIA_EN                    BIT(1)
+#define RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN                     BIT(0)
+
+#define RTL931X_MAC_L2_PORT_CTRL_REG(p)                 (0x6000 + ((p) * 0x80))
+/* Reserved                                                     31 - 21 */
+#define RTL931X_MAC_L2_PORT_CTRL_PER_PORT_MAC_ECO               BIT(22)
+#define RTL931X_MAC_L2_PORT_CTRL_STK_1G_PKT_FMT                 BIT(21)
+#define RTL931X_MAC_L2_PORT_CTRL_TX_IPG                         GENMASK(20, 5)
+#define RTL931X_MAC_L2_PORT_CTRL_PADDING_UND_SIZE_EN            BIT(4)
+#define RTL931X_MAC_L2_PORT_CTRL_PASS_ALL_MODE_EN               BIT(3)
+#define RTL931X_MAC_L2_PORT_CTRL_BYP_TX_CRC                     BIT(2)
+#define RTL931X_MAC_L2_PORT_CTRL_TX_EN                          BIT(1)
+#define RTL931X_MAC_L2_PORT_CTRL_RX_EN                          BIT(0)
+#define RTL931X_MAC_L2_PORT_CTRL_TXRX_EN \
+        (RTL931X_MAC_L2_PORT_CTRL_TX_EN | RTL931X_MAC_L2_PORT_CTRL_RX_EN)
+
+#define RTL931X_MAC_PORT_CTRL_REG(p)                    (0x6004 + ((p) * 0x80))
+/* Reserved                                                     31 - 5 */
+#define RTL931X_MAC_PORT_CTRL_PRECOLLAT_SEL                     GENMASK(4, 3)
+#define RTL931X_MAC_PORT_CTRL_LATE_COLI_THR                     GENMASK(2 ,1)
+#define RTL931X_MAC_PORT_CTRL_BKPRES_EN                         BIT(0)
+
 #define RTL931X_MAC_FORCE_MODE_CTRL		(0x0dcc)
 #define RTL931X_MAC_L2_PORT_CTRL		(0x6000)
 #define RTL931X_MAC_PORT_CTRL			(0x6004)
@@ -40,6 +95,55 @@
 #define RTL931X_TBL_ACCESS_DATA_5(i)		(0x7e20 + (((i) << 2)))
 
 /* MAC handling */
+#define RTL931X_MAC_LINK_DUP_STS_REG(p)                 (0x0ef0 + (((p) / 32) * 0x4))
+#define _RTL931X_MAC_LINK_DUP_STS_MASK                          BIT(0)
+#define RTL931X_MAC_LINK_DUP_STS_FULL                                   0b1
+#define RTL931X_MAC_LINK_DUP_STS_HALF                                   0b0
+#define RTL931X_MAC_LINK_DUP_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL931X_MAC_LINK_DUP_STS_MASK)
+
+#define RTL931X_MAC_LINK_MEDIA_STS_REG(p)               (0x0ec8 + (((p) / 32) * 0x4))
+#define _RTL931X_MAC_LINK_MEDIA_STS_MASK                        BIT(0)
+#define RTL931X_MAC_LINK_MEDIA_STS_FIBER                                0b1
+#define RTL931X_MAC_LINK_MEDIA_STS_COPPER                               0b0
+#define RTL931X_MAC_LINK_MEDIA_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL931X_MAC_LINK_MEDIA_STS_MASK)
+
+#define RTL931X_MAC_LINK_SPD_STS_REG(p)                 (0x0ed0 + (((p) / 8) * 0x4))
+#define _RTL931X_MAC_LINK_SPD_STS_MASK                          GENMASK(3, 0)
+#define RTL931X_MAC_LINK_SPD_STS_2G5_ALT                                0x8
+#define RTL931X_MAC_LINK_SPD_STS_1000M_ALT                              0x7
+#define RTL931X_MAC_LINK_SPD_STS_5G                                     0x6
+#define RTL931X_MAC_LINK_SPD_STS_2G5                                    0x5
+#define RTL931X_MAC_LINK_SPD_STS_10G                                    0x4
+#define RTL931X_MAC_LINK_SPD_STS_500M                                   0x3
+#define RTL931X_MAC_LINK_SPD_STS_1000M                                  0x2
+#define RTL931X_MAC_LINK_SPD_STS_100M                                   0x1
+#define RTL931X_MAC_LINK_SPD_STS_10M                                    0x0
+#define RTL931X_MAC_LINK_SPD_STS(p, r) \
+        (((r) >> (((p) % 8) * 4)) & _RTL931X_MAC_LINK_SPD_STS_MASK)
+
+#define RTL931X_MAC_LINK_STS_REG(p)                     (0x0ec0 + (((p) / 32) * 0x4))
+#define RTL931X_MAC_LINK_STS_MASK                               BIT(0)
+#define RTL931X_MAC_LINK_STS_UP                                         0b1
+#define RTL931X_MAC_LINK_STS_DOWN                                       0b0
+#define RTL931X_MAC_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & RTL931X_MAC_LINK_STS_MASK)
+
+#define RTL931X_MAC_RX_PAUSE_STS_REG(p)                 (0x0f00 + (((p) / 32) * 0x4))
+#define _RTL931X_MAC_RX_PAUSE_STS_MASK                          BIT(0)
+#define RTL931X_MAC_RX_PAUSE_STS_ON                                     0b1
+#define RTL931X_MAC_RX_PAUSE_STS_OFF                                    0b0
+#define RTL931X_MAC_RX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL931X_MAC_RX_PAUSE_STS_MASK)
+
+#define RTL931X_MAC_TX_PAUSE_STS_REG(p)                 (0x0ef8 + (((p) / 32) * 0x4))
+#define _RTL931X_MAC_TX_PAUSE_STS_MASK                          BIT(0)
+#define RTL931X_MAC_TX_PAUSE_STS_ON                                     0b1
+#define RTL931X_MAC_TX_PAUSE_STS_OFF                                    0b0
+#define RTL931X_MAC_TX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL931X_MAC_TX_PAUSE_STS_MASK)
+
 #define RTL931X_MAC_LINK_DUP_STS_ADDR		(0x0ef0)
 #define RTL931X_MAC_LINK_MEDIA_STS_ADDR		(0x0ec8)
 #define RTL931X_MAC_LINK_SPD_STS_ADDR		(0x0ed0)

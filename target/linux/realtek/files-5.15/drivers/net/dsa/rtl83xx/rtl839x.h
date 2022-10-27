@@ -3,6 +3,7 @@
 #ifndef _RTL839X_H
 #define _RTL839X_H __FILE__
 
+#include <linux/bitops.h>
 #include <linux/types.h>
 #include <net/dsa.h>
 
@@ -11,6 +12,41 @@
 #define RTL8390_VERSION_A 'A'
 
 /* MAC port control */
+#define RTL839X_MAC_FORCE_MODE_CTRL_REG(p)              (0x02bc + ((p) * 0x4))
+/* Reserved                                                     31 - 16 */
+#define RTL839X_MAC_FORCE_MODE_CTRL_500M_SPD                    BIT(15)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EEEP_1000M_EN               BIT(14)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EEEP_500M_EN                BIT(13)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EEEP_100M_EN                BIT(12)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EEE_10G_EN                  BIT(11)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN                BIT(10)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EEE_500M_EN                 BIT(9)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EEE_100M_EN                 BIT(8)
+#define RTL839X_MAC_FORCE_MODE_CTRL_FC_EN                       BIT(7)
+#define RTL839X_MAC_FORCE_MODE_CTRL_RX_PAUSE_EN                 BIT(6)
+#define RTL839X_MAC_FORCE_MODE_CTRL_TX_PAUSE_EN                 BIT(5)
+#define RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL                     GENMASK(4, 3)
+#define RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M                       0b10
+#define RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M                        0b01
+#define RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M                         0b00
+#define RTL839X_MAC_FORCE_MODE_CTRL_DUP_SEL                     BIT(2)
+#define RTL839X_MAC_FORCE_MODE_CTRL_LINK_EN                     BIT(1)
+#define RTL839X_MAC_FORCE_MODE_CTRL_EN                          BIT(0)
+
+#define RTL839X_MAC_PORT_CTRL_REG(p)                    (0x8004 + ((p) * 0x80))
+/* Reserved                                                     31 - 29 */
+#define RTL839X_MAC_PORT_CTRL_IPG_MIN_RX_SEL                    BIT(28)
+#define RTL839X_MAC_PORT_CTRL_IPG_LEN                           GENMASK(27, 8)
+#define RTL839X_MAC_PORT_CTRL_BYP_TX_CRC                        BIT(7)
+#define RTL839X_MAC_PORT_CTRL_PASS_ALL_MODE_EN                  BIT(6)
+#define RTL839X_MAC_PORT_CTRL_LATE_COLI_THR                     GENMASK(5, 4)
+#define RTL839X_MAC_PORT_CTRL_RX_CHK_CRC_EN                     BIT(3)
+#define RTL839X_MAC_PORT_CTRL_BKPRES_EN                         BIT(2)
+#define RTL839X_MAC_PORT_CTRL_TX_EN                             BIT(1)
+#define RTL839X_MAC_PORT_CTRL_RX_EN                             BIT(0)
+#define RTL839X_MAC_PORT_CTRL_TXRX_EN \
+        (RTL839X_MAC_PORT_CTRL_TX_EN | RTL839X_MAC_PORT_CTRL_RX_EN)
+
 #define RTL839X_MAC_FORCE_MODE_CTRL		(0x02bc)
 #define RTL839X_MAC_PORT_CTRL(port)		(0x8004 + (((port) << 7)))
 #define RTL839X_PORT_ISO_CTRL(port)		(0x1400 + ((port) << 3))
@@ -46,6 +82,51 @@
 #define RTL839X_TBL_ACCESS_DATA_2(i)		(0x6120 + (((i) << 2)))
 
 /* MAC handling */
+#define RTL839X_MAC_LINK_DUP_STS_REG(p)                 (0x03b0 + (((p) / 32) * 0x4))
+#define _RTL839X_MAC_LINK_DUP_STS_MASK                          BIT(0)
+#define RTL839X_MAC_LINK_DUP_STS_FULL                                   0b1
+#define RTL839X_MAC_LINK_DUP_STS_HALF                                   0b0
+#define RTL839X_MAC_LINK_DUP_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL839X_MAC_LINK_DUP_STS_MASK)
+
+#define RTL839X_MAC_LINK_SPD_STS_REG(p)                 (0x03a0 + (((p) / 16) * 0x4))
+#define _RTL839X_MAC_LINK_SPD_STS_MASK                          GENMASK(1, 0)
+#define RTL839X_MAC_LINK_SPD_STS_10G                                    0x3
+#define RTL839X_MAC_LINK_SPD_STS_500M                                   0x3 /* Only if RTL839X_MAC_LINK_500M_STS */
+#define RTL839X_MAC_LINK_SPD_STS_1000M                                  0x2
+#define RTL839X_MAC_LINK_SPD_STS_100M                                   0x1
+#define RTL839X_MAC_LINK_SPD_STS_10M                                    0x0
+#define RTL839X_MAC_LINK_SPD_STS(p, r) \
+        (((r) >> (((p) % 16) * 2)) & _RTL839X_MAC_LINK_SPD_STS_MASK)
+
+#define RTL839X_MAC_LINK_STS_REG(p)                     (0x0390 + (((p) / 32) * 0x4))
+#define _RTL839X_MAC_LINK_STS_MASK                              BIT(0)
+#define RTL839X_MAC_LINK_STS_UP                                         0b1
+#define RTL839X_MAC_LINK_STS_DOWN                                       0b0
+#define RTL839X_MAC_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL839X_MAC_LINK_STS_MASK)
+
+#define RTL839X_MAC_LINK_500M_STS_REG(p)                (0x0408 + (((p) / 32) * 0x4))
+#define _RTL839X_MAC_LINK_500M_STS_MASK                         BIT(0)
+#define RTL839X_MAC_LINK_500M_STS_ON                                    0b1
+#define RTL839X_MAC_LINK_500M_STS_OFF                                   0b0
+#define RTL839X_MAC_LINK_500M_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL839X_MAC_LINK_500M_STS_MASK)
+
+#define RTL839X_MAC_RX_PAUSE_STS_REG(p)                 (0x03c0 + (((p) / 32) * 0x4))
+#define _RTL839X_MAC_RX_PAUSE_STS_MASK                          BIT(0)
+#define RTL839X_MAC_RX_PAUSE_STS_ON                                     0b1
+#define RTL839X_MAC_RX_PAUSE_STS_OFF                                    0b0
+#define RTL839X_MAC_RX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL839X_MAC_RX_PAUSE_STS_MASK)
+
+#define RTL839X_MAC_TX_PAUSE_STS_REG(p)                 (0x03b8 + (((p) / 32) * 0x4))
+#define _RTL839X_MAC_TX_PAUSE_STS_MASK                          BIT(0)
+#define RTL839X_MAC_TX_PAUSE_STS_ON                                     0b1
+#define RTL839X_MAC_TX_PAUSE_STS_OFF                                    0b0
+#define RTL839X_MAC_TX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL839X_MAC_TX_PAUSE_STS_MASK)
+
 #define RTL839X_MAC_LINK_DUP_STS_ADDR		(0x03b0)
 #define RTL839X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0x03a0 + (((p >> 4) << 2)))
 #define RTL839X_MAC_LINK_STS_ADDR		(0x0390)

@@ -3,6 +3,7 @@
 #ifndef _RTL838X_H
 #define _RTL838X_H __FILE__
 
+#include <linux/bitops.h>
 #include <linux/types.h>
 #include <net/dsa.h>
 
@@ -12,6 +13,57 @@
 #define RTL8380_VERSION_B 'B'
 
 /* Register definitions */
+#define RTL838X_MAC_FORCE_MODE_CTRL_REG(p)              (0xa104 + ((p) * 0x4))
+/* Reserved                                                     31 - 28 */
+#define RTL838X_MAC_FORCE_MODE_CTRL_PHY_POWER_SEL               BIT(27)
+#define RTL838X_MAC_FORCE_MODE_CTRL_RETRY_SPDN_GLITE            BIT(26)
+#define RTL838X_MAC_FORCE_MODE_CTRL_EN_MY_SOFTNP                BIT(25)
+#define RTL838X_MAC_FORCE_MODE_CTRL_RETRY_SPDN_10M              BIT(24)
+#define RTL838X_MAC_FORCE_MODE_CTRL_SPDN_THR                    BIT(23)
+#define RTL838X_MAC_FORCE_MODE_CTRL_EN_RETRY_SPD_DN             BIT(22)
+#define RTL838X_MAC_FORCE_MODE_CTRL_EN_2PAIR_SPD_DN             BIT(21)
+#define RTL838X_MAC_FORCE_MODE_CTRL_BYPASS_GLITE_UP1            BIT(20)
+#define RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_EN  BIT(19)
+#define RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_SEL BIT(18)
+#define RTL838X_MAC_FORCE_MODE_CTRL_GLITE_PORT_TYPE             BIT(17)
+#define RTL838X_MAC_FORCE_MODE_CTRL_GLITE_EEE                   BIT(16)
+#define RTL838X_MAC_FORCE_MODE_CTRL_GLITE_SEL                   BIT(15)
+#define RTL838X_MAC_FORCE_MODE_CTRL_MEDIA_SEL                   BIT(14)
+#define RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_EN    BIT(13)
+#define RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_SEL   BIT(12)
+#define RTL838X_MAC_FORCE_MODE_CTRL_PHY_PORT_TYPE               BIT(11)
+#define RTL838X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN                BIT(10)
+#define RTL838X_MAC_FORCE_MODE_CTRL_EEE_100M_EN                 BIT(9)
+#define RTL838X_MAC_FORCE_MODE_CTRL_FC_EN                       BIT(8)
+#define RTL838X_MAC_FORCE_MODE_CTRL_RX_PAUSE_EN                 BIT(7)
+#define RTL838X_MAC_FORCE_MODE_CTRL_TX_PAUSE_EN                 BIT(6)
+#define RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL                     GENMASK(5, 4)
+#define RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M                       0b10
+#define RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M                        0b01
+#define RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M                         0b00
+#define RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL                     BIT(3)
+#define RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN                     BIT(2)
+#define RTL838X_MAC_FORCE_MODE_CTRL_LINK_EN                     BIT(1)
+#define RTL838X_MAC_FORCE_MODE_CTRL_EN                          BIT(0)
+
+#define RTL838X_MAC_PORT_CTRL_REG(p)                    (0xd560 + ((p) * 0x80))
+/* Reserved                                                     31 - 15 */
+#define RTL838X_MAC_PORT_CTRL_RX_FIFO_ERROR                     BIT(14)
+#define RTL838X_MAC_PORT_CTRL_RX_ENTRY_ERROR                    BIT(13)
+#define RTL838X_MAC_PORT_CTRL_TX_FIFO_ERROR                     BIT(12)
+#define RTL838X_MAC_PORT_CTRL_TX_ENTRY_ERROR                    BIT(11)
+#define RTL838X_MAC_PORT_CTRL_RX_RXER_CHK_EN                    BIT(10)
+#define RTL838X_MAC_PORT_CTRL_BYP_TX_CRC                        BIT(9)
+#define RTL838X_MAC_PORT_CTRL_PASS_ALL_MODE_EN                  BIT(8)
+#define RTL838X_MAC_PORT_CTRL_PRECOLLAT_SEL                     GENMASK(7, 6)
+#define RTL838X_MAC_PORT_CTRL_LATE_COLI_THR                     GENMASK(5, 4)
+#define RTL838X_MAC_PORT_CTRL_RX_CHK_CRC_EN                     BIT(3)
+#define RTL838X_MAC_PORT_CTRL_BKPRES_EN                         BIT(2)
+#define RTL838X_MAC_PORT_CTRL_TX_EN                             BIT(1)
+#define RTL838X_MAC_PORT_CTRL_RX_EN                             BIT(0)
+#define RTL838X_MAC_PORT_CTRL_TXRX_EN \
+        (RTL838X_MAC_PORT_CTRL_TX_EN | RTL838X_MAC_PORT_CTRL_RX_EN)
+
 #define RTL838X_MAC_FORCE_MODE_CTRL		(0xa104)
 #define RTL838X_MAC_PORT_CTRL(port)		(0xd560 + (((port) << 7)))
 #define RTL838X_PORT_ISO_CTRL(port)		(0x4100 + ((port) << 2))
@@ -46,6 +98,43 @@
 #define RTL838X_TBL_ACCESS_DATA_1(idx)		(0xa4cc + ((idx) << 2))
 
 /* MAC handling */
+#define RTL838X_MAC_LINK_DUP_STS_REG(p)                 (0xa19c + (((p) / 32) * 0x4))
+#define _RTL838X_MAC_LINK_DUP_STS_MASK                          BIT(0)
+#define RTL838X_MAC_LINK_DUP_STS_FULL                                   1
+#define RTL838X_MAC_LINK_DUP_STS_HALF                                   0
+#define RTL838X_MAC_LINK_DUP_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL838X_MAC_LINK_DUP_STS_MASK)
+
+#define RTL838X_MAC_LINK_SPD_STS_REG(p)                 (0xa190 + (((p) / 16) * 0x4))
+#define _RTL838X_MAC_LINK_SPD_STS_MASK                          GENMASK(1, 0)
+#define RTL838X_MAC_LINK_SPD_STS_2G                                     0x3 /* Only for port 24 & 26 */
+#define RTL838X_MAC_LINK_SPD_STS_1000M                                  0x2
+#define RTL838X_MAC_LINK_SPD_STS_100M                                   0x1
+#define RTL838X_MAC_LINK_SPD_STS_10M                                    0x0
+#define RTL838X_MAC_LINK_SPD_STS(p, r) \
+        (((r) >> (((p) % 16) * 2)) & _RTL838X_MAC_LINK_SPD_STS_MASK)
+
+#define RTL838X_MAC_LINK_STS_REG(p)                     (0xa188 + (((p) / 32) * 0x4))
+#define _RTL838X_MAC_LINK_STS_MASK                              BIT(0)
+#define RTL838X_MAC_LINK_STS_UP                                         0b1
+#define RTL838X_MAC_LINK_STS_DOWN                                       0b0
+#define RTL838X_MAC_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL838X_MAC_LINK_STS_MASK)
+
+#define RTL838X_MAC_RX_PAUSE_STS_REG(p)                 (0xa1a4 + (((p) / 32) * 0x4))
+#define _RTL838X_MAC_RX_PAUSE_STS_MASK                          BIT(0)
+#define RTL838X_MAC_RX_PAUSE_STS_ON                                     0b1
+#define RTL838X_MAC_RX_PAUSE_STS_OFF                                    0b0
+#define RTL838X_MAC_RX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL838X_MAC_RX_PAUSE_STS_MASK)
+
+#define RTL838X_MAC_TX_PAUSE_STS_REG(p)                 (0xa1a0 + (((p) / 32) * 0x4))
+#define _RTL838X_MAC_TX_PAUSE_STS_MASK                          BIT(0)
+#define RTL838X_MAC_TX_PAUSE_STS_ON                                     0b1
+#define RTL838X_MAC_TX_PAUSE_STS_OFF                                    0b0
+#define RTL838X_MAC_TX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL838X_MAC_TX_PAUSE_STS_MASK)
+
 #define RTL838X_MAC_LINK_DUP_STS_ADDR		(0xa19c)
 #define RTL838X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0xa190 + (((p >> 4) << 2)))
 #define RTL838X_MAC_LINK_STS_ADDR		(0xa188)

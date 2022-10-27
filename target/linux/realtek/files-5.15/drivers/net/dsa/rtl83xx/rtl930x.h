@@ -3,12 +3,55 @@
 #ifndef _RTL930X_H
 #define _RTL930X_H __FILE__
 
+#include <linux/bitops.h>
 #include <linux/types.h>
 #include <linux/phy.h>
 
 #include "rtl83xx.h"
 
 /* MAC port control */
+#define RTL930X_MAC_PORT_CTRL_REG(p)                    (0x3260 + ((p) * 0x40))
+/* Reserved                                                     31 - 5 */
+#define RTL930X_MAC_PORT_CTRL_PRECOLLAT_SEL                     GENMASK(4, 3)
+#define RTL930X_MAC_PORT_CTRL_LATE_COLI_THR                     GENMASK(2, 1)
+#define RTL930X_MAC_PORT_CTRL_BKPRES_EN                         BIT(0)
+
+#define RTL930X_MAC_L2_PORT_CTRL_REG(p)                 (0x3268 + ((p) * 0x40))
+/* Reserved                                                     31 - 6 */
+#define RTL930X_MAC_L2_PORT_CTRL_PADDING_UND_SIZE_EN            BIT(5)
+#define RTL930X_MAC_L2_PORT_CTRL_RX_CHK_CRC_EN                  BIT(4)
+#define RTL930X_MAC_L2_PORT_CTRL_PASS_ALL_MODE_EN               BIT(3)
+#define RTL930X_MAC_L2_PORT_CTRL_BYP_TX_CRC                     BIT(2)
+#define RTL930X_MAC_L2_PORT_CTRL_TX_EN                          BIT(1)
+#define RTL930X_MAC_L2_PORT_CTRL_RX_EN                          BIT(0)
+#define RTL930X_MAC_L2_PORT_CTRL_TXRX_EN \
+        (RTL930X_MAC_L2_PORT_CTRL_TX_EN | RTL930X_MAC_L2_PORT_CTRL_RX_EN)
+
+#define RTL930X_MAC_FORCE_MODE_CTRL_REG(p)              (0xca1c + ((p) * 0x4))
+/* Reserved                                                     31 - 18 */
+#define RTL930X_MAC_FORCE_MODE_CTRL_BYP_LINK                    BIT(17)
+#define RTL930X_MAC_FORCE_MODE_CTRL_MEDIA_SEL                   BIT(16)
+#define RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_10G                  BIT(15)
+#define RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_5G                   BIT(14)
+#define RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_2G5                  BIT(13)
+#define RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_1000M                BIT(12)
+#define RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_500M                 BIT(11)
+#define RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_100M                 BIT(10)
+#define RTL930X_MAC_FORCE_MODE_CTRL_FC_EN                       BIT(9)
+#define RTL930X_MAC_FORCE_MODE_CTRL_RX_PAUSE_EN                 BIT(8)
+#define RTL930X_MAC_FORCE_MODE_CTRL_TX_PAUSE_EN                 BIT(7)
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL                     GENMASK(6, 3)
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_5G                          0x6
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_2G5                         0x5
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_10G                         0x4
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_500M                        0x3
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M                       0x2
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M                        0x1
+#define RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M                         0x0
+#define RTL930X_MAC_FORCE_MODE_CTRL_DUP_SEL                     BIT(2)
+#define RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN                     BIT(1)
+#define RTL930X_MAC_FORCE_MODE_CTRL_EN                          BIT(0)
+
 #define RTL930X_MAC_FORCE_MODE_CTRL		(0xca1c)
 #define RTL930X_MAC_L2_PORT_CTRL(port)		(0x3268 + (((port) << 6)))
 #define RTL930X_MAC_PORT_CTRL(port)		(0x3260 + (((port) << 6)))
@@ -36,6 +79,55 @@
 #define RTL930X_TBL_ACCESS_DATA_2(i)		(0xce08 + (((i) << 2)))
 
 /* MAC handling */
+#define RTL930X_MAC_LINK_DUP_STS_REG(p)                 (0xcb28 + (((p) / 32) * 0x4))
+#define _RTL930X_MAC_LINK_DUP_STS_MASK                          BIT(0)
+#define RTL930X_MAC_LINK_DUP_STS_FULL                                   0b1
+#define RTL930X_MAC_LINK_DUP_STS_HALF                                   0b0
+#define RTL930X_MAC_LINK_DUP_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL930X_MAC_LINK_DUP_STS_MASK)
+
+#define RTL930X_MAC_LINK_MEDIA_STS_REG(p)               (0xcb14 + (((p) / 32) * 0x4))
+#define _RTL930X_MAC_LINK_MEDIA_STS_MASK                        BIT(0)
+#define RTL930X_MAC_LINK_MEDIA_STS_FIBER                                0b1
+#define RTL930X_MAC_LINK_MEDIA_STS_COPPER                               0b0
+#define RTL930X_MAC_LINK_MEDIA_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL930X_MAC_LINK_MEDIA_STS_MASK)
+
+#define RTL930X_MAC_LINK_SPD_STS_REG(p)                 (0xcb18 + (((p) / 8) * 0x4))
+#define _RTL930X_MAC_LINK_SPD_STS_MASK                          GENMASK(3, 0)
+#define RTL930X_MAC_LINK_SPD_STS_2G5_ALT                                0x8
+#define RTL930X_MAC_LINK_SPD_STS_1000M_ALT                              0x7
+#define RTL930X_MAC_LINK_SPD_STS_5G                                     0x6
+#define RTL930X_MAC_LINK_SPD_STS_2G5                                    0x5
+#define RTL930X_MAC_LINK_SPD_STS_10G                                    0x4
+#define RTL930X_MAC_LINK_SPD_STS_500M                                   0x3
+#define RTL930X_MAC_LINK_SPD_STS_1000M                                  0x2
+#define RTL930X_MAC_LINK_SPD_STS_100M                                   0x1
+#define RTL930X_MAC_LINK_SPD_STS_10M                                    0x0
+#define RTL930X_MAC_LINK_SPD_STS(p, r) \
+        (((r) >> (((p) % 8) * 4)) & _RTL930X_MAC_LINK_SPD_STS_MASK)
+
+#define RTL930X_MAC_LINK_STS_REG(p)                     (0xcb10 + (((p) / 32) * 0x4))
+#define RTL930X_MAC_LINK_STS_MASK                               BIT(0)
+#define RTL930X_MAC_LINK_STS_UP                                         0b1
+#define RTL930X_MAC_LINK_STS_DOWN                                       0b0
+#define RTL930X_MAC_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & RTL930X_MAC_LINK_STS_MASK)
+
+#define RTL930X_MAC_RX_PAUSE_STS_REG(p)                 (0xcb30 + (((p) / 32) * 0x4))
+#define _RTL930X_MAC_RX_PAUSE_STS_MASK                          BIT(0)
+#define RTL930X_MAC_RX_PAUSE_STS_ON                                     0b1
+#define RTL930X_MAC_RX_PAUSE_STS_OFF                                    0b0
+#define RTL930X_MAC_RX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL930X_MAC_RX_PAUSE_STS_MASK)
+
+#define RTL930X_MAC_TX_PAUSE_STS_REG(p)                 (0xcb2c + (((p) / 32) * 0x4))
+#define _RTL930X_MAC_TX_PAUSE_STS_MASK                          BIT(0)
+#define RTL930X_MAC_TX_PAUSE_STS_ON                                     0b1
+#define RTL930X_MAC_TX_PAUSE_STS_OFF                                    0b0
+#define RTL930X_MAC_TX_PAUSE_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL930X_MAC_TX_PAUSE_STS_MASK)
+
 #define RTL930X_MAC_LINK_DUP_STS_ADDR		(0xcb28)
 #define RTL930X_MAC_LINK_MEDIA_STS_ADDR		(0xcb14)
 #define RTL930X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0xcb18 + (((p >> 3) << 2)))
