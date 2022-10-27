@@ -671,12 +671,23 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 		sw_w32(0xffffffff, priv->r->dma_if_intr_sts);
 	}
 
-	/* Reset NIC (SW_NIC_RST) and queues (SW_Q_RST) */
-	if (priv->family_id == RTL9300_FAMILY_ID || priv->family_id == RTL9310_FAMILY_ID)
-		reset_mask = 0x6;
-	else
-		reset_mask = 0xc;
-
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		reset_mask = RTL838X_RST_GLB_CTRL_0_SW_NIC_RST | RTL838X_RST_GLB_CTRL_0_SW_Q_RST;
+		break;
+	case RTL8390_FAMILY_ID:
+		reset_mask = RTL839X_RST_GLB_CTRL_SW_NIC_RST | RTL839X_RST_GLB_CTRL_SW_Q_RST;
+		break;
+	case RTL9300_FAMILY_ID:
+		reset_mask = RTL930X_RST_GLB_CTRL_0_SW_NIC_RST | RTL930X_RST_GLB_CTRL_0_SW_Q_RST;
+		break;
+	case RTL9310_FAMILY_ID:
+		reset_mask = RTL931X_RST_GLB_CTRL_SW_NIC_RST | RTL931X_RST_GLB_CTRL_SW_Q_RST;
+		break;
+	default:
+		pr_err("%s: Unsupported family id: %d", __func__, priv->family_id);
+		break;
+	}
 	sw_w32_mask(0, reset_mask, priv->r->rst_glb_ctrl);
 
 	do { /* Wait for reset of NIC and Queues done */
