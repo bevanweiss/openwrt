@@ -345,6 +345,135 @@
 #define RTL838X_SMI_ACCESS_PHY_CTRL_1	(0xa1bc)
 #define RTL838X_SMI_ACCESS_PHY_CTRL_2	(0xa1c0)
 #define RTL838X_SMI_ACCESS_PHY_CTRL_3	(0xa1c4)
+
+#define RTL838X_SMI_PHY_PORT_CTRL_REG(p)                (0xa1b8 + (((p) / 32) * 0x4))
+/* Reserved                                                     31 - 29 */
+#define RTL838X_SMI_PHY_PORT_CTRL_PHY_MASK                      GENMASK(28, 0)
+#define RTL838X_SMI_PHY_PORT_CTRL_PHY(p) \
+        (BIT((p) % 32) & RTL838X_SMI_PHY_PORT_CTRL_PHY_MASK)
+
+#define RTL839X_SMI_PHY_PORT_CTRL_REG(p)                (0x03e4 + (((p) / 32) * 0x4))
+#define RTL839X_SMI_PHY_PORT_CTRL_PHY_MASK                      GENMASK(31, 0)
+#define RTL839X_SMI_PHY_PORT_CTRL_PHY(p) \
+        (BIT((p) % 32) & RTL839X_SMI_PHY_PORT_CTRL_PHY_MASK)
+
+#define RTL930X_SMI_PHY_PORT_CTRL_REG(p)                (0xcb70 + (((p) / 32) * 0x4))
+/* Reserved                                                     31 - 29 */
+/* When broadcast bit is set, PHY_MASK mask sets broadcast address */
+#define RTL930X_SMI_PHY_PORT_CTRL_PHY_BROADCAST                 BIT(28)
+#define RTL930X_SMI_PHY_PORT_CTRL_PHY_BROADCAST_ADDR            GENMASK(4, 0)
+#define RTL930X_SMI_PHY_PORT_CTRL_PHY_MASK                      GENMASK(27, 0)
+#define RTL930X_SMI_PHY_PORT_CTRL_PHY(p) \
+        (BIT((p) % 32) & RTL930X_SMI_PHY_PORT_CTRL_PHY_MASK)
+
+#define RTL931X_SMI_PHY_PORT_CTRL_REG(p)                (0x0c08 + (((p) / 32) * 0x4))
+#define RTL931X_SMI_PHY_PORT_CTRL_PHY_MASK                      GENMASK(31, 0)
+#define RTL931X_SMI_PHY_PORT_CTRL_PHY(p) \
+        (BIT((p) % 32) & RTL931X_SMI_PHY_PORT_CTRL_PHY_MASK)
+
+#define RTL839X_SMI_PHY_CTRL_REG                        (0x03e0)
+/* Reserved                                                     31 - 9 */
+#define RTL839X_SMI_PHY_CTRL_EXT_PAGE                           GENMASK(8, 0)
+
+#define RTL931X_SMI_PHY_CTRL_REG                        (0x0c04)
+/* Reserved                                                     31 - 9 */
+#define RTL931X_SMI_PHY_CTRL_EXT_PAGE                           GENMASK(8, 0)
+
+#define RTL838X_SMI_ACCESS_PHY_CTRL_REG                 (0xa1bc)
+/* Reserved                                                     31 - 25 */
+#define RTL838X_SMI_ACCESS_PHY_CTRL_REG_ADDR                    GENMASK(24, 20)
+#define RTL838X_SMI_ACCESS_PHY_CTRL_PARK_PAGE                   GENMASK(19, 15)
+#define RTL838X_SMI_ACCESS_PHY_CTRL_PARK_PAGE_NO_PARK                   0x1f
+#define RTL838X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE                   GENMASK(14, 3)
+#define RTL838X_SMI_ACCESS_PHY_CTRL_RWOP                        BIT(2) /* Write (1), Read (0) */
+#define RTL838X_SMI_ACCESS_PHY_CTRL_TYPE                        BIT(1) /* Clause 45 (1), Clause 22 (0) */
+#define RTL838X_SMI_ACCESS_PHY_CTRL_CMD                         BIT(0) /* Executes MDIO command, self-clears on completion */
+
+#define RTL839X_SMI_ACCESS_PHY_CTRL_REG                 (0x03dc)
+/* Reserved                                                     31 - 28 */
+#define RTL839X_SMI_ACCESS_PHY_CTRL_PARK_PAGE                   GENMASK(27, 23)
+#define RTL839X_SMI_ACCESS_PHY_CTRL_PARK_PAGE_NO_PARK                   0x1f
+#define RTL839X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE                   GENMASK(22, 10)
+#define RTL839X_SMI_ACCESS_PHY_CTRL_REG_ADDR                    GENMASK(9, 5)
+#define RTL839X_SMI_ACCESS_PHY_CTRL_BROADCAST                   BIT(4)
+#define RTL839X_SMI_ACCESS_PHY_CTRL_RWOP                        BIT(3) /* Write (1), Read (0) */
+#define RTL839X_SMI_ACCESS_PHY_CTRL_TYPE                        BIT(2) /* Clause 45 (1), Clause 22 (0) */
+#define RTL839X_SMI_ACCESS_PHY_CTRL_FAIL                        BIT(1)
+#define RTL839X_SMI_ACCESS_PHY_CTRL_CMD                         BIT(0) /* Executes MDIO command, self-clears on completion */
+
+#define RTL930X_SMI_ACCESS_PHY_CTRL_REG                 (0xcb74)
+/* Reserved                                                     31 - 26 */
+#define RTL930X_SMI_ACCESS_PHY_CTRL_FAIL                        BIT(25)
+#define RTL930X_SMI_ACCESS_PHY_CTRL_REG_ADDR                    GENMASK(24, 20)
+#define RTL930X_SMI_ACCESS_PHY_CTRL_PARK_PAGE                   GENMASK(19, 15)
+#define RTL930X_SMI_ACCESS_PHY_CTRL_PARK_PAGE_NO_PARK                   0x1f
+#define RTL930X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE                   GENMASK(14, 3)
+#define RTL930X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE_NO_CHANGE                 0xfff
+#define RTL930X_SMI_ACCESS_PHY_CTRL_RWOP                        BIT(2) /* Write (1), Read (0) */
+#define RTL930X_SMI_ACCESS_PHY_CTRL_TYPE                        BIT(1) /* Clause 45 (1), Clause 22 (0) */
+#define RTL930X_SMI_ACCESS_PHY_CTRL_CMD                         BIT(0) /* Executes MDIO command, self-clears on completion */
+
+#define RTL931X_SMI_ACCESS_PHY_CTRL_REG                 (0x0c00)
+/* Reserved                                                     31 - 25 */
+#define RTL931X_SMI_ACCESS_PHY_CTRL_ACCESS                      BIT(24)
+#define RTL931X_SMI_ACCESS_PHY_CTRL_MAIN_PAGE                   GENMASK(23, 11)
+#define RTL931X_SMI_ACCESS_PHY_CTRL_REG_ADDR                    GENMASK(10, 6)
+#define RTL931X_SMI_ACCESS_PHY_CTRL_BROADCAST                   BIT(5)
+#define RTL931X_SMI_ACCESS_PHY_CTRL_RWOP                        BIT(4) /* Write (1), Read (0) */
+#define RTL931X_SMI_ACCESS_PHY_CTRL_TYPE                        GENMASK(3, 2)
+#define RTL931X_SMI_ACCESS_PHY_CTRL_TYPE_C45_10G                        0x2
+#define RTL931X_SMI_ACCESS_PHY_CTRL_TYPE_C45_1G                         0x1
+#define RTL931X_SMI_ACCESS_PHY_CTRL_TYPE_C22                            0x0
+#define RTL931X_SMI_ACCESS_PHY_CTRL_FAIL                        BIT(1)
+#define RTL931X_SMI_ACCESS_PHY_CTRL_CMD                         BIT(0) /* Executes MDIO command, self-clears on completion */
+
+#define RTL838X_SMI_PHY_DATA_CTRL_REG                   (0xa1c0)
+/* INDATA becomes PORT_ID for read operations to select the port */
+#define RTL838X_SMI_PHY_DATA_CTRL_PORT_ID                       GENMASK(20, 16)
+#define RTL838X_SMI_PHY_DATA_CTRL_INDATA                        GENMASK(31, 16)
+#define RTL838X_SMI_PHY_DATA_CTRL_DATA                          GENMASK(15, 0)
+
+#define RTL839X_SMI_PHY_DATA_CTRL_REG                   (0x03f0)
+/* INDATA becomes PORT_ID for read operations to select the port */
+#define RTL839X_SMI_PHY_DATA_CTRL_PORT_ID                       GENMASK(20, 16)
+#define RTL839X_SMI_PHY_DATA_CTRL_INDATA                        GENMASK(31, 16)
+#define RTL839X_SMI_PHY_DATA_CTRL_DATA                          GENMASK(15, 0)
+
+#define RTL930X_SMI_PHY_DATA_CTRL_REG                   (0xcb78)
+/* INDATA becomes PORT_ID for read operations to select the port */
+#define RTL930X_SMI_PHY_DATA_CTRL_PORT_ID                       GENMASK(20, 16)
+#define RTL930X_SMI_PHY_DATA_CTRL_INDATA                        GENMASK(31, 16)
+#define RTL930X_SMI_PHY_DATA_CTRL_DATA                          GENMASK(15, 0)
+
+#define RTL931X_SMI_PHY_DATA_CTRL_REG                   (0x0c10)
+#define RTL931X_SMI_PHY_DATA_CTRL_DATA                          GENMASK(31, 16)
+#define RTL931X_SMI_PHY_DATA_CTRL_INDATA                        GENMASK(15, 0)
+
+#define RTL838X_SMI_PHY_MMD_CTRL_REG                    (0xa1c4)
+/* Reserved                                                 31 - 21 */
+#define RTL838X_SMI_PHY_MMD_CTRL_DEVAD                      GENMASK(20, 16)
+#define RTL838X_SMI_PHY_MMD_CTRL_REGAD                      GENMASK(15, 0)
+
+#define RTL839X_SMI_PHY_MMD_CTRL_REG                    (0x03f4)
+/* Reserved                                                     31 - 21 */
+#define RTL839X_SMI_PHY_MMD_CTRL_DEVAD                          GENMASK(20, 16)
+#define RTL839X_SMI_PHY_MMD_CTRL_REGAD                          GENMASK(15, 0)
+
+#define RTL930X_SMI_PHY_MMD_CTRL_REG                    (0xcb7c)
+/* Reserved                                                 31 - 21 */
+#define RTL930X_SMI_PHY_MMD_CTRL_DEVAD                      GENMASK(20, 16)
+#define RTL930X_SMI_PHY_MMD_CTRL_REGAD                      GENMASK(15, 0)
+
+#define RTL931X_SMI_PHY_MMD_CTRL_REG                    (0x0c18)
+/* Reserved                                                     31 - 21 */
+#define RTL931X_SMI_PHY_MMD_CTRL_DEVAD                          GENMASK(20, 16)
+#define RTL931X_SMI_PHY_MMD_CTRL_REGAD                          GENMASK(15, 0)
+
+#define RTL931X_SMI_PHY_BC_PHYID_CTRL_REG               (0x0c14)
+/* Reserved                                                     31 - 11 */
+#define RTL931X_SMI_PHY_BC_PHYID_CTRL_PORT_ID                   GENMASK(10, 5)
+#define RTL931X_SMI_PHY_BC_PHYID_CTRL_BC_PHYID                  GENMASK(4, 0)
+
 #define RTL838X_SMI_PORT0_5_ADDR_CTRL	(0xa1c8)
 #define RTL838X_SMI_POLL_CTRL		(0xa17c)
 
