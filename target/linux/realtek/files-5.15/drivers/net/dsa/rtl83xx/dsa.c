@@ -1042,35 +1042,35 @@ static void rtl931x_phylink_mac_config(struct dsa_switch *ds, int port,
 
 	switch (state->speed) {
 	case SPEED_10000:
-		reg |= 4 << 3;
+		reg |= 4 << 12;
 		break;
 	case SPEED_5000:
-		reg |= 6 << 3;
+		reg |= 6 << 12;
 		break;
 	case SPEED_2500:
-		reg |= 5 << 3;
+		reg |= 5 << 12;
 		break;
 	case SPEED_1000:
-		reg |= 2 << 3;
+		reg |= 2 << 12;
 		break;
 	default:
-		reg |= 2 << 3;
+		reg |= 2 << 12;
 		break;
 	}
 
 	if (state->link)
-		reg |= RTL930X_FORCE_LINK_EN;
+		reg |= RTL931X_FORCE_LINK_EN;
 
 	if (priv->lagmembers & BIT_ULL(port))
-		reg |= RTL930X_DUPLEX_MODE | RTL930X_FORCE_LINK_EN;
+		reg |= RTL931X_DUPLEX_MODE | RTL931X_FORCE_LINK_EN;
 
 	if (state->duplex == DUPLEX_FULL)
-		reg |= RTL930X_DUPLEX_MODE;
+		reg |= RTL931X_DUPLEX_MODE;
 
 	if (priv->ports[port].phy_is_integrated)
-		reg &= ~RTL930X_FORCE_EN; /* Clear MAC_FORCE_EN to allow SDS-MAC link */
+		reg &= ~RTL931X_FORCE_EN; /* Clear MAC_FORCE_EN to allow SDS-MAC link */
 	else
-		reg |= RTL930X_FORCE_EN;
+		reg |= RTL931X_FORCE_EN;
 
 	sw_w32(reg, priv->r->mac_force_mode_ctrl(port));
 }
