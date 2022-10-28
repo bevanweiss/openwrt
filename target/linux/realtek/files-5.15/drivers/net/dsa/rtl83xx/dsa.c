@@ -456,9 +456,9 @@ static int rtl83xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 		state->link = 1;
 	pr_debug("%s: link state port %d: %llx\n", __func__, port, link & BIT_ULL(port));
 
-	state->duplex = 0;
+	state->duplex = DUPLEX_HALF;
 	if (priv->r->get_port_reg_le(priv->r->mac_link_dup_sts) & BIT_ULL(port))
-		state->duplex = 1;
+		state->duplex = DUPLEX_FULL;
 
 	speed = priv->r->get_port_reg_le(priv->r->mac_link_spd_sts(port));
 	speed >>= (port % 16) << 1;
@@ -524,9 +524,9 @@ static int rtl93xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 	pr_debug("%s: link state port %d: %llx, media %llx\n", __func__, port,
 		 link & BIT_ULL(port), media);
 
-	state->duplex = 0;
+	state->duplex = DUPLEX_HALF;
 	if (priv->r->get_port_reg_le(priv->r->mac_link_dup_sts) & BIT_ULL(port))
-		state->duplex = 1;
+		state->duplex = DUPLEX_FULL;
 
 	speed = priv->r->get_port_reg_le(priv->r->mac_link_spd_sts(port));
 	speed >>= (port % 8) << 2;
@@ -560,7 +560,7 @@ static int rtl93xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 		&& (port >= 52 || port <= 55)) { /* Internal serdes */
 			state->speed = SPEED_10000;
 			state->link = 1;
-			state->duplex = 1;
+			state->duplex = DUPLEX_FULL;
 	}
 
 	pr_debug("%s: speed is: %d %d\n", __func__, (u32)speed & 0xf, state->speed);
