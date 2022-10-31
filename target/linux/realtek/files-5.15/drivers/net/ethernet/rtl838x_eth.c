@@ -1606,11 +1606,11 @@ static int rtl8380_init_mac(struct rtl838x_eth_priv *priv)
 
 	/* Init VLAN. TODO: Understand what is being done, here */
 	if (priv->id == RTL8383_FAMILY_ID) {
-		for (int i = 0; i <= 28; i++)
+		for (int i = 0; i <= RTL838X_PORT_CNT; i++)
 			sw_w32(0, 0xd57c + i * 0x80);
 	}
 	if (priv->id == RTL8380_FAMILY_ID) {
-		for (int i = 8; i <= 28; i++)
+		for (int i = 8; i <= RTL838X_PORT_CNT; i++)
 			sw_w32(0, 0xd57c + i * 0x80);
 	}
 
@@ -1923,7 +1923,7 @@ static int rtl839x_mdio_reset(struct mii_bus *bus)
 	return 0;
 }
 
-u8 mac_type_bit[RTL930X_CPU_PORT] = {0, 0, 0, 0, 2, 2, 2, 2, 4, 4, 4, 4, 6, 6, 6, 6,
+u8 mac_type_bit[RTL930X_PORT_CPU] = {0, 0, 0, 0, 2, 2, 2, 2, 4, 4, 4, 4, 6, 6, 6, 6,
 				     8, 8, 8, 8, 10, 10, 10, 10, 12, 15, 18, 21};
 
 static int rtl930x_mdio_reset(struct mii_bus *bus)
@@ -1939,7 +1939,7 @@ static int rtl930x_mdio_reset(struct mii_bus *bus)
 
 	/* Mapping of port to phy-addresses on an SMI bus */
 	poll_sel[0] = poll_sel[1] = 0;
-	for (int i = 0; i < RTL930X_CPU_PORT; i++) {
+	for (int i = 0; i < RTL930X_PORT_CNT; i++) {
 		int pos;
 
 		if ((priv->smi_bus[i] < 0) || (priv->smi_bus[i] > MAX_SMI_BUSSES))
@@ -1971,7 +1971,7 @@ static int rtl930x_mdio_reset(struct mii_bus *bus)
 	/* Set the MAC type of each port according to the PHY-interface */
 	/* Values are FE: 2, GE: 3, XGE/2.5G: 0(SERDES) or 1(otherwise), SXGE: 0 */
 	v = 0;
-	for (int i = 0; i < RTL930X_CPU_PORT; i++) {
+	for (int i = 0; i < RTL930X_PORT_CNT; i++) {
 		switch (priv->interfaces[i]) {
 		case PHY_INTERFACE_MODE_10GBASER:
 			break;			/* Serdes: Value = 0 */
@@ -2047,7 +2047,7 @@ static int rtl931x_mdio_reset(struct mii_bus *bus)
 	mdc_on[0] = mdc_on[1] = mdc_on[2] = mdc_on[3] = false;
 	/* Mapping of port to phy-addresses on an SMI bus */
 	poll_sel[0] = poll_sel[1] = poll_sel[2] = poll_sel[3] = 0;
-	for (int i = 0; i < 56; i++) {
+	for (int i = 0; i < RTL931X_PORT_END; i++) {
 		u32 pos;
 
 		if ((priv->smi_bus[i] < 0) || (priv->smi_bus[i] > MAX_SMI_BUSSES))
@@ -2464,22 +2464,22 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 
 	switch (priv->family_id) {
 	case RTL8380_FAMILY_ID:
-		priv->cpu_port = RTL838X_CPU_PORT;
+		priv->cpu_port = RTL838X_PORT_CPU;
 		priv->r = &rtl838x_reg;
 		dev->netdev_ops = &rtl838x_eth_netdev_ops;
 		break;
 	case RTL8390_FAMILY_ID:
-		priv->cpu_port = RTL839X_CPU_PORT;
+		priv->cpu_port = RTL839X_PORT_CPU;
 		priv->r = &rtl839x_reg;
 		dev->netdev_ops = &rtl839x_eth_netdev_ops;
 		break;
 	case RTL9300_FAMILY_ID:
-		priv->cpu_port = RTL930X_CPU_PORT;
+		priv->cpu_port = RTL930X_PORT_CPU;
 		priv->r = &rtl930x_reg;
 		dev->netdev_ops = &rtl930x_eth_netdev_ops;
 		break;
 	case RTL9310_FAMILY_ID:
-		priv->cpu_port = RTL931X_CPU_PORT;
+		priv->cpu_port = RTL931X_PORT_CPU;
 		priv->r = &rtl931x_reg;
 		dev->netdev_ops = &rtl931x_eth_netdev_ops;
 		rtl931x_chip_init(priv);

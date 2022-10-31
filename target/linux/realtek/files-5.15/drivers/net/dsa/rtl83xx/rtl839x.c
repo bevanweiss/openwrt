@@ -138,10 +138,10 @@ void rtl839x_print_matrix(void)
 	volatile u64 *ptr9;
 
 	ptr9 = RTL838X_SW_BASE + RTL839X_PORT_ISO_CTRL(0);
-	for (int i = 0; i < 52; i += 4)
+	for (int i = 0; i < RTL839X_PORT_CNT; i += 4)
 		pr_debug("> %16llx %16llx %16llx %16llx\n",
 			ptr9[i + 0], ptr9[i + 1], ptr9[i + 2], ptr9[i + 3]);
-	pr_debug("CPU_PORT> %16llx\n", ptr9[52]);
+	pr_debug("CPU_PORT> %16llx\n", ptr9[RTL839X_PORT_CPU]);
 }
 
 static inline int rtl839x_port_iso_ctrl(int p)
@@ -614,7 +614,7 @@ irqreturn_t rtl839x_switch_irq(int irq, void *dev_id)
 	rtl839x_set_port_reg_le(ports, RTL839X_ISR_PORT_LINK_STS_CHG);
 	pr_debug("RTL8390 Link change: status: %x, ports %llx\n", status, ports);
 
-	for (int i = 0; i < RTL839X_CPU_PORT; i++) {
+	for (int i = 0; i < RTL839X_PORT_CNT; i++) {
 		if (ports & BIT_ULL(i)) {
 			link = rtl839x_get_port_reg_le(RTL839X_MAC_LINK_STS);
 			if (link & BIT_ULL(i))
@@ -668,7 +668,7 @@ int rtl839x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 		return -ENOTSUPP;
 
 	/* Take bug on RTL839x Rev <= C into account */
-	if (port >= RTL839X_CPU_PORT)
+	if (port >= RTL839X_PORT_END)
 		return -EIO;
 
 	mutex_lock(&smi_lock);
@@ -704,7 +704,7 @@ int rtl839x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 		return -ENOTSUPP;
 
 	/* Take bug on RTL839x Rev <= C into account */
-	if (port >= RTL839X_CPU_PORT)
+	if (port >= RTL839X_PORT_END)
 		return -EIO;
 
 	mutex_lock(&smi_lock);
@@ -742,7 +742,7 @@ int rtl839x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 	u32 v;
 
 	/* Take bug on RTL839x Rev <= C into account */
-	if (port >= RTL839X_CPU_PORT)
+	if (port >= RTL839X_PORT_END)
 		return -EIO;
 
 	mutex_lock(&smi_lock);
@@ -777,7 +777,7 @@ int rtl839x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 	u32 v;
 
 	/* Take bug on RTL839x Rev <= C into account */
-	if (port >= RTL839X_CPU_PORT)
+	if (port >= RTL839X_PORT_END)
 		return -EIO;
 
 	mutex_lock(&smi_lock);
@@ -865,7 +865,7 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 	u32 v;
 
 	/* This works only for Ethernet ports, and on the RTL839X, ports above 47 are SFP */
-	if (port >= 48)
+	if (port >= RTL839X_PORT_ETH)
 		return;
 
 	enable = true;
@@ -887,7 +887,7 @@ int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 {
 	u64 link, a;
 
-	if (port >= 48)
+	if (port >= RTL839X_PORT_ETH)
 		return 0;
 
 	link = rtl839x_get_port_reg_le(RTL839X_MAC_LINK_STS);
@@ -923,7 +923,7 @@ static void rtl839x_init_eee(struct rtl838x_switch_priv *priv, bool enable)
 	sw_w32_mask(0xff << 20, 0x11 << 20, RTL839X_EEE_TX_TIMER_10G_CTRL);
 
 	/* Setup EEE on all ports */
-	for (int i = 0; i < priv->cpu_port; i++) {
+	for (int i = 0; i < RTL839X_PORT_CNT; i++) {
 		if (priv->ports[i].phy)
 			rtl839x_port_eee_set(priv, i, enable);
 	}

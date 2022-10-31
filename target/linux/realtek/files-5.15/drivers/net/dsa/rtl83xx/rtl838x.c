@@ -130,11 +130,11 @@ void rtl838x_print_matrix(void)
 	unsigned volatile int *ptr8;
 
 	ptr8 = RTL838X_SW_BASE + RTL838X_PORT_ISO_CTRL(0);
-	for (int i = 0; i < 28; i += 8)
+	for (int i = 0; i < RTL838X_PORT_CNT; i += 8)
 		pr_debug("> %8x %8x %8x %8x %8x %8x %8x %8x\n",
 			ptr8[i + 0], ptr8[i + 1], ptr8[i + 2], ptr8[i + 3],
 			ptr8[i + 4], ptr8[i + 5], ptr8[i + 6], ptr8[i + 7]);
-	pr_debug("CPU_PORT> %8x\n", ptr8[28]);
+	pr_debug("CPU_PORT> %8x\n", ptr8[RTL838X_PORT_CPU]);
 }
 
 static inline int rtl838x_port_iso_ctrl(int p)
@@ -605,7 +605,7 @@ static void rtl838x_port_eee_set(struct rtl838x_switch_priv *priv, int port, boo
 	u32 v;
 
 	/* This works only for Ethernet ports, and on the RTL838X, ports from 24 are SFP */
-	if (port >= 24)
+	if (port >= RTL838X_PORT_ETH)
 		return;
 
 	pr_debug("In %s: setting port %d to %d\n", __func__, port, enable);
@@ -632,7 +632,7 @@ static int rtl838x_eee_port_ability(struct rtl838x_switch_priv *priv,
 {
 	u64 link;
 
-	if (port >= 24)
+	if (port >= RTL838X_PORT_ETH)
 		return 0;
 
 	link = rtl839x_get_port_reg_le(RTL838X_MAC_LINK_STS);
@@ -664,7 +664,7 @@ static void rtl838x_init_eee(struct rtl838x_switch_priv *priv, bool enable)
 	sw_w32(0x5001417, RTL838X_EEE_TX_TIMER_GELITE_CTRL);
 
 	/* Enable EEE MAC support on ports */
-	for (int i = 0; i < priv->cpu_port; i++) {
+	for (int i = 0; i < RTL838X_PORT_CNT; i++) {
 		if (priv->ports[i].phy)
 			rtl838x_port_eee_set(priv, i, enable);
 	}
@@ -1788,7 +1788,7 @@ irqreturn_t rtl838x_switch_irq(int irq, void *dev_id)
 	sw_w32(ports, RTL838X_ISR_PORT_LINK_STS_CHG);
 	pr_info("RTL8380 Link change: status: %x, ports %x\n", status, ports);
 
-	for (int i = 0; i < 28; i++) {
+	for (int i = 0; i < RTL838X_PORT_CNT; i++) {
 		if (ports & BIT(i)) {
 			link = sw_r32(RTL838X_MAC_LINK_STS);
 			if (link & BIT(i))

@@ -197,7 +197,7 @@ void rtl930x_print_matrix(void)
 {
 	struct table_reg *r = rtl_table_get(RTL9300_TBL_0, 6);
 
-	for (int i = 0; i < 29; i++) {
+	for (int i = 0; i < RTL930X_PORT_END; i++) {
 		rtl_table_read(r, i);
 		pr_debug("> %08x\n", sw_r32(rtl_table_data(r, 0)));
 	}
@@ -772,7 +772,7 @@ irqreturn_t rtl930x_switch_irq(int irq, void *dev_id)
 	/* Clear status */
 	sw_w32(ports, RTL930X_ISR_PORT_LINK_STS_CHG);
 
-	for (int i = 0; i < 28; i++) {
+	for (int i = 0; i < RTL930X_PORT_CNT; i++) {
 		if (ports & BIT(i)) {
 			/* Read the register twice because of issues with latency at least
 			 * with the external RTL8226 PHY on the XGS1210
@@ -962,7 +962,7 @@ void rtl930x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 	u32 v;
 
 	/* This works only for Ethernet ports, and on the RTL930X, ports from 26 are SFP */
-	if (port >= 26)
+	if (port >= RTL930X_PORT_ETH)
 		return;
 
 	pr_debug("In %s: setting port %d to %d\n", __func__, port, enable);
@@ -983,7 +983,7 @@ int rtl930x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 {
 	u32 link, a;
 
-	if (port >= 26)
+	if (port >= RTL930X_PORT_ETH)
 		return -ENOTSUPP;
 
 	pr_info("In %s, port %d\n", __func__, port);
@@ -1032,7 +1032,7 @@ static void rtl930x_init_eee(struct rtl838x_switch_priv *priv, bool enable)
 	pr_info("Setting up EEE, state: %d\n", enable);
 
 	/* Setup EEE on all ports */
-	for (int i = 0; i < priv->cpu_port; i++) {
+	for (int i = 0; i < RTL930X_PORT_CNT; i++) {
 		if (priv->ports[i].phy)
 			rtl930x_port_eee_set(priv, i, enable);
 	}
@@ -2459,12 +2459,12 @@ void rtl930x_set_distribution_algorithm(int group, int algoidx, u32 algomsk)
 
 static void rtl930x_led_init(struct rtl838x_switch_priv *priv)
 {
-	u32 led_copper_port_set[REALTEK_PORT_ARRAY_SIZE(RTL930X_CPU_PORT, 2)] = { 0x00 };
-	u32 led_fiber_port_set[REALTEK_PORT_ARRAY_SIZE(RTL930X_CPU_PORT, 2)] = { 0x00 };
-	u32 port_mask_copper[REALTEK_PORT_ARRAY_SIZE(RTL930X_CPU_PORT, 1)] = { 0x0 };
-	u32 port_mask_fiber[REALTEK_PORT_ARRAY_SIZE(RTL930X_CPU_PORT, 1)] = { 0x0 };
-	u32 port_mask_combo[REALTEK_PORT_ARRAY_SIZE(RTL930X_CPU_PORT, 1)] = { 0x0 };
-	u32 led_port_num[REALTEK_PORT_ARRAY_SIZE(RTL930X_CPU_PORT, 2)] = { 0x00 };
+	u32 led_copper_port_set[REALTEK_PORT_ARRAY_SIZE(RTL930X_PORT_CPU, 2)] = { 0x00 };
+	u32 led_fiber_port_set[REALTEK_PORT_ARRAY_SIZE(RTL930X_PORT_CPU, 2)] = { 0x00 };
+	u32 port_mask_copper[REALTEK_PORT_ARRAY_SIZE(RTL930X_PORT_CPU, 1)] = { 0x0 };
+	u32 port_mask_fiber[REALTEK_PORT_ARRAY_SIZE(RTL930X_PORT_CPU, 1)] = { 0x0 };
+	u32 port_mask_combo[REALTEK_PORT_ARRAY_SIZE(RTL930X_PORT_CPU, 1)] = { 0x0 };
+	u32 led_port_num[REALTEK_PORT_ARRAY_SIZE(RTL930X_PORT_CPU, 2)] = { 0x00 };
 	struct device_node *node;
 
 	pr_info("%s called\n", __func__);

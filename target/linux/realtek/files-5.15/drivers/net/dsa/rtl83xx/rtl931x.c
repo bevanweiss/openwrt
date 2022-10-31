@@ -368,7 +368,7 @@ irqreturn_t rtl931x_switch_irq(int irq, void *dev_id)
 	link = rtl839x_get_port_reg_le(RTL931X_MAC_LINK_STS);
 	pr_debug("RTL931X Link change: status: %x, link status %016llx\n", status, link);
 
-	for (int i = 0; i < 56; i++) {
+	for (int i = 0; i < RTL931X_PORT_END; i++) {
 		if (ports & BIT_ULL(i)) {
 			if (link & BIT_ULL(i)) {
 				pr_info("%s port %d up\n", __func__, i);
@@ -530,10 +530,10 @@ void rtl931x_print_matrix(void)
 {
 	volatile u64 *ptr = RTL838X_SW_BASE + RTL931X_PORT_ISO_VB_ISO_PMSK_CTRL(0);
 
-	for (int i = 0; i < 52; i += 4)
+	for (int i = 0; i < RTL931X_PORT_CNT; i += 4)
 		pr_info("> %16llx %16llx %16llx %16llx\n",
 			ptr[i + 0], ptr[i + 1], ptr[i + 2], ptr[i + 3]);
-	pr_info("CPU_PORT> %16llx\n", ptr[52]);
+	pr_info("CPU_PORT> %16llx\n", ptr[RTL931X_PORT_CPU]);
 }
 
 void rtl931x_set_receive_management_action(int port, rma_ctrl_t type, action_type_t action)
@@ -1624,12 +1624,12 @@ void rtl931x_set_distribution_algorithm(int group, int algoidx, u32 algomsk)
 
 static void rtl931x_led_init(struct rtl838x_switch_priv *priv)
 {
-	u32 led_copper_port_set[REALTEK_PORT_ARRAY_SIZE(RTL931X_CPU_PORT, 2)] = { 0x00 };
-	u32 led_fiber_port_set[REALTEK_PORT_ARRAY_SIZE(RTL931X_CPU_PORT, 2)] = { 0x00 };
-	u32 port_mask_copper[REALTEK_PORT_ARRAY_SIZE(RTL931X_CPU_PORT, 1)] = { 0x0 };
-	u32 port_mask_fiber[REALTEK_PORT_ARRAY_SIZE(RTL931X_CPU_PORT, 1)] = { 0x0 };
-	u32 port_mask_combo[REALTEK_PORT_ARRAY_SIZE(RTL931X_CPU_PORT, 1)] = { 0x0 };
-	u32 led_port_num[REALTEK_PORT_ARRAY_SIZE(RTL931X_CPU_PORT, 2)] = { 0x00 };
+	u32 led_copper_port_set[REALTEK_PORT_ARRAY_SIZE(RTL931X_PORT_CPU, 2)] = { 0x00 };
+	u32 led_fiber_port_set[REALTEK_PORT_ARRAY_SIZE(RTL931X_PORT_CPU, 2)] = { 0x00 };
+	u32 port_mask_copper[REALTEK_PORT_ARRAY_SIZE(RTL931X_PORT_CPU, 1)] = { 0x0 };
+	u32 port_mask_fiber[REALTEK_PORT_ARRAY_SIZE(RTL931X_PORT_CPU, 1)] = { 0x0 };
+	u32 port_mask_combo[REALTEK_PORT_ARRAY_SIZE(RTL931X_PORT_CPU, 1)] = { 0x0 };
+	u32 led_port_num[REALTEK_PORT_ARRAY_SIZE(RTL931X_PORT_CPU, 2)] = { 0x00 };
 	struct device_node *node;
 
 	pr_info("%s called\n", __func__);

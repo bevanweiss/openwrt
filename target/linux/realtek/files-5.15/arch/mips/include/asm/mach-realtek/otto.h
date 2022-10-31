@@ -356,10 +356,38 @@
 #define RTL931X_SPI_CTRL0		(0x103C)
 
 /* Basic SoC Features */
-#define RTL838X_CPU_PORT			28
-#define RTL839X_CPU_PORT			52
-#define RTL930X_CPU_PORT			28
-#define RTL931X_CPU_PORT			56
+/* Number of Ethernet ports */
+#define RTL838X_PORT_ETH        24
+#define RTL839X_PORT_ETH        48
+#define RTL930X_PORT_ETH        26
+#define RTL931X_PORT_ETH        52
+
+/* Number of SFP ports */
+#define RTL838X_PORT_SFP        4
+#define RTL839X_PORT_SFP        4
+#define RTL930X_PORT_SFP        2
+#define RTL931X_PORT_SFP        0
+
+/* Total port count */
+#define RTL838X_PORT_CNT        (RTL838X_PORT_ETH + RTL838X_PORT_SFP)
+#define RTL839X_PORT_CNT        (RTL839X_PORT_ETH + RTL839X_PORT_SFP)
+#define RTL930X_PORT_CNT        (RTL930X_PORT_ETH + RTL930X_PORT_SFP)
+#define RTL931X_PORT_CNT        (RTL931X_PORT_ETH + RTL931X_PORT_SFP)
+
+/* CPU Port number */
+#define RTL838X_PORT_CPU        RTL838X_PORT_CNT
+#define RTL839X_PORT_CPU        RTL839X_PORT_CNT
+#define RTL930X_PORT_CPU        RTL930X_PORT_CNT
+#define RTL931X_PORT_CPU        RTL931X_PORT_CNT
+
+/* RTL931x uses 4 ports for the internal CPU port */
+#define RTL931X_INT_SERDES_PORTS        4
+
+/* Last port is the port count + the cpu port */
+#define RTL838X_PORT_END        (RTL838X_PORT_CNT + 1)
+#define RTL839X_PORT_END        (RTL839X_PORT_CNT + 1)
+#define RTL930X_PORT_END        (RTL930X_PORT_CNT + 1)
+#define RTL931X_PORT_END        (RTL931X_PORT_CNT + RTL931X_INT_SERDES_PORTS)
 
 struct rtl83xx_soc_info {
 	unsigned char *name;
