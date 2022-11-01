@@ -1493,7 +1493,7 @@ static void rtl838x_mac_pcs_get_state(struct phylink_config *config,
 		break;
 	}
 
-	state->pause &= (MLO_PAUSE_RX | MLO_PAUSE_TX);
+	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
 	if (priv->r->get_mac_rx_pause_sts(port))
 		state->pause |= MLO_PAUSE_RX;
 	if (priv->r->get_mac_tx_pause_sts(port))

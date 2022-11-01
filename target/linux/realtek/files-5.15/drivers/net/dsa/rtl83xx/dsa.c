@@ -481,7 +481,7 @@ static int rtl83xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 		break;
 	}
 
-	state->pause &= (MLO_PAUSE_RX | MLO_PAUSE_TX);
+	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
 	if (priv->r->get_port_reg_le(priv->r->mac_rx_pause_sts) & BIT_ULL(port))
 		state->pause |= MLO_PAUSE_RX;
 	if (priv->r->get_port_reg_le(priv->r->mac_tx_pause_sts) & BIT_ULL(port))
@@ -564,7 +564,7 @@ static int rtl93xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 	}
 
 	pr_debug("%s: speed is: %d %d\n", __func__, (u32)speed & 0xf, state->speed);
-	state->pause &= (MLO_PAUSE_RX | MLO_PAUSE_TX);
+	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
 	if (priv->r->get_port_reg_le(priv->r->mac_rx_pause_sts) & BIT_ULL(port))
 		state->pause |= MLO_PAUSE_RX;
 	if (priv->r->get_port_reg_le(priv->r->mac_tx_pause_sts) & BIT_ULL(port))
