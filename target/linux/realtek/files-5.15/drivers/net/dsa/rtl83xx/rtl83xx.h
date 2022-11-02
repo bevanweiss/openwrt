@@ -11,12 +11,6 @@
 #define RTL8390_VERSION_A 'A'
 #define RTL8380_VERSION_B 'B'
 
-struct fdb_update_work {
-	struct work_struct work;
-	struct net_device *ndev;
-	u64 macs[];
-};
-
 #define MIB_DESC(_size, _offset, _name) {.size = _size, .offset = _offset, .name = _name}
 struct rtl83xx_mib_desc {
 	unsigned int size;
