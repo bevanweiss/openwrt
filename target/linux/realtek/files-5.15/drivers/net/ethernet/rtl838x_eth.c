@@ -190,7 +190,7 @@ struct rtl838x_eth_priv {
 	u32 lastEvent;
 	u16 rxrings;
 	u16 rxringlen;
-	u8 smi_bus[MAX_PORTS];
+	u32 smi_bus[MAX_PORTS];
 	u8 smi_addr[MAX_PORTS];
 	u32 sds_id[MAX_PORTS];
 	bool smi_bus_isc45[MAX_SMI_BUSSES];
@@ -1922,7 +1922,7 @@ static int rtl930x_mdio_reset(struct mii_bus *bus)
 	for (int i = 0; i < RTL930X_CPU_PORT; i++) {
 		int pos;
 
-		if (priv->smi_bus[i] > 3)
+		if ((priv->smi_bus[i] < 0) || (priv->smi_bus[i] > MAX_SMI_BUSSES))
 			continue;
 		pos = (i % 6) * 5;
 		sw_w32_mask(0x1f << pos, priv->smi_addr[i] << pos,
@@ -2030,6 +2030,8 @@ static int rtl931x_mdio_reset(struct mii_bus *bus)
 	for (int i = 0; i < 56; i++) {
 		u32 pos;
 
+		if ((priv->smi_bus[i] < 0) || (priv->smi_bus[i] > MAX_SMI_BUSSES))
+			continue;
 		pos = (i % 6) * 5;
 		sw_w32_mask(0x1f << pos, priv->smi_addr[i] << pos, RTL931X_SMI_PORT_ADDR + (i / 6) * 4);
 		pos = (i * 2) % 32;
@@ -2173,13 +2175,17 @@ static int rtl838x_mdio_init(struct rtl838x_eth_priv *priv)
 	for_each_node_by_name(dn, "ethernet-phy") {
 		u32 smi_addr[2];
 
-		if (of_property_read_u32(dn, "reg", &pn))
+		if (of_property_read_u32(dn, "reg", &pn)) {
+			pr_err("%s: missing reg property on port %d\n", __func__, pn);
 			continue;
-
-		if (of_property_read_u32_array(dn, "rtl9300,smi-address", &smi_addr[0], 2)) {
-			smi_addr[0] = 0;
-			smi_addr[1] = pn;
 		}
+
+		if (pn >= MAX_PORTS) {
+			pr_err("%s: illegal port number %d\n", __func__, pn);
+			continue;
+		}
+
+		priv->phy_is_internal[pn] = of_property_read_bool(dn, "phy-is-integrated");
 
 		if (of_property_read_u32(dn, "sds", &priv->sds_id[pn]))
 			priv->sds_id[pn] = -1;
@@ -2187,19 +2193,28 @@ static int rtl838x_mdio_init(struct rtl838x_eth_priv *priv)
 			pr_info("set sds port %d to %d\n", pn, priv->sds_id[pn]);
 		}
 
-		if (pn < MAX_PORTS) {
+		if (of_property_read_u32_array(dn, "rtl9300,smi-address", &smi_addr[0], 2)) {
+			/* Integrated PHYs associated to a SerDes do not have an smi_bus */
+			if (priv->phy_is_internal[pn] && priv->sds_id[pn] >= 0) {
+				priv->smi_bus[pn] = -1;
+			/* PHYs whether integrated or not, not associated to an SDS use an smi_bus */
+			} else {
+				/* For RTL83xx, PHY-id is port ID on smi_bus 0 */
+				priv->smi_bus[pn] = 0;
+				priv->smi_addr[pn] = pn;
+			}
+		} else {
 			priv->smi_bus[pn] = smi_addr[0];
 			priv->smi_addr[pn] = smi_addr[1];
-		} else {
-			pr_err("%s: illegal port number %d\n", __func__, pn);
 		}
 
-		if (of_device_is_compatible(dn, "ethernet-phy-ieee802.3-c45"))
-			priv->smi_bus_isc45[smi_addr[0]] = true;
-
-		if (of_property_read_bool(dn, "phy-is-integrated")) {
-			priv->phy_is_internal[pn] = true;
+		if (priv->smi_bus[pn] > MAX_SMI_BUSSES) {
+			pr_err("%s: illegal SMI bus number %d\n", __func__, priv->smi_bus[pn]);
+			continue;
 		}
+
+		if (priv->smi_bus[pn] >= 0)
+			priv->smi_bus_isc45[priv->smi_bus[pn]] = !!of_device_is_compatible(dn, "ethernet-phy-ieee802.3-c45");
 	}
 
 	dn = of_find_compatible_node(NULL, NULL, "realtek,rtl83xx-switch");
