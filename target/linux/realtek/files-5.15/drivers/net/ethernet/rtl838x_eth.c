@@ -2284,7 +2284,7 @@ static netdev_features_t rtl838x_fix_features(struct net_device *dev,
 	return features;
 }
 
-static int rtl83xx_set_features(struct net_device *dev, netdev_features_t features)
+static int rtl838x_set_features(struct net_device *dev, netdev_features_t features)
 {
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
 
@@ -2298,7 +2298,21 @@ static int rtl83xx_set_features(struct net_device *dev, netdev_features_t featur
 	return 0;
 }
 
-static int rtl93xx_set_features(struct net_device *dev, netdev_features_t features)
+static int rtl839x_set_features(struct net_device *dev, netdev_features_t features)
+{
+	struct rtl838x_eth_priv *priv = netdev_priv(dev);
+
+	if ((features ^ dev->features) & NETIF_F_RXCSUM) {
+		if (!(features & NETIF_F_RXCSUM))
+			sw_w32_mask(BIT(3), 0, priv->r->mac_port_ctrl(priv->cpu_port));
+		else
+			sw_w32_mask(0, BIT(3), priv->r->mac_port_ctrl(priv->cpu_port));
+	}
+
+	return 0;
+}
+
+static int rtl930x_set_features(struct net_device *dev, netdev_features_t features)
 {
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
 
@@ -2312,6 +2326,13 @@ static int rtl93xx_set_features(struct net_device *dev, netdev_features_t featur
 	return 0;
 }
 
+static int rtl931x_set_features(struct net_device *dev, netdev_features_t features)
+{
+	/* RXCSUM not supported */
+
+	return 0;
+}
+
 static const struct net_device_ops rtl838x_eth_netdev_ops = {
 	.ndo_open = rtl838x_eth_open,
 	.ndo_stop = rtl838x_eth_stop,
@@ -2321,7 +2342,7 @@ static const struct net_device_ops rtl838x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl838x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl83xx_set_features,
+	.ndo_set_features = rtl838x_set_features,
 	.ndo_fix_features = rtl838x_fix_features,
 	.ndo_setup_tc = rtl83xx_setup_tc,
 };
@@ -2335,7 +2356,7 @@ static const struct net_device_ops rtl839x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl839x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl83xx_set_features,
+	.ndo_set_features = rtl839x_set_features,
 	.ndo_fix_features = rtl838x_fix_features,
 	.ndo_setup_tc = rtl83xx_setup_tc,
 };
@@ -2349,7 +2370,7 @@ static const struct net_device_ops rtl930x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl930x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl93xx_set_features,
+	.ndo_set_features = rtl930x_set_features,
 	.ndo_fix_features = rtl838x_fix_features,
 	.ndo_setup_tc = rtl83xx_setup_tc,
 };
@@ -2363,7 +2384,7 @@ static const struct net_device_ops rtl931x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl931x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl93xx_set_features,
+	.ndo_set_features = rtl931x_set_features,
 	.ndo_fix_features = rtl838x_fix_features,
 };
 
