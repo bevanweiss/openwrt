@@ -444,48 +444,21 @@ static int rtl838x_phylink_mac_link_state(struct dsa_switch *ds, int port,
 					  struct phylink_link_state *state)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
-	u64 speed;
-	u64 link;
 
 	if (port < 0 || port > priv->cpu_port)
 		return -EINVAL;
 
-	state->link = 0;
-	link = priv->r->get_port_reg_le(priv->r->mac_link_sts);
-	if (link & BIT_ULL(port))
+	state->duplex = priv->r->mac_link_dup_sts(port);
+
+	state->link = priv->r->mac_link_sts(port);
+	if (priv->r->mac_link_media_sts(port) == PORT_FIBRE)
 		state->link = 1;
-	pr_debug("%s: link state port %d: %llx\n", __func__, port, link & BIT_ULL(port));
-
-	state->duplex = DUPLEX_HALF;
-	if (priv->r->get_port_reg_le(priv->r->mac_link_dup_sts) & BIT_ULL(port))
-		state->duplex = DUPLEX_FULL;
-
-	speed = priv->r->get_port_reg_le(priv->r->mac_link_spd_sts(port));
-	speed >>= (port % 16) << 1;
-	switch (speed & 0x3) {
-	case 0:
-		state->speed = SPEED_10;
-		break;
-	case 1:
-		state->speed = SPEED_100;
-		break;
-	case 2:
-		state->speed = SPEED_1000;
-		break;
-	case 3:
-		if ((port == 24) || (port == 26)) /* Internal serdes */
-			state->speed = SPEED_2500;
-		else
-			state->speed = SPEED_100;
-
-		break;
-	}
 
 	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
-	if (priv->r->get_port_reg_le(priv->r->mac_rx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_RX;
-	if (priv->r->get_port_reg_le(priv->r->mac_tx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_TX;
+	state->pause |= priv->r->mac_rx_pause_sts(port);
+	state->pause |= priv->r->mac_tx_pause_sts(port);
+
+	state->speed = priv->r->mac_link_spd_sts(port);
 
 	return 1;
 }
@@ -494,43 +467,22 @@ static int rtl839x_phylink_mac_link_state(struct dsa_switch *ds, int port,
 					  struct phylink_link_state *state)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
-	u64 speed;
-	u64 link;
 
 	if (port < 0 || port > priv->cpu_port)
 		return -EINVAL;
 
-	state->link = 0;
-	link = priv->r->get_port_reg_le(priv->r->mac_link_sts);
-	if (link & BIT_ULL(port))
+	state->duplex = priv->r->mac_link_dup_sts(port);
+
+	state->link = priv->r->mac_link_sts(port);
+	if (priv->r->mac_link_media_sts(port) == PORT_FIBRE)
 		state->link = 1;
-	pr_debug("%s: link state port %d: %llx\n", __func__, port, link & BIT_ULL(port));
 
-	state->duplex = DUPLEX_HALF;
-	if (priv->r->get_port_reg_le(priv->r->mac_link_dup_sts) & BIT_ULL(port))
-		state->duplex = DUPLEX_FULL;
+	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
+	state->pause |= priv->r->mac_rx_pause_sts(port);
+	state->pause |= priv->r->mac_tx_pause_sts(port);
 
-	speed = priv->r->get_port_reg_le(priv->r->mac_link_spd_sts(port));
-	speed >>= (port % 16) << 1;
-	switch (speed & 0x3) {
-	case 0:
-		state->speed = SPEED_10;
-		break;
-	case 1:
-		state->speed = SPEED_100;
-		break;
-	case 2:
-		state->speed = SPEED_1000;
-		break;
-	case 3:
-		state->speed = SPEED_100; /* Is in fact 500Mbit */
-	}
+	state->speed = priv->r->mac_link_spd_sts(port);
 
-	state->pause &= (MLO_PAUSE_RX | MLO_PAUSE_TX);
-	if (priv->r->get_port_reg_le(priv->r->mac_rx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_RX;
-	if (priv->r->get_port_reg_le(priv->r->mac_tx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_TX;
 	return 1;
 }
 
@@ -538,145 +490,53 @@ static int rtl930x_phylink_mac_link_state(struct dsa_switch *ds, int port,
 					  struct phylink_link_state *state)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
-	u64 speed;
-	u64 link;
-	u64 media;
 
 	if (port < 0 || port > priv->cpu_port)
 		return -EINVAL;
 
-	/* On the RTL9300 for at least the RTL8226B PHY, the MAC-side link
-	 * state needs to be read twice in order to read a correct result.
-	 * This would not be necessary for ports connected e.g. to RTL8218D
-	 * PHYs.
-	 */
-	state->link = 0;
-	link = priv->r->get_port_reg_le(priv->r->mac_link_sts);
-	link = priv->r->get_port_reg_le(priv->r->mac_link_sts);
-	if (link & BIT_ULL(port))
+	state->duplex = priv->r->mac_link_dup_sts(port);
+
+	state->link = priv->r->mac_link_sts(port);
+	if (priv->r->mac_link_media_sts(port) == PORT_FIBRE)
 		state->link = 1;
 
-	media = sw_r32(RTL930X_MAC_LINK_MEDIA_STS_ADDR);
-	if (media & BIT_ULL(port))
-		state->link = 1;
+	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
+	state->pause |= priv->r->mac_rx_pause_sts(port);
+	state->pause |= priv->r->mac_tx_pause_sts(port);
 
-	pr_debug("%s: link state port %d: %llx, media %llx\n", __func__, port,
-		 link & BIT_ULL(port), media);
+	state->speed = priv->r->mac_link_spd_sts(port);
 
-	state->duplex = DUPLEX_HALF;
-	if (priv->r->get_port_reg_le(priv->r->mac_link_dup_sts) & BIT_ULL(port))
-		state->duplex = DUPLEX_FULL;
-
-	speed = priv->r->get_port_reg_le(priv->r->mac_link_spd_sts(port));
-	speed >>= (port % 8) << 2;
-	switch (speed & 0xf) {
-	case 0:
-		state->speed = SPEED_10;
-		break;
-	case 1:
-		state->speed = SPEED_100;
-		break;
-	case 2: fallthrough;
-	case 7:
-		state->speed = SPEED_1000;
-		break;
-	case 4:
-		state->speed = SPEED_10000;
-		break;
-	case 5: fallthrough;
-	case 8:
-		state->speed = SPEED_2500;
-		break;
-	case 6:
-		state->speed = SPEED_5000;
-		break;
-	default:
-		pr_err("%s: unknown speed: %d\n", __func__, (u32)speed & 0xf);
-		break;
-	}
-
-	pr_debug("%s: speed is: %d %d\n", __func__, (u32)speed & 0xf, state->speed);
-	state->pause &= (MLO_PAUSE_RX | MLO_PAUSE_TX);
-	if (priv->r->get_port_reg_le(priv->r->mac_rx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_RX;
-	if (priv->r->get_port_reg_le(priv->r->mac_tx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_TX;
 	return 1;
 }
 static int rtl931x_phylink_mac_link_state(struct dsa_switch *ds, int port,
 					  struct phylink_link_state *state)
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
-	u64 speed;
-	u64 link;
-	u64 media;
+
+	if ((priv->family_id == RTL9310_FAMILY_ID) &&
+	    ((port >= (RTL931X_PORT_CPU) ||
+	     (port <= (RTL931X_PORT_CPU + RTL931X_INT_SERDES_PORTS))))) { /* Internal serdes */
+		state->duplex = DUPLEX_FULL;
+		state->link = 1;
+		state->speed = SPEED_10000;
+
+		return 1;
+	}
 
 	if (port < 0 || port > priv->cpu_port)
 		return -EINVAL;
 
-	/*
-	 * On the RTL9300 for at least the RTL8226B PHY, the MAC-side link
-	 * state needs to be read twice in order to read a correct result.
-	 * This would not be necessary for ports connected e.g. to RTL8218D
-	 * PHYs.
-	 */
-	state->link = 0;
-	link = priv->r->get_port_reg_le(priv->r->mac_link_sts);
-	link = priv->r->get_port_reg_le(priv->r->mac_link_sts);
-	if (link & BIT_ULL(port))
+	state->duplex = priv->r->mac_link_dup_sts(port);
+
+	state->link = priv->r->mac_link_sts(port);
+	if (priv->r->mac_link_media_sts(port) == PORT_FIBRE)
 		state->link = 1;
 
-	media = priv->r->get_port_reg_le(RTL931X_MAC_LINK_MEDIA_STS_ADDR);
-	if (media & BIT_ULL(port))
-		state->link = 1;
-
-	pr_debug("%s: link state port %d: %llx, media %llx\n", __func__, port,
-		 link & BIT_ULL(port), media);
-
-	state->duplex = DUPLEX_HALF;
-	if (priv->r->get_port_reg_le(priv->r->mac_link_dup_sts) & BIT_ULL(port))
-		state->duplex = DUPLEX_FULL;
-
-	speed = priv->r->get_port_reg_le(priv->r->mac_link_spd_sts(port));
-	speed >>= (port % 8) << 2;
-	switch (speed & 0xf) {
-	case 0:
-		state->speed = SPEED_10;
-		break;
-	case 1:
-		state->speed = SPEED_100;
-		break;
-	case 2:
-	case 7:
-		state->speed = SPEED_1000;
-		break;
-	case 4:
-		state->speed = SPEED_10000;
-		break;
-	case 5:
-	case 8:
-		state->speed = SPEED_2500;
-		break;
-	case 6:
-		state->speed = SPEED_5000;
-		break;
-	default:
-		pr_err("%s: unknown speed: %d\n", __func__, (u32)speed & 0xf);
-	}
-
-	if ((port >= (RTL931X_PORT_CPU) ||
-	    (port <= (RTL931X_PORT_CPU + RTL931X_INT_SERDES_PORTS)))) { /* Internal serdes */
-			state->speed = SPEED_10000;
-			state->link = 1;
-			state->duplex = DUPLEX_FULL;
-	}
-
-	pr_debug("%s: speed is: %d %d\n", __func__, (u32)speed & 0xf, state->speed);
 	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
-	if (priv->r->get_port_reg_le(priv->r->mac_rx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_RX;
-	if (priv->r->get_port_reg_le(priv->r->mac_tx_pause_sts) & BIT_ULL(port))
-		state->pause |= MLO_PAUSE_TX;
+	state->pause |= priv->r->mac_rx_pause_sts(port);
+	state->pause |= priv->r->mac_tx_pause_sts(port);
+
+	state->speed = priv->r->mac_link_spd_sts(port);
 
 	return 1;
 }

@@ -701,7 +701,6 @@ irqreturn_t rtl839x_switch_irq(int irq, void *dev_id)
 	struct dsa_switch *ds = dev_id;
 	u32 status = sw_r32(RTL839X_ISR_GLB_SRC_REG);
 	u64 ports = rtl839x_get_port_reg_le(RTL839X_ISR_PORT_LINK_STS_REG(0));
-	u64 link;
 
 	/* Clear status */
 	rtl839x_isr_port_link_sts_chg(ports);
@@ -709,8 +708,7 @@ irqreturn_t rtl839x_switch_irq(int irq, void *dev_id)
 
 	for (int i = 0; i < RTL839X_PORT_CNT; i++) {
 		if (ports & BIT_ULL(i)) {
-			link = rtl839x_get_port_reg_le(RTL839X_MAC_LINK_STS_ADDR);
-			if (link & BIT_ULL(i))
+			if (rtl839x_mac_link_sts(i) == 1)
 				dsa_port_phylink_mac_change(ds, i, true);
 			else
 				dsa_port_phylink_mac_change(ds, i, false);
@@ -978,13 +976,12 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 /* Get EEE own capabilities and negotiation result */
 int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_eee *e, int port)
 {
-	u64 link, a;
+	u64 a;
 
 	if (port >= RTL839X_PORT_ETH)
 		return 0;
 
-	link = rtl839x_get_port_reg_le(RTL839X_MAC_LINK_STS_ADDR);
-	if (!(link & BIT_ULL(port)))
+	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
 	if (sw_r32(rtl839x_mac_force_mode_ctrl(port)) & BIT(8))
@@ -1972,11 +1969,12 @@ const struct rtl838x_reg rtl839x_reg = {
 	.mir_ctrl = RTL839X_MIR_CTRL,
 	.mir_dpm = RTL839X_MIR_DPM_CTRL,
 	.mir_spm = RTL839X_MIR_SPM_CTRL,
-	.mac_link_sts = RTL839X_MAC_LINK_STS_ADDR,
-	.mac_link_dup_sts = RTL839X_MAC_LINK_DUP_STS_ADDR,
-	.mac_link_spd_sts = rtl839x_mac_link_spd_sts_addr,
-	.mac_rx_pause_sts = RTL839X_MAC_RX_PAUSE_STS_ADDR,
-	.mac_tx_pause_sts = RTL839X_MAC_TX_PAUSE_STS_ADDR,
+	.mac_link_sts = rtl839x_mac_link_sts,
+	.mac_link_dup_sts = rtl839x_mac_link_dup_sts,
+	.mac_link_media_sts = rtl839x_mac_link_media_sts,
+	.mac_link_spd_sts = rtl839x_mac_link_spd_sts,
+	.mac_rx_pause_sts = rtl839x_mac_rx_pause_sts,
+	.mac_tx_pause_sts = rtl839x_mac_tx_pause_sts,
 	.read_l2_entry_using_hash = rtl839x_read_l2_entry_using_hash,
 	.write_l2_entry_using_hash = rtl839x_write_l2_entry_using_hash,
 	.read_cam = rtl839x_read_cam,

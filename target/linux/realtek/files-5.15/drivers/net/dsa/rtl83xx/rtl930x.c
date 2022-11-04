@@ -853,19 +853,13 @@ irqreturn_t rtl930x_switch_irq(int irq, void *dev_id)
 {
 	struct dsa_switch *ds = dev_id;
 	u32 ports = sw_r32(RTL930X_ISR_PORT_LINK_STS_REG(0));
-	u32 link;
 
 	/* Clear status */
 	rtl930x_isr_port_link_sts_chg(ports);
 
 	for (int i = 0; i < RTL930X_PORT_CNT; i++) {
 		if (ports & BIT(i)) {
-			/* Read the register twice because of issues with latency at least
-			 * with the external RTL8226 PHY on the XGS1210
-			 */
-			link = sw_r32(RTL930X_MAC_LINK_STS_ADDR);
-			link = sw_r32(RTL930X_MAC_LINK_STS_ADDR);
-			if (link & BIT(i))
+			if (rtl930x_mac_link_sts(i) == 1)
 				dsa_port_phylink_mac_change(ds, i, true);
 			else
 				dsa_port_phylink_mac_change(ds, i, false);
@@ -1067,15 +1061,13 @@ void rtl930x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 /* Get EEE own capabilities and negotiation result */
 int rtl930x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_eee *e, int port)
 {
-	u32 link, a;
+	u32 a;
 
 	if (port >= RTL930X_PORT_ETH)
 		return -ENOTSUPP;
 
 	pr_info("In %s, port %d\n", __func__, port);
-	link = sw_r32(RTL930X_MAC_LINK_STS_ADDR);
-	link = sw_r32(RTL930X_MAC_LINK_STS_ADDR);
-	if (!(link & BIT(port)))
+	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
 	pr_info("Setting advertised\n");
@@ -2663,11 +2655,12 @@ const struct rtl838x_reg rtl930x_reg = {
 	.mir_ctrl = RTL930X_MIR_CTRL,
 	.mir_dpm = RTL930X_MIR_DPM_CTRL,
 	.mir_spm = RTL930X_MIR_SPM_CTRL,
-	.mac_link_sts = RTL930X_MAC_LINK_STS_ADDR,
-	.mac_link_dup_sts = RTL930X_MAC_LINK_DUP_STS_ADDR,
-	.mac_link_spd_sts = rtl930x_mac_link_spd_sts_addr,
-	.mac_rx_pause_sts = RTL930X_MAC_RX_PAUSE_STS_ADDR,
-	.mac_tx_pause_sts = RTL930X_MAC_TX_PAUSE_STS_ADDR,
+	.mac_link_sts = rtl930x_mac_link_sts,
+	.mac_link_dup_sts = rtl930x_mac_link_dup_sts,
+	.mac_link_media_sts = rtl930x_mac_link_media_sts,
+	.mac_link_spd_sts = rtl930x_mac_link_spd_sts,
+	.mac_rx_pause_sts = rtl930x_mac_rx_pause_sts,
+	.mac_tx_pause_sts = rtl930x_mac_tx_pause_sts,
 	.read_l2_entry_using_hash = rtl930x_read_l2_entry_using_hash,
 	.write_l2_entry_using_hash = rtl930x_write_l2_entry_using_hash,
 	.read_cam = rtl930x_read_cam,

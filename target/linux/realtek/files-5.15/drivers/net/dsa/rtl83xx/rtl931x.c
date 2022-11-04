@@ -453,20 +453,14 @@ irqreturn_t rtl931x_switch_irq(int irq, void *dev_id)
 	struct dsa_switch *ds = dev_id;
 	u32 status = sw_r32(RTL931X_ISR_GLB_SRC_REG);
 	u64 ports = rtl839x_get_port_reg_le(RTL931X_ISR_PORT_LINK_STS_REG(0));
-	u64 link;
 
 	/* Clear status */
 	rtl931x_isr_port_link_sts_chg(ports);
 	pr_debug("RTL931X Link change: status: %x, ports %016llx\n", status, ports);
 
-	link = rtl839x_get_port_reg_le(RTL931X_MAC_LINK_STS_ADDR);
-	/* Must re-read this to get correct status */
-	link = rtl839x_get_port_reg_le(RTL931X_MAC_LINK_STS_ADDR);
-	pr_debug("RTL931X Link change: status: %x, link status %016llx\n", status, link);
-
 	for (int i = 0; i < RTL931X_PORT_END; i++) {
 		if (ports & BIT_ULL(i)) {
-			if (link & BIT_ULL(i)) {
+			if (rtl931x_mac_link_sts(i) == 1) {
 				pr_info("%s port %d up\n", __func__, i);
 				dsa_port_phylink_mac_change(ds, i, true);
 			} else {
@@ -1836,11 +1830,12 @@ const struct rtl838x_reg rtl931x_reg = {
 	.mir_ctrl = RTL931X_MIR_CTRL,
 	.mir_dpm = RTL931X_MIR_DPM_CTRL,
 	.mir_spm = RTL931X_MIR_SPM_CTRL,
-	.mac_link_sts = RTL931X_MAC_LINK_STS_ADDR,
-	.mac_link_dup_sts = RTL931X_MAC_LINK_DUP_STS_ADDR,
-	.mac_link_spd_sts = rtl931x_mac_link_spd_sts_addr,
-	.mac_rx_pause_sts = RTL931X_MAC_RX_PAUSE_STS_ADDR,
-	.mac_tx_pause_sts = RTL931X_MAC_TX_PAUSE_STS_ADDR,
+	.mac_link_sts = rtl931x_mac_link_sts,
+	.mac_link_dup_sts = rtl931x_mac_link_dup_sts,
+	.mac_link_media_sts = rtl931x_mac_link_media_sts,
+	.mac_link_spd_sts = rtl931x_mac_link_spd_sts,
+	.mac_rx_pause_sts = rtl931x_mac_rx_pause_sts,
+	.mac_tx_pause_sts = rtl931x_mac_tx_pause_sts,
 	.read_l2_entry_using_hash = rtl931x_read_l2_entry_using_hash,
 	.write_l2_entry_using_hash = rtl931x_write_l2_entry_using_hash,
 	.read_cam = rtl931x_read_cam,
