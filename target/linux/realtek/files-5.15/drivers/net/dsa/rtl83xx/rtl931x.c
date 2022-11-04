@@ -366,6 +366,78 @@ static inline int rtl931x_mac_port_ctrl(int p)
 	return RTL931X_MAC_L2_PORT_CTRL + (p << 7);
 }
 
+int rtl931x_mac_link_sts(const int port)
+{
+	/* Read the register twice because of issues with latency */
+	(void)sw_r32(RTL931X_MAC_LINK_STS_REG(port));
+	if (RTL931X_MAC_LINK_STS(port, sw_r32(RTL931X_MAC_LINK_STS_REG(port))) == RTL931X_MAC_LINK_STS_UP)
+		return 1;
+	else
+		return 0;
+
+	return 0;
+}
+
+int rtl931x_mac_link_dup_sts(const int port)
+{
+	if (RTL931X_MAC_LINK_DUP_STS(port, sw_r32(RTL931X_MAC_LINK_DUP_STS_REG(port))) == RTL931X_MAC_LINK_DUP_STS_FULL)
+		return DUPLEX_FULL;
+	else
+		return DUPLEX_HALF;
+
+	return DUPLEX_UNKNOWN;
+}
+
+int rtl931x_mac_link_media_sts(const int port)
+{
+	switch (RTL931X_MAC_LINK_MEDIA_STS(port, sw_r32(RTL931X_MAC_LINK_MEDIA_STS_REG(port)))) {
+	case RTL931X_MAC_LINK_MEDIA_STS_FIBER:
+		return PORT_FIBRE;
+	case RTL931X_MAC_LINK_MEDIA_STS_COPPER:
+		return PORT_TP;
+	}
+
+	return PORT_OTHER;
+}
+
+int rtl931x_mac_link_spd_sts(const int port)
+{
+	switch (RTL931X_MAC_LINK_SPD_STS(port, sw_r32(RTL931X_MAC_LINK_SPD_STS_REG(port)))) {
+	case RTL931X_MAC_LINK_SPD_STS_10G:
+		return SPEED_10000;
+	case RTL931X_MAC_LINK_SPD_STS_5G:
+		return SPEED_5000;
+	case RTL931X_MAC_LINK_SPD_STS_2G5_ALT: fallthrough;
+	case RTL931X_MAC_LINK_SPD_STS_2G5:
+		return SPEED_2500;
+	case RTL931X_MAC_LINK_SPD_STS_1000M_ALT: fallthrough;
+	case RTL931X_MAC_LINK_SPD_STS_1000M:
+		return SPEED_1000;
+	case RTL931X_MAC_LINK_SPD_STS_100M:
+		return SPEED_100;
+	case RTL931X_MAC_LINK_SPD_STS_10M:
+		return SPEED_10;
+	}
+
+	return SPEED_UNKNOWN;
+}
+
+int rtl931x_mac_rx_pause_sts(const int port)
+{
+	if (RTL931X_MAC_RX_PAUSE_STS(port, sw_r32(RTL931X_MAC_RX_PAUSE_STS_REG(port))) == RTL931X_MAC_RX_PAUSE_STS_ON)
+		return MLO_PAUSE_RX;
+
+	return MLO_PAUSE_NONE;
+}
+
+int rtl931x_mac_tx_pause_sts(const int port)
+{
+	if (RTL931X_MAC_TX_PAUSE_STS(port, sw_r32(RTL931X_MAC_TX_PAUSE_STS_REG(port))) == RTL931X_MAC_TX_PAUSE_STS_ON)
+		return MLO_PAUSE_TX;
+
+	return MLO_PAUSE_NONE;
+}
+
 static inline int rtl931x_l2_port_new_salrn(int p)
 {
 	return RTL931X_L2_PORT_NEW_SALRN(p);

@@ -413,6 +413,80 @@ static inline int rtl930x_mac_link_spd_sts_addr(int p)
 	return RTL930X_MAC_LINK_SPD_STS_PORT_ADDR(p);
 }
 
+int rtl930x_mac_link_sts(const int port)
+{
+	/* Read the register twice because of issues with latency at least
+	 * with the external RTL8226 PHY on the XGS1210
+	 */
+	(void)sw_r32(RTL930X_MAC_LINK_STS_REG(port));
+	if (RTL930X_MAC_LINK_STS(port, sw_r32(RTL930X_MAC_LINK_STS_REG(port))) == RTL930X_MAC_LINK_STS_UP)
+		return 1;
+	else
+		return 0;
+
+	return 0;
+}
+
+int rtl930x_mac_link_dup_sts(const int port)
+{
+	if (RTL930X_MAC_LINK_DUP_STS(port, sw_r32(RTL930X_MAC_LINK_DUP_STS_REG(port))) == RTL930X_MAC_LINK_DUP_STS_FULL)
+		return DUPLEX_FULL;
+	else
+		return DUPLEX_HALF;
+
+	return DUPLEX_UNKNOWN;
+}
+
+int rtl930x_mac_link_media_sts(const int port)
+{
+	switch (RTL930X_MAC_LINK_MEDIA_STS(port, sw_r32(RTL930X_MAC_LINK_MEDIA_STS_REG(port)))) {
+	case RTL930X_MAC_LINK_MEDIA_STS_FIBER:
+		return PORT_FIBRE;
+	case RTL930X_MAC_LINK_MEDIA_STS_COPPER:
+		return PORT_TP;
+	}
+
+	return PORT_OTHER;
+}
+
+int rtl930x_mac_link_spd_sts(const int port)
+{
+	switch (RTL930X_MAC_LINK_SPD_STS(port, sw_r32(RTL930X_MAC_LINK_SPD_STS_REG(port)))) {
+	case RTL930X_MAC_LINK_SPD_STS_10G:
+		return SPEED_10000;
+	case RTL930X_MAC_LINK_SPD_STS_5G:
+		return SPEED_5000;
+	case RTL930X_MAC_LINK_SPD_STS_2G5_ALT: fallthrough;
+	case RTL930X_MAC_LINK_SPD_STS_2G5:
+		return SPEED_2500;
+	case RTL930X_MAC_LINK_SPD_STS_1000M_ALT: fallthrough;
+	case RTL930X_MAC_LINK_SPD_STS_1000M:
+		return SPEED_1000;
+	case RTL930X_MAC_LINK_SPD_STS_100M:
+		return SPEED_100;
+	case RTL930X_MAC_LINK_SPD_STS_10M:
+		return SPEED_10;
+	}
+
+	return SPEED_UNKNOWN;
+}
+
+int rtl930x_mac_rx_pause_sts(const int port)
+{
+	if (RTL930X_MAC_RX_PAUSE_STS(port, sw_r32(RTL930X_MAC_RX_PAUSE_STS_REG(port))) == RTL930X_MAC_RX_PAUSE_STS_ON)
+		return MLO_PAUSE_RX;
+
+	return MLO_PAUSE_NONE;
+}
+
+int rtl930x_mac_tx_pause_sts(const int port)
+{
+	if (RTL930X_MAC_TX_PAUSE_STS(port, sw_r32(RTL930X_MAC_TX_PAUSE_STS_REG(port))) == RTL930X_MAC_TX_PAUSE_STS_ON)
+		return MLO_PAUSE_TX;
+
+	return MLO_PAUSE_NONE;
+}
+
 static u64 rtl930x_l2_hash_seed(u64 mac, u32 vid)
 {
 	u64 v = vid;

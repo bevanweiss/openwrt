@@ -13,6 +13,7 @@
 #include <linux/types.h>
 #include <net/dsa.h>
 #include <net/ipv6.h>
+#include <uapi/linux/ethtool.h>
 #include <uapi/linux/in6.h>
 
 #include "rtl838x.h"
@@ -297,6 +298,68 @@ static inline int rtl838x_l2_port_new_sa_fwd(int p)
 static inline int rtl838x_mac_link_spd_sts_addr(int p)
 {
 	return RTL838X_MAC_LINK_SPD_STS_PORT_ADDR(p);
+}
+
+int rtl838x_mac_link_sts(const int port)
+{
+	if (RTL838X_MAC_LINK_STS(port, sw_r32(RTL838X_MAC_LINK_STS_REG(port))) == RTL838X_MAC_LINK_STS_UP)
+		return 1;
+	else
+		return 0;
+
+	return 0;
+}
+
+int rtl838x_mac_link_dup_sts(const int port)
+{
+	if (RTL838X_MAC_LINK_DUP_STS(port, sw_r32(RTL838X_MAC_LINK_DUP_STS_REG(port))) == RTL838X_MAC_LINK_DUP_STS_FULL)
+		return DUPLEX_FULL;
+	else
+		return DUPLEX_HALF;
+
+	return DUPLEX_UNKNOWN;
+}
+
+int rtl838x_mac_link_media_sts(const int port)
+{
+	return PORT_TP;
+}
+
+int rtl838x_mac_link_spd_sts(const int port)
+{
+	switch (RTL838X_MAC_LINK_SPD_STS(port, sw_r32(RTL838X_MAC_LINK_SPD_STS_REG(port)))) {
+	case RTL838X_MAC_LINK_SPD_STS_2G:
+		// TODO Lie about the speed, as we do not have SPEED_2000 yet
+		/* 2G mode is only supported on port 24 and 26 */
+		if ((port == 24) || (port == 26))
+			return SPEED_100;
+		pr_err("%s: 2G Speed is not supported on ports other then 24 and 26\n", __func__);
+		break;
+	case RTL838X_MAC_LINK_SPD_STS_1000M:
+		return SPEED_1000;
+	case RTL838X_MAC_LINK_SPD_STS_100M:
+		return SPEED_100;
+	case RTL838X_MAC_LINK_SPD_STS_10M:
+		return SPEED_10;
+	}
+
+	return SPEED_UNKNOWN;
+}
+
+int rtl838x_mac_rx_pause_sts(const int port)
+{
+	if (RTL838X_MAC_RX_PAUSE_STS(port, sw_r32(RTL838X_MAC_RX_PAUSE_STS_REG(port))) == RTL838X_MAC_RX_PAUSE_STS_ON)
+		return MLO_PAUSE_RX;
+
+	return MLO_PAUSE_NONE;
+}
+
+int rtl838x_mac_tx_pause_sts(const int port)
+{
+	if (RTL838X_MAC_TX_PAUSE_STS(port, sw_r32(RTL838X_MAC_TX_PAUSE_STS_REG(port))) == RTL838X_MAC_TX_PAUSE_STS_ON)
+		return MLO_PAUSE_TX;
+
+	return MLO_PAUSE_NONE;
 }
 
 inline static int rtl838x_trk_mbr_ctr(int group)

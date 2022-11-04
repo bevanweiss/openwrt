@@ -335,6 +335,75 @@ static inline int rtl839x_mac_link_spd_sts_addr(int p)
 	return RTL839X_MAC_LINK_SPD_STS_PORT_ADDR(p);
 }
 
+int rtl839x_mac_link_sts(const int port)
+{
+	if (RTL839X_MAC_LINK_STS(port, sw_r32(RTL839X_MAC_LINK_STS_REG(port))) == RTL839X_MAC_LINK_STS_UP)
+		return 1;
+	else
+		return 0;
+
+	return 0;
+}
+
+int rtl839x_mac_link_dup_sts(const int port)
+{
+	if (RTL839X_MAC_LINK_DUP_STS(port, sw_r32(RTL839X_MAC_LINK_DUP_STS_REG(port))) == RTL839X_MAC_LINK_DUP_STS_FULL)
+		return DUPLEX_FULL;
+	else
+		return DUPLEX_HALF;
+
+	return DUPLEX_UNKNOWN;
+}
+
+int rtl839x_mac_link_media_sts(const int port)
+{
+	return PORT_TP;
+}
+
+int rtl839x_mac_link_spd_sts(const int port)
+{
+	switch (RTL839X_MAC_LINK_SPD_STS(port, sw_r32(RTL839X_MAC_LINK_SPD_STS_REG(port)))) {
+/*	case RTL839X_MAC_LINK_SPD_STS_500M: fallthrough; */
+	case RTL839X_MAC_LINK_SPD_STS_10G:
+		if (rtl893x_mac_link_500m_sts(port))
+			return SPEED_100; // TODO Lie about the speed, as we do not have SPEED_500 yet
+		else
+			return SPEED_10000;
+	case RTL839X_MAC_LINK_SPD_STS_1000M:
+		return SPEED_1000;
+	case RTL839X_MAC_LINK_SPD_STS_100M:
+		return SPEED_100;
+	case RTL839X_MAC_LINK_SPD_STS_10M:
+		return SPEED_10;
+	}
+
+	return SPEED_UNKNOWN;
+}
+
+bool rtl893x_mac_link_500m_sts(const int port)
+{
+	if (RTL839X_MAC_LINK_500M_STS(port, sw_r32(RTL839X_MAC_LINK_500M_STS_REG(port))))
+		return true;
+	else
+		return false;
+}
+
+int rtl839x_mac_rx_pause_sts(const int port)
+{
+	if (RTL839X_MAC_RX_PAUSE_STS(port, sw_r32(RTL839X_MAC_RX_PAUSE_STS_REG(port))) == RTL839X_MAC_RX_PAUSE_STS_ON)
+		return MLO_PAUSE_RX;
+
+	return MLO_PAUSE_NONE;
+}
+
+int rtl839x_mac_tx_pause_sts(const int port)
+{
+	if (RTL839X_MAC_TX_PAUSE_STS(port, sw_r32(RTL839X_MAC_TX_PAUSE_STS_REG(port))) == RTL839X_MAC_TX_PAUSE_STS_ON)
+		return MLO_PAUSE_TX;
+
+	return MLO_PAUSE_NONE;
+}
+
 static inline int rtl839x_trk_mbr_ctr(int group)
 {
 	return RTL839X_TRK_MBR_CTR + (group << 3);
