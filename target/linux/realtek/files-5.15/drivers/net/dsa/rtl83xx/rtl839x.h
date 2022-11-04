@@ -46,11 +46,11 @@
 #define RTL839X_TBL_ACCESS_DATA_2(i)		(0x6120 + (((i) << 2)))
 
 /* MAC handling */
-#define RTL839X_MAC_LINK_DUP_STS		(0x03b0)
-#define RTL839X_MAC_LINK_SPD_STS(p)		(0x03a0 + (((p >> 4) << 2)))
-#define RTL839X_MAC_LINK_STS			(0x0390)
-#define RTL839X_MAC_RX_PAUSE_STS		(0x03c0)
-#define RTL839X_MAC_TX_PAUSE_STS		(0x03b8)
+#define RTL839X_MAC_LINK_DUP_STS_ADDR		(0x03b0)
+#define RTL839X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0x03a0 + (((p >> 4) << 2)))
+#define RTL839X_MAC_LINK_STS_ADDR		(0x0390)
+#define RTL839X_MAC_RX_PAUSE_STS_ADDR		(0x03c0)
+#define RTL839X_MAC_TX_PAUSE_STS_ADDR		(0x03b8)
 
 #define RTL839X_FORCE_EN			(1 << 0)
 #define RTL839X_FORCE_LINK_EN			(1 << 1)

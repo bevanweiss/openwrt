@@ -36,12 +36,12 @@
 #define RTL930X_TBL_ACCESS_DATA_2(i)		(0xce08 + (((i) << 2)))
 
 /* MAC handling */
-#define RTL930X_MAC_LINK_DUP_STS		(0xcb28)
-#define RTL930X_MAC_LINK_MEDIA_STS		(0xcb14)
-#define RTL930X_MAC_LINK_SPD_STS(p)		(0xcb18 + (((p >> 3) << 2)))
-#define RTL930X_MAC_LINK_STS			(0xcb10)
-#define RTL930X_MAC_RX_PAUSE_STS		(0xcb30)
-#define RTL930X_MAC_TX_PAUSE_STS		(0xcb2c)
+#define RTL930X_MAC_LINK_DUP_STS_ADDR		(0xcb28)
+#define RTL930X_MAC_LINK_MEDIA_STS_ADDR		(0xcb14)
+#define RTL930X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0xcb18 + (((p >> 3) << 2)))
+#define RTL930X_MAC_LINK_STS_ADDR		(0xcb10)
+#define RTL930X_MAC_RX_PAUSE_STS_ADDR		(0xcb30)
+#define RTL930X_MAC_TX_PAUSE_STS_ADDR		(0xcb2c)
 
 #define RTL930X_FORCE_EN			(1 << 0)
 #define RTL930X_FORCE_LINK_EN			(1 << 1)

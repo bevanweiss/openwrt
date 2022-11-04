@@ -274,9 +274,9 @@ static inline int rtl838x_l2_port_new_sa_fwd(int p)
 	return RTL838X_L2_PORT_NEW_SA_FWD(p);
 }
 
-static inline int rtl838x_mac_link_spd_sts(int p)
+static inline int rtl838x_mac_link_spd_sts_addr(int p)
 {
-	return RTL838X_MAC_LINK_SPD_STS(p);
+	return RTL838X_MAC_LINK_SPD_STS_PORT_ADDR(p);
 }
 
 inline static int rtl838x_trk_mbr_ctr(int group)
@@ -635,7 +635,7 @@ static int rtl838x_eee_port_ability(struct rtl838x_switch_priv *priv,
 	if (port >= RTL838X_PORT_ETH)
 		return 0;
 
-	link = rtl839x_get_port_reg_le(RTL838X_MAC_LINK_STS);
+	link = rtl839x_get_port_reg_le(RTL838X_MAC_LINK_STS_ADDR);
 	if (!(link & BIT(port)))
 		return 0;
 
@@ -1740,11 +1740,11 @@ const struct rtl838x_reg rtl838x_reg = {
 	.mir_ctrl = RTL838X_MIR_CTRL,
 	.mir_dpm = RTL838X_MIR_DPM_CTRL,
 	.mir_spm = RTL838X_MIR_SPM_CTRL,
-	.mac_link_sts = RTL838X_MAC_LINK_STS,
-	.mac_link_dup_sts = RTL838X_MAC_LINK_DUP_STS,
-	.mac_link_spd_sts = rtl838x_mac_link_spd_sts,
-	.mac_rx_pause_sts = RTL838X_MAC_RX_PAUSE_STS,
-	.mac_tx_pause_sts = RTL838X_MAC_TX_PAUSE_STS,
+	.mac_link_sts = RTL838X_MAC_LINK_STS_ADDR,
+	.mac_link_dup_sts = RTL838X_MAC_LINK_DUP_STS_ADDR,
+	.mac_link_spd_sts = rtl838x_mac_link_spd_sts_addr,
+	.mac_rx_pause_sts = RTL838X_MAC_RX_PAUSE_STS_ADDR,
+	.mac_tx_pause_sts = RTL838X_MAC_TX_PAUSE_STS_ADDR,
 	.read_l2_entry_using_hash = rtl838x_read_l2_entry_using_hash,
 	.write_l2_entry_using_hash = rtl838x_write_l2_entry_using_hash,
 	.read_cam = rtl838x_read_cam,
@@ -1790,7 +1790,7 @@ irqreturn_t rtl838x_switch_irq(int irq, void *dev_id)
 
 	for (int i = 0; i < RTL838X_PORT_CNT; i++) {
 		if (ports & BIT(i)) {
-			link = sw_r32(RTL838X_MAC_LINK_STS);
+			link = sw_r32(RTL838X_MAC_LINK_STS_ADDR);
 			if (link & BIT(i))
 				dsa_port_phylink_mac_change(ds, i, true);
 			else

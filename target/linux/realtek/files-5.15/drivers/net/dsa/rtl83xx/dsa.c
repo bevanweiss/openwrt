@@ -556,7 +556,7 @@ static int rtl930x_phylink_mac_link_state(struct dsa_switch *ds, int port,
 	if (link & BIT_ULL(port))
 		state->link = 1;
 
-	media = sw_r32(RTL930X_MAC_LINK_MEDIA_STS);
+	media = sw_r32(RTL930X_MAC_LINK_MEDIA_STS_ADDR);
 	if (media & BIT_ULL(port))
 		state->link = 1;
 
@@ -626,7 +626,7 @@ static int rtl931x_phylink_mac_link_state(struct dsa_switch *ds, int port,
 	if (link & BIT_ULL(port))
 		state->link = 1;
 
-	media = priv->r->get_port_reg_le(RTL931X_MAC_LINK_MEDIA_STS);
+	media = priv->r->get_port_reg_le(RTL931X_MAC_LINK_MEDIA_STS_ADDR);
 	if (media & BIT_ULL(port))
 		state->link = 1;
 

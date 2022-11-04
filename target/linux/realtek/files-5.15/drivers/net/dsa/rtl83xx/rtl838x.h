@@ -46,11 +46,11 @@
 #define RTL838X_TBL_ACCESS_DATA_1(idx)		(0xa4cc + ((idx) << 2))
 
 /* MAC handling */
-#define RTL838X_MAC_LINK_DUP_STS		(0xa19c)
-#define RTL838X_MAC_LINK_SPD_STS(p)		(0xa190 + (((p >> 4) << 2)))
-#define RTL838X_MAC_LINK_STS			(0xa188)
-#define RTL838X_MAC_RX_PAUSE_STS		(0xa1a4)
-#define RTL838X_MAC_TX_PAUSE_STS		(0xa1a0)
+#define RTL838X_MAC_LINK_DUP_STS_ADDR		(0xa19c)
+#define RTL838X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0xa190 + (((p >> 4) << 2)))
+#define RTL838X_MAC_LINK_STS_ADDR		(0xa188)
+#define RTL838X_MAC_RX_PAUSE_STS_ADDR		(0xa1a4)
+#define RTL838X_MAC_TX_PAUSE_STS_ADDR		(0xa1a0)
 
 #define RTL838X_FORCE_EN			(1 << 0)
 #define RTL838X_FORCE_LINK_EN			(1 << 1)
