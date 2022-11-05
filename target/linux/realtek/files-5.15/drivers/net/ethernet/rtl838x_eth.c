@@ -1109,7 +1109,23 @@ static void rtl838x_eth_tx_timeout(struct net_device *ndev, unsigned int txqueue
 	spin_lock_irqsave(&priv->lock, flags);
 	rtl838x_hw_stop(priv);
 	rtl838x_hw_ring_setup(priv);
-	rtl838x_hw_en_rxtx(priv);
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		rtl838x_hw_en_rxtx(priv);
+		break;
+	case RTL8390_FAMILY_ID:
+		rtl839x_hw_en_rxtx(priv);
+		break;
+	case RTL9300_FAMILY_ID:
+		rtl93xx_hw_en_rxtx(priv);
+		break;
+	case RTL9310_FAMILY_ID:
+		rtl93xx_hw_en_rxtx(priv);
+		break;
+	default:
+		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
+		break;
+	}
 	netif_trans_update(ndev);
 	netif_start_queue(ndev);
 	spin_unlock_irqrestore(&priv->lock, flags);
