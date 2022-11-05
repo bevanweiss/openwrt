@@ -932,6 +932,9 @@ static int rtl838x_eth_open(struct net_device *ndev)
 		/* Set PCIE_PWR_DOWN */
 		sw_w32_mask(0, BIT(1), RTL931X_PS_SOC_CTRL);
 		break;
+	default:
+		pr_err("%s: unsupport chip family: %d\n", __func__, priv->family_id);
+		break;
 	}
 
 	netif_tx_start_all_queues(ndev);

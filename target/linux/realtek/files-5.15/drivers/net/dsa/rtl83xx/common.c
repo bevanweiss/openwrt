@@ -1551,6 +1551,9 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 		priv->n_lags = 16;
 		priv->l2_bucket_size = 8;
 		break;
+	default:
+		pr_err("%s: Unsupported chip family: %d\n", __func__, soc_info.family);
+		break;
 	}
 	pr_debug("Chip version %c\n", priv->version);
 
