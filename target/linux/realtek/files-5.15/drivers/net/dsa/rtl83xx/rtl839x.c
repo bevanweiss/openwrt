@@ -1002,6 +1002,7 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 /* Get EEE own capabilities and negotiation result */
 int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_eee *e, int port)
 {
+	u32 reg;
 	u64 a;
 
 	if (port >= RTL839X_PORT_ETH)
@@ -1010,10 +1011,11 @@ int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
-	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & RTL839X_MAC_FORCE_MODE_CTRL_EEE_100M_EN)
+	reg = sw_r32(priv->r->mac_force_mode_ctrl(port));
+	if (reg & RTL839X_MAC_FORCE_MODE_CTRL_EEE_100M_EN)
 		e->advertised |= ADVERTISED_100baseT_Full;
 
-	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & RTL839X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN)
+	if (reg & RTL839X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN)
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
 	a = rtl839x_get_port_reg_le(RTL839X_MAC_EEE_ABLTY);

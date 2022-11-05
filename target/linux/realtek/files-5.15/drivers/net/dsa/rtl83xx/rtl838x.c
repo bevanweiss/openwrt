@@ -713,16 +713,19 @@ static void rtl838x_port_eee_set(struct rtl838x_switch_priv *priv, int port, boo
 static int rtl838x_eee_port_ability(struct rtl838x_switch_priv *priv,
 				    struct ethtool_eee *e, int port)
 {
+	u32 reg;
+
 	if (port >= RTL838X_PORT_ETH)
 		return 0;
 
 	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
-	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & RTL838X_MAC_FORCE_MODE_CTRL_EEE_100M_EN)
+	reg = sw_r32(priv->r->mac_force_mode_ctrl(port));
+	if (reg & RTL838X_MAC_FORCE_MODE_CTRL_EEE_100M_EN)
 		e->advertised |= ADVERTISED_100baseT_Full;
 
-	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & RTL838X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN)
+	if (reg & RTL838X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN)
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
 	if (sw_r32(RTL838X_MAC_EEE_ABLTY) & BIT(port)) {
