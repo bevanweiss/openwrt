@@ -888,22 +888,23 @@ static irqreturn_t rtl93xx_net_irq(int irq, void *dev_id)
 
 static const struct rtl838x_eth_reg rtl838x_reg = {
 	.net_irq = rtl83xx_net_irq,
-	.mac_port_ctrl = rtl838x_mac_port_ctrl_eth,
+	.mac_port_ctrl = rtl838x_mac_port_ctrl,
+	.mac_force_mode_ctrl = rtl838x_mac_force_mode_ctrl,
 	.dma_if_intr_sts = RTL838X_DMA_IF_INTR_STS_REG,
 	.dma_if_intr_msk = RTL838X_DMA_IF_INTR_MSK_REG,
 	.dma_if_ctrl = RTL838X_DMA_IF_CTRL_REG,
-	.mac_force_mode_ctrl = RTL838X_MAC_FORCE_MODE_CTRL_ETH,
 	.dma_rx_base = RTL838X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_tx_base = RTL838X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_if_rx_ring_size = rtl838x_dma_if_rx_ring_size,
 	.dma_if_rx_ring_cntr = rtl838x_dma_if_rx_ring_cntr,
 	.dma_if_rx_cur = RTL838X_DMA_IF_RX_CUR,
 	.rst_glb_ctrl = RTL838X_RST_GLB_CTRL_0,
-	.get_mac_link_sts = rtl838x_get_mac_link_sts,
-	.get_mac_link_dup_sts = rtl838x_get_mac_link_dup_sts,
-	.get_mac_link_spd_sts = rtl838x_get_mac_link_spd_sts,
-	.get_mac_rx_pause_sts = rtl838x_get_mac_rx_pause_sts,
-	.get_mac_tx_pause_sts = rtl838x_get_mac_tx_pause_sts,
+	.get_mac_link_sts = rtl838x_mac_link_sts,
+	.get_mac_link_dup_sts = rtl838x_mac_link_dup_sts,
+	.get_mac_link_media_sts = rtl838x_mac_link_media_sts,
+	.get_mac_link_spd_sts = rtl838x_mac_link_spd_sts,
+	.get_mac_rx_pause_sts = rtl838x_mac_rx_pause_sts,
+	.get_mac_tx_pause_sts = rtl838x_mac_tx_pause_sts,
 	.mac = RTL838X_MAC_ADDR_CTRL_HI_REG,
 	.l2_tbl_flush_ctrl = RTL838X_L2_TBL_FLUSH_CTRL,
 	.update_cntr = rtl838x_update_cntr,
@@ -913,22 +914,23 @@ static const struct rtl838x_eth_reg rtl838x_reg = {
 
 static const struct rtl838x_eth_reg rtl839x_reg = {
 	.net_irq = rtl83xx_net_irq,
-	.mac_port_ctrl = rtl839x_mac_port_ctrl_eth,
+	.mac_port_ctrl = rtl839x_mac_port_ctrl,
+	.mac_force_mode_ctrl = rtl839x_mac_force_mode_ctrl,
 	.dma_if_intr_sts = RTL839X_DMA_IF_INTR_STS_REG,
 	.dma_if_intr_msk = RTL839X_DMA_IF_INTR_MSK_REG,
 	.dma_if_ctrl = RTL839X_DMA_IF_CTRL_REG,
-	.mac_force_mode_ctrl = RTL839X_MAC_FORCE_MODE_CTRL_ETH,
 	.dma_rx_base = RTL839X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_tx_base = RTL839X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_if_rx_ring_size = rtl839x_dma_if_rx_ring_size,
 	.dma_if_rx_ring_cntr = rtl839x_dma_if_rx_ring_cntr,
 	.dma_if_rx_cur = RTL839X_DMA_IF_RX_CUR,
 	.rst_glb_ctrl = RTL839X_RST_GLB_CTRL,
-	.get_mac_link_sts = rtl839x_get_mac_link_sts,
-	.get_mac_link_dup_sts = rtl839x_get_mac_link_dup_sts,
-	.get_mac_link_spd_sts = rtl839x_get_mac_link_spd_sts,
-	.get_mac_rx_pause_sts = rtl839x_get_mac_rx_pause_sts,
-	.get_mac_tx_pause_sts = rtl839x_get_mac_tx_pause_sts,
+	.get_mac_link_sts = rtl839x_mac_link_sts,
+	.get_mac_link_dup_sts = rtl839x_mac_link_dup_sts,
+	.get_mac_link_media_sts = rtl839x_mac_link_media_sts,
+	.get_mac_link_spd_sts = rtl839x_mac_link_spd_sts,
+	.get_mac_rx_pause_sts = rtl839x_mac_rx_pause_sts,
+	.get_mac_tx_pause_sts = rtl839x_mac_tx_pause_sts,
 	.mac = RTL839X_MAC_ADDR_CTRL_HI_REG,
 	.l2_tbl_flush_ctrl = RTL839X_L2_TBL_FLUSH_CTRL,
 	.update_cntr = rtl839x_update_cntr,
@@ -938,7 +940,8 @@ static const struct rtl838x_eth_reg rtl839x_reg = {
 
 static const struct rtl838x_eth_reg rtl930x_reg = {
 	.net_irq = rtl93xx_net_irq,
-	.mac_port_ctrl = rtl930x_mac_port_ctrl_eth,
+	.mac_port_ctrl = rtl930x_mac_port_ctrl,
+	.mac_force_mode_ctrl = rtl930x_mac_force_mode_ctrl,
 	.dma_if_intr_rx_runout_sts = RTL930X_DMA_IF_INTR_RX_RUNOUT_STS_REG,
 	.dma_if_intr_rx_done_sts = RTL930X_DMA_IF_INTR_RX_DONE_STS_REG,
 	.dma_if_intr_tx_done_sts = RTL930X_DMA_IF_INTR_TX_DONE_STS_REG,
@@ -948,18 +951,18 @@ static const struct rtl838x_eth_reg rtl930x_reg = {
 	.l2_ntfy_if_intr_sts = RTL930X_L2_NTFY_IF_INTR_STS,
 	.l2_ntfy_if_intr_msk = RTL930X_L2_NTFY_IF_INTR_MSK,
 	.dma_if_ctrl = RTL930X_DMA_IF_CTRL_REG,
-	.mac_force_mode_ctrl = RTL930X_MAC_FORCE_MODE_CTRL_ETH,
 	.dma_rx_base = RTL930X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_tx_base = RTL930X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_if_rx_ring_size = rtl930x_dma_if_rx_ring_size,
 	.dma_if_rx_ring_cntr = rtl930x_dma_if_rx_ring_cntr,
 	.dma_if_rx_cur = RTL930X_DMA_IF_RX_CUR,
 	.rst_glb_ctrl = RTL930X_RST_GLB_CTRL_0,
-	.get_mac_link_sts = rtl930x_get_mac_link_sts,
-	.get_mac_link_dup_sts = rtl930x_get_mac_link_dup_sts,
-	.get_mac_link_spd_sts = rtl930x_get_mac_link_spd_sts,
-	.get_mac_rx_pause_sts = rtl930x_get_mac_rx_pause_sts,
-	.get_mac_tx_pause_sts = rtl930x_get_mac_tx_pause_sts,
+	.get_mac_link_sts = rtl930x_mac_link_sts,
+	.get_mac_link_dup_sts = rtl930x_mac_link_dup_sts,
+	.get_mac_link_media_sts = rtl930x_mac_link_media_sts,
+	.get_mac_link_spd_sts = rtl930x_mac_link_spd_sts,
+	.get_mac_rx_pause_sts = rtl930x_mac_rx_pause_sts,
+	.get_mac_tx_pause_sts = rtl930x_mac_tx_pause_sts,
 	.mac = RTL930X_MAC_L2_ADDR_CTRL_HI_REG,
 	.l2_tbl_flush_ctrl = RTL930X_L2_TBL_FLUSH_CTRL,
 	.update_cntr = rtl930x_update_cntr,
@@ -969,7 +972,8 @@ static const struct rtl838x_eth_reg rtl930x_reg = {
 
 static const struct rtl838x_eth_reg rtl931x_reg = {
 	.net_irq = rtl93xx_net_irq,
-	.mac_port_ctrl = rtl931x_mac_port_ctrl_eth,
+	.mac_port_ctrl = rtl931x_mac_port_ctrl,
+	.mac_force_mode_ctrl = rtl931x_mac_force_mode_ctrl,
 	.dma_if_intr_rx_runout_sts = RTL931X_DMA_IF_INTR_RX_RUNOUT_STS_REG,
 	.dma_if_intr_rx_done_sts = RTL931X_DMA_IF_INTR_RX_DONE_STS_REG,
 	.dma_if_intr_tx_done_sts = RTL931X_DMA_IF_INTR_TX_DONE_STS_REG,
@@ -979,18 +983,18 @@ static const struct rtl838x_eth_reg rtl931x_reg = {
 	.l2_ntfy_if_intr_sts = RTL931X_L2_NTFY_IF_INTR_STS,
 	.l2_ntfy_if_intr_msk = RTL931X_L2_NTFY_IF_INTR_MSK,
 	.dma_if_ctrl = RTL931X_DMA_IF_CTRL_REG,
-	.mac_force_mode_ctrl = RTL931X_MAC_FORCE_MODE_CTRL_ETH,
 	.dma_rx_base = RTL931X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_tx_base = RTL931X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(0),
 	.dma_if_rx_ring_size = rtl931x_dma_if_rx_ring_size,
 	.dma_if_rx_ring_cntr = rtl931x_dma_if_rx_ring_cntr,
 	.dma_if_rx_cur = RTL931X_DMA_IF_RX_CUR,
 	.rst_glb_ctrl = RTL931X_RST_GLB_CTRL,
-	.get_mac_link_sts = rtl931x_get_mac_link_sts,
-	.get_mac_link_dup_sts = rtl931x_get_mac_link_dup_sts,
-	.get_mac_link_spd_sts = rtl931x_get_mac_link_spd_sts,
-	.get_mac_rx_pause_sts = rtl931x_get_mac_rx_pause_sts,
-	.get_mac_tx_pause_sts = rtl931x_get_mac_tx_pause_sts,
+	.get_mac_link_sts = rtl931x_mac_link_sts,
+	.get_mac_link_dup_sts = rtl931x_mac_link_dup_sts,
+	.get_mac_link_spd_sts = rtl931x_mac_link_spd_sts,
+	.get_mac_link_media_sts = rtl931x_mac_link_media_sts,
+	.get_mac_rx_pause_sts = rtl931x_mac_rx_pause_sts,
+	.get_mac_tx_pause_sts = rtl931x_mac_tx_pause_sts,
 	.mac = RTL931X_MAC_L2_ADDR_CTRL_HI_REG,
 	.l2_tbl_flush_ctrl = RTL931X_L2_TBL_FLUSH_CTRL,
 	.update_cntr = rtl931x_update_cntr,
@@ -1165,7 +1169,7 @@ static void rtl838x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	 * | SPD_SEL = 0b10 | FORCE_FC_EN | PHY_MASTER_SLV_MANUAL_EN
 	 * | MEDIA_SEL
 	 */
-	sw_w32(0x6192F, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
+	sw_w32(0x6192F, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 
 	/* Enable CRC checks on CPU-port */
 	sw_w32_mask(0, BIT(3), priv->r->mac_port_ctrl(priv->cpu_port));
@@ -1201,7 +1205,7 @@ static void rtl839x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	sw_w32(0x38000, RTL839X_TBL_ACCESS_L2_CTRL);
 
 	/* Force CPU port link up */
-	sw_w32_mask(0, 3, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
+	sw_w32_mask(0, 3, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 }
 
 static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
@@ -1240,9 +1244,9 @@ static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 		sw_w32_mask(0, BIT(priv->cpu_port), RTL931X_L2_UNKN_UC_FLD_PMSK);
 
 	if (priv->family_id == RTL9300_FAMILY_ID)
-		sw_w32(0x217, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
+		sw_w32(0x217, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 	else
-		sw_w32(0x2a1d, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
+		sw_w32(0x2a1d, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 }
 
 static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring_b *ring)
@@ -1439,11 +1443,11 @@ static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 
 	/* CPU-Port: Link down */
 	if (priv->family_id == RTL8380_FAMILY_ID || priv->family_id == RTL8390_FAMILY_ID)
-		sw_w32(force_mac, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
+		sw_w32(force_mac, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 	else if (priv->family_id == RTL9300_FAMILY_ID)
-		sw_w32_mask(0x3, 0, priv->r->mac_force_mode_ctrl + priv->cpu_port *4);
+		sw_w32_mask(0x3, 0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 	else if (priv->family_id == RTL9310_FAMILY_ID)
-		sw_w32_mask(BIT(0) | BIT(9), 0, priv->r->mac_force_mode_ctrl + priv->cpu_port *4);
+		sw_w32_mask(BIT(0) | BIT(9), 0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 	msleep(100);
 
 	switch(priv->family_id) {
@@ -1979,55 +1983,32 @@ static void rtl838x_mac_an_restart(struct phylink_config *config)
 
 	pr_debug("In %s\n", __func__);
 	/* Restart by disabling and re-enabling link */
-	sw_w32(0x6192D, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
+	sw_w32(0x6192D, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 	msleep(20);
-	sw_w32(0x6192F, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
+	sw_w32(0x6192F, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 }
 
 static void rtl838x_mac_pcs_get_state(struct phylink_config *config,
 				  struct phylink_link_state *state)
 {
-	u32 speed;
 	struct net_device *dev = container_of(config->dev, struct net_device, dev);
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
 	int port = priv->cpu_port;
 
 	pr_info("In %s\n", __func__);
 
-	state->link = priv->r->get_mac_link_sts(port) ? 1 : 0;
-	state->duplex = priv->r->get_mac_link_dup_sts(port) ? 1 : 0;
+	state->duplex = priv->r->get_mac_link_dup_sts(port);
 
-	pr_info("%s link status is %d\n", __func__, state->link);
-	speed = priv->r->get_mac_link_spd_sts(port);
-	switch (speed) {
-	case 0:
-		state->speed = SPEED_10;
-		break;
-	case 1:
-		state->speed = SPEED_100;
-		break;
-	case 2:
-		state->speed = SPEED_1000;
-		break;
-	case 5:
-		state->speed = SPEED_2500;
-		break;
-	case 6:
-		state->speed = SPEED_5000;
-		break;
-	case 4:
-		state->speed = SPEED_10000;
-		break;
-	default:
-		state->speed = SPEED_UNKNOWN;
-		break;
-	}
+	state->link = priv->r->get_mac_link_sts(port);
 
 	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
-	if (priv->r->get_mac_rx_pause_sts(port))
-		state->pause |= MLO_PAUSE_RX;
-	if (priv->r->get_mac_tx_pause_sts(port))
-		state->pause |= MLO_PAUSE_TX;
+	state->pause |= priv->r->get_mac_rx_pause_sts(port);
+	state->pause |= priv->r->get_mac_tx_pause_sts(port);
+
+	state->speed = priv->r->get_mac_link_spd_sts(port);
+
+	pr_info("%s link status is %d\n", __func__, state->link);
+
 }
 
 static void rtl838x_mac_link_down(struct phylink_config *config,

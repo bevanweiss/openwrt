@@ -366,7 +366,8 @@ struct dsa_tag;
 
 struct rtl838x_eth_reg {
 	irqreturn_t (*net_irq)(int irq, void *dev_id);
-	int (*mac_port_ctrl)(int port);
+	int (*mac_port_ctrl)(const int port);
+	int (*mac_force_mode_ctrl)(const int port);
 	int dma_if_intr_sts;
 	int dma_if_intr_msk;
 	int dma_if_intr_rx_runout_sts;
@@ -378,18 +379,18 @@ struct rtl838x_eth_reg {
 	int l2_ntfy_if_intr_sts;
 	int l2_ntfy_if_intr_msk;
 	int dma_if_ctrl;
-	int mac_force_mode_ctrl;
 	int dma_rx_base;
 	int dma_tx_base;
 	int (*dma_if_rx_ring_size)(const int ring);
 	int (*dma_if_rx_ring_cntr)(const int ring);
 	int dma_if_rx_cur;
 	int rst_glb_ctrl;
-	u32 (*get_mac_link_sts)(int port);
-	u32 (*get_mac_link_dup_sts)(int port);
-	u32 (*get_mac_link_spd_sts)(int port);
-	u32 (*get_mac_rx_pause_sts)(int port);
-	u32 (*get_mac_tx_pause_sts)(int port);
+	int (*get_mac_link_sts)(const int port);
+	int (*get_mac_link_dup_sts)(const int port);
+	int (*get_mac_link_media_sts)(const int port);
+	int (*get_mac_link_spd_sts)(const int port);
+	int (*get_mac_rx_pause_sts)(const int port);
+	int (*get_mac_tx_pause_sts)(const int port);
 	int mac;
 	int l2_tbl_flush_ctrl;
 	void (*update_cntr)(int r, int work_done);
