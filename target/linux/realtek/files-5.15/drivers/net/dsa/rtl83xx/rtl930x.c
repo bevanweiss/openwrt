@@ -409,11 +409,6 @@ int rtl930x_mac_port_ctrl(const int p)
 	return RTL930X_MAC_L2_PORT_CTRL_REG(p);
 }
 
-static inline int rtl930x_mac_link_spd_sts_addr(int p)
-{
-	return RTL930X_MAC_LINK_SPD_STS_PORT_ADDR(p);
-}
-
 int rtl930x_mac_link_sts(const int port)
 {
 	/* Read the register twice because of issues with latency at least

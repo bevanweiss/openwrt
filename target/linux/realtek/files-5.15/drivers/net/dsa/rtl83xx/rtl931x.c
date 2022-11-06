@@ -353,17 +353,12 @@ static void rtl931x_vlan_set_untagged(u32 vlan, u64 portmask)
 
 int rtl931x_mac_force_mode_ctrl(const int p)
 {
-	return RTL931X_MAC_FORCE_MODE_CTRL + (p << 2);
-}
-
-static inline int rtl931x_mac_link_spd_sts_addr(int p)
-{
-	return RTL931X_MAC_LINK_SPD_STS_ADDR + (((p >> 3) << 2));
+	return RTL931X_MAC_FORCE_MODE_CTRL_REG(p);
 }
 
 int rtl931x_mac_port_ctrl(const int p)
 {
-	return RTL931X_MAC_L2_PORT_CTRL + (p << 7);
+	return RTL931X_MAC_L2_PORT_CTRL_REG(p);
 }
 
 int rtl931x_mac_link_sts(const int port)

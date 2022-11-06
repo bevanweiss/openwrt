@@ -64,8 +64,6 @@
 #define RTL838X_MAC_PORT_CTRL_TXRX_EN \
         (RTL838X_MAC_PORT_CTRL_TX_EN | RTL838X_MAC_PORT_CTRL_RX_EN)
 
-#define RTL838X_MAC_FORCE_MODE_CTRL		(0xa104)
-#define RTL838X_MAC_PORT_CTRL(port)		(0xd560 + (((port) << 7)))
 #define RTL838X_PORT_ISO_CTRL(port)		(0x4100 + ((port) << 2))
 
 #define RTL838X_MAC_EEE_ABLTY_REG(p)                    (0xa1a8 + (((p) / 32) * 0x4))
@@ -142,28 +140,7 @@
 #define RTL838X_MAC_TX_PAUSE_STS(p, r) \
         (((r) >> ((p) % 32)) & _RTL838X_MAC_TX_PAUSE_STS_MASK)
 
-#define RTL838X_MAC_LINK_DUP_STS_ADDR		(0xa19c)
-#define RTL838X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0xa190 + (((p >> 4) << 2)))
-#define RTL838X_MAC_LINK_STS_ADDR		(0xa188)
-#define RTL838X_MAC_RX_PAUSE_STS_ADDR		(0xa1a4)
-#define RTL838X_MAC_TX_PAUSE_STS_ADDR		(0xa1a0)
-
-#define RTL838X_FORCE_EN			(1 << 0)
-#define RTL838X_FORCE_LINK_EN			(1 << 1)
-#define RTL838X_NWAY_EN				(1 << 2)
-#define RTL838X_DUPLEX_MODE			(1 << 3)
-#define RTL838X_TX_PAUSE_EN			(1 << 6)
-#define RTL838X_RX_PAUSE_EN			(1 << 7)
-#define RTL838X_MAC_FORCE_FC_EN			(1 << 8)
-
 /* EEE */
-#define RTL838X_EEE_CLK_STOP_CTRL		(0x0148)
-#define RTL838X_EEE_PORT_RX_EN			(0x0150)
-#define RTL838X_EEE_PORT_TX_EN			(0x014c)
-#define RTL838X_EEE_TX_TIMER_GELITE_CTRL	(0xaa08)
-#define RTL838X_EEE_TX_TIMER_GIGA_CTRL		(0xaa04)
-#define RTL838X_MAC_EEE_ABLTY			(0xa1a8)
-
 #define RTL838X_EEE_PORT_TX_REG(p)                      (0x014c + (((p) / 32) * 0x4))
 #define _RTL838X_EEE_PORT_TX_EN_MASK                            BIT(0)
 #define RTL838X_EEE_PORT_TX_EN_ON                                       0b1

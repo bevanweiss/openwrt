@@ -406,19 +406,8 @@ extern struct rtl83xx_soc_info soc_info;
  * for an RX ring, MAX_ENTRIES the maximum number of entries
  * available in total for all queues.
  */
-#define MAX_RXRINGS	32
-#define MAX_RXLEN	300
-#define MAX_ENTRIES	(300 * 8)
-#define TXRINGS		2
-#define TXRINGLEN	160
 #define NOTIFY_EVENTS	10
 #define NOTIFY_BLOCKS	10
-#define TX_EN		0x8
-#define RX_EN		0x4
-#define TX_EN_93XX	0x20
-#define RX_EN_93XX	0x10
-#define TX_DO		0x2
-#define WRAP		0x2
 #define MAX_PORTS	57
 #define MAX_SMI_BUSSES	4
 

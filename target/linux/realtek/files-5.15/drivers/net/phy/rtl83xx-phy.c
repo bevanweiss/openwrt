@@ -3466,8 +3466,6 @@ void rtl9300_phy_enable_10g_1g(int sds_num)
 	pr_info("%s set medium after: %08x\n", __func__, v);
 }
 
-#define RTL930X_MAC_FORCE_MODE_CTRL		(0xCA1C)
-
 int rtl9300_sds_10g_idle(int sds_num)
 {
 	bool busy;

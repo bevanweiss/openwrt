@@ -110,12 +110,6 @@
 
 #define RTL_SW_CORE_BASE                (0x1b000000)
 
-#define read_sw(reg)		ioread32((void __iomem *)CKSEG1ADDR(RTL_SW_CORE_BASE + (reg)))
-#define read_soc(reg)		ioread32((void __iomem *)CKSEG1ADDR(RTL_SOC_BASE + (reg)))
-
-#define write_sw(val, reg)	iowrite32(val, (void __iomem *)CKSEG1ADDR(RTL_SW_CORE_BASE + (reg)))
-#define write_soc(val, reg)	iowrite32(val, (void __iomem *)CKSEG1ADDR(RTL_SOC_BASE + (reg)))
-
 /*
  * some hardware specific definitions
  */

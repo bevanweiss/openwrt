@@ -341,10 +341,6 @@
  * MDIO via Realtek's SMI interface
  */
 #define RTL838X_SMI_GLB_CTRL		(0xa100)
-#define RTL838X_SMI_ACCESS_PHY_CTRL_0	(0xa1b8)
-#define RTL838X_SMI_ACCESS_PHY_CTRL_1	(0xa1bc)
-#define RTL838X_SMI_ACCESS_PHY_CTRL_2	(0xa1c0)
-#define RTL838X_SMI_ACCESS_PHY_CTRL_3	(0xa1c4)
 
 #define RTL838X_SMI_PHY_PORT_CTRL_REG(p)                (0xa1b8 + (((p) / 32) * 0x4))
 /* Reserved                                                     31 - 29 */
@@ -479,21 +475,12 @@
 
 #define RTL839X_SMI_GLB_CTRL		(0x03f8)
 #define RTL839X_SMI_PORT_POLLING_CTRL	(0x03fc)
-#define RTL839X_PHYREG_ACCESS_CTRL	(0x03DC)
-#define RTL839X_PHYREG_CTRL		(0x03E0)
-#define RTL839X_PHYREG_PORT_CTRL	(0x03E4)
-#define RTL839X_PHYREG_DATA_CTRL	(0x03F0)
-#define RTL839X_PHYREG_MMD_CTRL		(0x3F4)
 
 #define RTL930X_SMI_GLB_CTRL		(0xCA00)
 #define RTL930X_SMI_POLL_CTRL		(0xca90)
 #define RTL930X_SMI_PORT0_15_POLLING_SEL (0xCA08)
 #define RTL930X_SMI_PORT16_27_POLLING_SEL (0xCA0C)
 #define RTL930X_SMI_PORT0_5_ADDR	(0xCB80)
-#define RTL930X_SMI_ACCESS_PHY_CTRL_0	(0xCB70)
-#define RTL930X_SMI_ACCESS_PHY_CTRL_1	(0xCB74)
-#define RTL930X_SMI_ACCESS_PHY_CTRL_2	(0xCB78)
-#define RTL930X_SMI_ACCESS_PHY_CTRL_3	(0xCB7C)
 
 #define RTL931X_SMI_GLB_CTRL1		(0x0CBC)
 #define RTL931X_SMI_GLB_CTRL0		(0x0CC0)
@@ -501,35 +488,10 @@
 #define RTL931X_SMI_PORT_ADDR		(0x0C74)
 #define RTL931X_SMI_PORT_POLLING_SEL	(0x0C9C)
 #define RTL9310_SMI_PORT_POLLING_CTRL	(0x0CCC)
-#define RTL931X_SMI_INDRT_ACCESS_CTRL_0	(0x0C00)
-#define RTL931X_SMI_INDRT_ACCESS_CTRL_1	(0x0C04)
-#define RTL931X_SMI_INDRT_ACCESS_CTRL_2	(0x0C08)
-#define RTL931X_SMI_INDRT_ACCESS_CTRL_3	(0x0C10)
 #define RTL931X_SMI_INDRT_ACCESS_BC_PHYID_CTRL (0x0C14)
 #define RTL931X_SMI_INDRT_ACCESS_MMD_CTRL (0xC18)
 #define RTL931X_MAC_L2_GLOBAL_CTRL2	(0x1358)
 #define RTL931X_MAC_L2_GLOBAL_CTRL1	(0x5548)
-
-/* Switch interrupts */
-#define RTL838X_IMR_GLB			(0x1100)
-#define RTL838X_IMR_PORT_LINK_STS_CHG	(0x1104)
-#define RTL838X_ISR_GLB_SRC		(0x1148)
-#define RTL838X_ISR_PORT_LINK_STS_CHG	(0x114C)
-
-#define RTL839X_IMR_GLB			(0x0064)
-#define RTL839X_IMR_PORT_LINK_STS_CHG	(0x0068)
-#define RTL839X_ISR_GLB_SRC		(0x009c)
-#define RTL839X_ISR_PORT_LINK_STS_CHG	(0x00a0)
-
-#define RTL930X_IMR_GLB			(0xC628)
-#define RTL930X_IMR_PORT_LINK_STS_CHG	(0xC62C)
-#define RTL930X_ISR_GLB			(0xC658)
-#define RTL930X_ISR_PORT_LINK_STS_CHG	(0xC660)
-
-/* IMR_GLB does not exit on RTL931X */
-#define RTL931X_IMR_PORT_LINK_STS_CHG	(0x126C)
-#define RTL931X_ISR_GLB_SRC		(0x12B4)
-#define RTL931X_ISR_PORT_LINK_STS_CHG	(0x12B8)
 
 /* Definition of family IDs */
 #define RTL8328_FAMILY_ID   (0x8328)
@@ -607,9 +569,6 @@ struct rtl83xx_soc_info {
 	unsigned char *name;
 	unsigned int id;
 	unsigned int family;
-	unsigned char *compatible;
-	volatile void *sw_base;
-	volatile void *icu_base;
 	int cpu_port;
 };
 

@@ -47,8 +47,6 @@
 #define RTL839X_MAC_PORT_CTRL_TXRX_EN \
         (RTL839X_MAC_PORT_CTRL_TX_EN | RTL839X_MAC_PORT_CTRL_RX_EN)
 
-#define RTL839X_MAC_FORCE_MODE_CTRL		(0x02bc)
-#define RTL839X_MAC_PORT_CTRL(port)		(0x8004 + (((port) << 7)))
 #define RTL839X_PORT_ISO_CTRL(port)		(0x1400 + ((port) << 3))
 
 #define RTL839X_MAC_EEE_ABLTY_REG(p)                    (0x03c8 + (((p) / 32) * 0x4))
@@ -142,26 +140,7 @@
 #define RTL839X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_10G              GENMASK(31, 16)
 #define RTL839X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M            GENMASK(15, 0)
 
-#define RTL839X_MAC_LINK_DUP_STS_ADDR		(0x03b0)
-#define RTL839X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0x03a0 + (((p >> 4) << 2)))
-#define RTL839X_MAC_LINK_STS_ADDR		(0x0390)
-#define RTL839X_MAC_RX_PAUSE_STS_ADDR		(0x03c0)
-#define RTL839X_MAC_TX_PAUSE_STS_ADDR		(0x03b8)
-
-#define RTL839X_FORCE_EN			(1 << 0)
-#define RTL839X_FORCE_LINK_EN			(1 << 1)
-#define RTL839X_DUPLEX_MODE			(1 << 2)
-#define RTL839X_TX_PAUSE_EN			(1 << 5)
-#define RTL839X_RX_PAUSE_EN			(1 << 6)
-#define RTL839X_MAC_FORCE_FC_EN			(1 << 7)
-
 /* EEE */
-#define RTL839X_EEE_CTRL(p)			(0x8008 + ((p) << 7))
-#define RTL839X_EEE_TX_TIMER_10G_CTRL		(0x0434)
-#define RTL839X_EEE_TX_TIMER_GELITE_CTRL	(0x042c)
-#define RTL839X_EEE_TX_TIMER_GIGA_CTRL		(0x0430)
-#define RTL839X_MAC_EEE_ABLTY			(0x03c8)
-
 #define RTL839X_EEE_CTRL_REG(p)                         (0x8008 + (((p) / 1) * 0x4))
 /* Reserved                                                     31 - 2 */
 #define RTL839X_EEE_CTRL_TX_EN                                  BIT(1)

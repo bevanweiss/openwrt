@@ -330,11 +330,6 @@ static inline int rtl839x_l2_port_new_sa_fwd(int p)
 	return RTL839X_L2_PORT_NEW_SA_FWD(p);
 }
 
-static inline int rtl839x_mac_link_spd_sts_addr(int p)
-{
-	return RTL839X_MAC_LINK_SPD_STS_PORT_ADDR(p);
-}
-
 int rtl839x_mac_link_sts(const int port)
 {
 	if (RTL839X_MAC_LINK_STS(port, sw_r32(RTL839X_MAC_LINK_STS_REG(port))) == RTL839X_MAC_LINK_STS_UP)

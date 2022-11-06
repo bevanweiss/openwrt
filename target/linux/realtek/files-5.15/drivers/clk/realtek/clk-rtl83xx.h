@@ -294,11 +294,6 @@ static const int rtl839x_pll_cmu_ctrl1_divn3_lut[] = {
 #define RTL930X_PLL_CMU_CTRL1_STEP_IN                   GENMASK(24, 12)
 #define RTL930X_PLL_CMU_CTRL1_TBASE_IN                  GENMASK(11, 0)
 
-#define RTL_PLL_CTRL0_CMU_SEL_PREDIV(v)		(((v) >> 0) & 0x3)
-#define RTL_PLL_CTRL0_CMU_SEL_DIV4(v)		(((v) >> 2) & 0x1)
-#define RTL_PLL_CTRL0_CMU_NCODE_IN(v)		(((v) >> 4) & 0xff)
-#define RTL_PLL_CTRL0_CMU_DIVN2(v)		(((v) >> 12) & 0xff)
-
 /* Other stuff */
 #define RTL_SRAM_SET_PLL_RATE_CANARY    (0x5eaf00d5)
 

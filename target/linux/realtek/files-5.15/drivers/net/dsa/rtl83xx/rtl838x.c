@@ -295,11 +295,6 @@ static inline int rtl838x_l2_port_new_sa_fwd(int p)
 	return RTL838X_L2_PORT_NEW_SA_FWD(p);
 }
 
-static inline int rtl838x_mac_link_spd_sts_addr(int p)
-{
-	return RTL838X_MAC_LINK_SPD_STS_PORT_ADDR(p);
-}
-
 int rtl838x_mac_link_sts(const int port)
 {
 	if (RTL838X_MAC_LINK_STS(port, sw_r32(RTL838X_MAC_LINK_STS_REG(port))) == RTL838X_MAC_LINK_STS_UP)

@@ -53,10 +53,6 @@
 #define RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN                     BIT(1)
 #define RTL930X_MAC_FORCE_MODE_CTRL_EN                          BIT(0)
 
-#define RTL930X_MAC_FORCE_MODE_CTRL		(0xca1c)
-#define RTL930X_MAC_L2_PORT_CTRL(port)		(0x3268 + (((port) << 6)))
-#define RTL930X_MAC_PORT_CTRL(port)		(0x3260 + (((port) << 6)))
-
 #define RTL930X_MAC_EEE_ABLTY_REG(p)                    (0xcb34 + (((p) / 32) * 0x4))
 #define _RTL930X_MAC_EEE_ABLTY_ABLE_MASK                        BIT(0)
 #define RTL930X_MAC_EEE_ABLTY_ABLE_ON                                   0b1
@@ -136,25 +132,7 @@
 #define RTL930X_MAC_TX_PAUSE_STS(p, r) \
         (((r) >> ((p) % 32)) & _RTL930X_MAC_TX_PAUSE_STS_MASK)
 
-#define RTL930X_MAC_LINK_DUP_STS_ADDR		(0xcb28)
-#define RTL930X_MAC_LINK_MEDIA_STS_ADDR		(0xcb14)
-#define RTL930X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0xcb18 + (((p >> 3) << 2)))
-#define RTL930X_MAC_LINK_STS_ADDR		(0xcb10)
-#define RTL930X_MAC_RX_PAUSE_STS_ADDR		(0xcb30)
-#define RTL930X_MAC_TX_PAUSE_STS_ADDR		(0xcb2c)
-
-#define RTL930X_FORCE_EN			(1 << 0)
-#define RTL930X_FORCE_LINK_EN			(1 << 1)
-#define RTL930X_DUPLEX_MODE			(1 << 2)
-#define RTL930X_TX_PAUSE_EN			(1 << 7)
-#define RTL930X_RX_PAUSE_EN			(1 << 8)
-#define RTL930X_MAC_FORCE_FC_EN			(1 << 9)
-
 /* EEE */
-#define RTL930X_MAC_EEE_ABLTY			(0xcb34)
-#define RTL930X_EEE_CTRL(p)			(0x3274 + ((p) << 6))
-#define RTL930X_EEEP_PORT_CTRL(p)		(0x3278 + ((p) << 6))
-
 #define RTL930X_EEE_CTRL_REG(p)                         (0x3274 + (((p) / 1) * 0x40))
 /* Reserved                                                     31 - 2 */
 #define RTL930X_EEE_CTRL_TX_EN                                  BIT(1)

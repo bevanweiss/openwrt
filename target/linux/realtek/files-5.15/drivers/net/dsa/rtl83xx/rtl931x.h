@@ -62,9 +62,6 @@
 #define RTL931X_MAC_PORT_CTRL_LATE_COLI_THR                     GENMASK(2 ,1)
 #define RTL931X_MAC_PORT_CTRL_BKPRES_EN                         BIT(0)
 
-#define RTL931X_MAC_FORCE_MODE_CTRL		(0x0dcc)
-#define RTL931X_MAC_L2_PORT_CTRL		(0x6000)
-#define RTL931X_MAC_PORT_CTRL			(0x6004)
 #define RTL931X_PORT_ISO_VB_ISO_PMSK_CTRL(port)	(0x8a04 + ((port) << 2))
 
 #define RTL931X_MAC_EEE_ABLTY_REG(p)                    (0x0f08 + (((p) / 32) * 0x4))
@@ -150,20 +147,6 @@
 #define RTL931X_MAC_TX_PAUSE_STS_OFF                                    0b0
 #define RTL931X_MAC_TX_PAUSE_STS(p, r) \
         (((r) >> ((p) % 32)) & _RTL931X_MAC_TX_PAUSE_STS_MASK)
-
-#define RTL931X_MAC_LINK_DUP_STS_ADDR		(0x0ef0)
-#define RTL931X_MAC_LINK_MEDIA_STS_ADDR		(0x0ec8)
-#define RTL931X_MAC_LINK_SPD_STS_ADDR		(0x0ed0)
-#define RTL931X_MAC_LINK_STS_ADDR		(0x0ec0)
-#define RTL931X_MAC_RX_PAUSE_STS_ADDR		(0x0f00)
-#define RTL931X_MAC_TX_PAUSE_STS_ADDR		(0x0ef8)
-
-#define RTL931X_RX_PAUSE_EN			(1 << 17)
-#define RTL931X_TX_PAUSE_EN			(1 << 16)
-#define RTL931X_FORCE_EN			(1 << 9)
-#define RTL931X_MAC_FORCE_FC_EN			(1 << 4)
-#define RTL931X_DUPLEX_MODE			(1 << 2)
-#define RTL931X_FORCE_LINK_EN			(1 << 0)
 
 /* EEE */
 #define RTL931X_EEE_TX_SEL_CTRL0_REG                    (0x5658)
