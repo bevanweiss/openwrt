@@ -312,12 +312,12 @@ void rtl839x_isr_port_media_sts_chg(const u64 ports)
 
 int rtl839x_mac_force_mode_ctrl(const int p)
 {
-	return RTL839X_MAC_FORCE_MODE_CTRL + (p << 2);
+	return RTL839X_MAC_FORCE_MODE_CTRL_REG(p);
 }
 
 int rtl839x_mac_port_ctrl(const int p)
 {
-	return RTL839X_MAC_PORT_CTRL(p);
+	return RTL839X_MAC_PORT_CTRL_REG(p);
 }
 
 static inline int rtl839x_l2_port_new_salrn(int p)
@@ -961,10 +961,12 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 
 	enable = true;
 	pr_debug("In %s: setting port %d to %d\n", __func__, port, enable);
-	v = enable ? 0xf : 0x0;
 
-	/* Set EEE for 100, 500, 1000MBit and 10GBit */
-	sw_w32_mask(0xf << 8, v << 8, priv->r->mac_force_mode_ctrl(port));
+	v = RTL839X_MAC_FORCE_MODE_CTRL_EEE_10G_EN |
+	    RTL839X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN |
+	    RTL839X_MAC_FORCE_MODE_CTRL_EEE_500M_EN |
+	    RTL839X_MAC_FORCE_MODE_CTRL_EEE_100M_EN;
+	sw_w32_mask(v, enable ? v : 0x0, priv->r->mac_force_mode_ctrl(port));
 
 	/* Set TX/RX EEE state */
 	v = enable ? 0x3 : 0x0;
@@ -984,10 +986,10 @@ int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
-	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(8))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & RTL839X_MAC_FORCE_MODE_CTRL_EEE_100M_EN)
 		e->advertised |= ADVERTISED_100baseT_Full;
 
-	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(10))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & RTL839X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN)
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
 	a = rtl839x_get_port_reg_le(RTL839X_MAC_EEE_ABLTY);

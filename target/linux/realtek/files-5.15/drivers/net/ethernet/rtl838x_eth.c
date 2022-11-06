@@ -1008,7 +1008,30 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 	u32 reset_mask;
 
 	pr_info("RESETTING %x, CPU_PORT %d\n", priv->family_id, priv->cpu_port);
-	sw_w32_mask(0x3, 0, priv->r->mac_port_ctrl(priv->cpu_port));
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		sw_w32_mask(RTL838X_MAC_PORT_CTRL_TXRX_EN,
+		            0,
+		            priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL8390_FAMILY_ID:
+		sw_w32_mask(RTL839X_MAC_PORT_CTRL_TXRX_EN,
+		            0,
+		            priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9300_FAMILY_ID:
+		sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
+		            0,
+		            priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9310_FAMILY_ID:
+		sw_w32_mask(RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
+		            0,
+		            priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	default:
+		pr_err("%s: Unsupported chip family: 0x%x\n", __func__, priv->family_id);
+	}
 	msleep(100);
 
 	switch(priv->family_id) {
@@ -1162,17 +1185,22 @@ static void rtl838x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	            RTL838X_DMA_IF_CTRL_TX_EN,
 	            RTL838X_DMA_IF_CTRL_REG);
 
-	/* Restart TX/RX to CPU port */
-	sw_w32_mask(0x0, 0x3, priv->r->mac_port_ctrl(priv->cpu_port));
-	/* Set Speed, duplex, flow control
-	 * FORCE_EN | LINK_EN | NWAY_EN | DUP_SEL
-	 * | SPD_SEL = 0b10 | FORCE_FC_EN | PHY_MASTER_SLV_MANUAL_EN
-	 * | MEDIA_SEL
-	 */
-	sw_w32(0x6192F, priv->r->mac_force_mode_ctrl(priv->cpu_port));
-
-	/* Enable CRC checks on CPU-port */
-	sw_w32_mask(0, BIT(3), priv->r->mac_port_ctrl(priv->cpu_port));
+	sw_w32_mask(RTL838X_MAC_PORT_CTRL_TXRX_EN, 0, priv->r->mac_port_ctrl(priv->cpu_port));
+	sw_w32_mask(0,
+	            RTL838X_MAC_PORT_CTRL_TXRX_EN,
+	            priv->r->mac_port_ctrl(priv->cpu_port));
+	sw_w32(RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_GLITE_PORT_TYPE |
+	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_PORT_TYPE |
+	       RTL838X_MAC_FORCE_MODE_CTRL_EN |
+	       FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+	       RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN |
+	       RTL838X_MAC_FORCE_MODE_CTRL_LINK_EN |
+	       RTL838X_MAC_FORCE_MODE_CTRL_EN,
+	       priv->r->mac_force_mode_ctrl(priv->cpu_port));
+	sw_w32_mask(0, RTL838X_MAC_PORT_CTRL_RX_CHK_CRC_EN, priv->r->mac_port_ctrl(priv->cpu_port));
 }
 
 static void rtl839x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
@@ -1195,8 +1223,10 @@ static void rtl839x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	            RTL839X_DMA_IF_CTRL_TX_EN,
 	            RTL839X_DMA_IF_CTRL_REG);
 
-	/* Restart TX/RX to CPU port, enable CRC checking */
-	sw_w32_mask(0x0, 0x3 | BIT(3), priv->r->mac_port_ctrl(priv->cpu_port));
+	sw_w32_mask(0x0,
+	            RTL839X_MAC_PORT_CTRL_TXRX_EN |
+	            RTL839X_MAC_PORT_CTRL_RX_CHK_CRC_EN,
+	            priv->r->mac_port_ctrl(priv->cpu_port));
 
 	/* CPU port joins Lookup Miss Flooding Portmask */
 	/* TODO: The code below should also work for the RTL838x */
@@ -1204,8 +1234,10 @@ static void rtl839x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	sw_w32_mask(0, 0x80000000, RTL839X_TBL_ACCESS_L2_DATA(0));
 	sw_w32(0x38000, RTL839X_TBL_ACCESS_L2_CTRL);
 
-	/* Force CPU port link up */
-	sw_w32_mask(0, 3, priv->r->mac_force_mode_ctrl(priv->cpu_port));
+	sw_w32_mask(0,
+	            RTL839X_MAC_FORCE_MODE_CTRL_LINK_EN |
+	            RTL839X_MAC_FORCE_MODE_CTRL_EN,
+	            priv->r->mac_force_mode_ctrl(priv->cpu_port));
 }
 
 static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
@@ -1235,18 +1267,40 @@ static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	            RTL930X_DMA_IF_CTRL_TX_EN,
 	            priv->r->dma_if_ctrl);
 
-	/* Restart TX/RX to CPU port, enable CRC checking */
-	sw_w32_mask(0x0, 0x3 | BIT(4), priv->r->mac_port_ctrl(priv->cpu_port));
+	sw_w32_mask(0,
+	            RTL930X_MAC_L2_PORT_CTRL_TXRX_EN |
+	            RTL930X_MAC_L2_PORT_CTRL_RX_CHK_CRC_EN,
+	            priv->r->mac_port_ctrl(priv->cpu_port));
 
 	if (priv->family_id == RTL9300_FAMILY_ID)
 		sw_w32_mask(0, BIT(priv->cpu_port), RTL930X_L2_UNKN_UC_FLD_PMSK);
 	else
 		sw_w32_mask(0, BIT(priv->cpu_port), RTL931X_L2_UNKN_UC_FLD_PMSK);
 
-	if (priv->family_id == RTL9300_FAMILY_ID)
-		sw_w32(0x217, priv->r->mac_force_mode_ctrl(priv->cpu_port));
-	else
-		sw_w32(0x2a1d, priv->r->mac_force_mode_ctrl(priv->cpu_port));
+	switch (priv->family_id) {
+	case RTL9300_FAMILY_ID:
+		sw_w32(RTL930X_MAC_FORCE_MODE_CTRL_FC_EN |
+		       FIELD_PREP(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+		       RTL930X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+		       RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN |
+		       RTL930X_MAC_FORCE_MODE_CTRL_EN,
+		       priv->r->mac_force_mode_ctrl(priv->cpu_port));
+		break;
+	case RTL9310_FAMILY_ID:
+		sw_w32_mask(0, BIT(priv->cpu_port), RTL931X_L2_UNKN_UC_FLD_PMSK);
+		sw_w32(FIELD_PREP(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+		       RTL931X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+		       RTL931X_MAC_FORCE_MODE_CTRL_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_FC_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_SPD_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_DUP_EN |
+		       RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN,
+		       priv->r->mac_force_mode_ctrl(priv->cpu_port));
+		break;
+	default:
+		pr_err("%s Unsupported chip family: %d\n", __func__, priv->family_id);
+		break;
+	}
 }
 
 static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring_b *ring)
@@ -1384,10 +1438,27 @@ static int rtl838x_eth_open(struct net_device *ndev)
 
 static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 {
-	u32 force_mac = priv->family_id == RTL8380_FAMILY_ID ? 0x6192C : 0x75;
-
-	/* Disable RX/TX from/to CPU-port */
-	sw_w32_mask(0x3, 0, priv->r->mac_port_ctrl(priv->cpu_port));
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		sw_w32_mask(RTL838X_MAC_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL8390_FAMILY_ID:
+		sw_w32_mask(RTL839X_MAC_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9300_FAMILY_ID:
+		sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9310_FAMILY_ID:
+		sw_w32_mask(RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	default:
+		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
+		break;
+	}
 
 	switch(priv->family_id) {
 	case RTL8380_FAMILY_ID:
@@ -1441,13 +1512,40 @@ static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 	}
 	/* TODO: L2 flush register is 64 bit on RTL931X and 930X */
 
-	/* CPU-Port: Link down */
-	if (priv->family_id == RTL8380_FAMILY_ID || priv->family_id == RTL8390_FAMILY_ID)
-		sw_w32(force_mac, priv->r->mac_force_mode_ctrl(priv->cpu_port));
-	else if (priv->family_id == RTL9300_FAMILY_ID)
-		sw_w32_mask(0x3, 0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
-	else if (priv->family_id == RTL9310_FAMILY_ID)
-		sw_w32_mask(BIT(0) | BIT(9), 0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		sw_w32(RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_SEL |
+		       RTL838X_MAC_FORCE_MODE_CTRL_GLITE_PORT_TYPE |
+		       RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_SEL |
+		       RTL838X_MAC_FORCE_MODE_CTRL_PHY_PORT_TYPE |
+		       FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL,
+		                  RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+		       RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+		       RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN,
+		       priv->r->mac_force_mode_ctrl(priv->cpu_port));
+		break;
+	case RTL8390_FAMILY_ID:
+		sw_w32(RTL839X_MAC_FORCE_MODE_CTRL_RX_PAUSE_EN |
+		       RTL839X_MAC_FORCE_MODE_CTRL_TX_PAUSE_EN |
+		       FIELD_PREP(RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL,
+		                  RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+		       RTL839X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+		       RTL839X_MAC_FORCE_MODE_CTRL_EN,
+		       priv->r->mac_force_mode_ctrl(priv->cpu_port));
+		break;
+	case RTL9300_FAMILY_ID:
+		sw_w32_mask(RTL930X_MAC_FORCE_MODE_CTRL_EN |
+		            RTL930X_MAC_FORCE_MODE_CTRL_EN,
+		            0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
+		break;
+	case RTL9310_FAMILY_ID:
+		sw_w32_mask(RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN |
+		            RTL931X_MAC_FORCE_MODE_CTRL_EN,
+		            0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
+		break;
+	default:
+		pr_warn("%s Unsupported chip family: %d\n", __func__, priv->family_id);
+	}
 	msleep(100);
 
 	switch(priv->family_id) {
@@ -1982,10 +2080,30 @@ static void rtl838x_mac_an_restart(struct phylink_config *config)
 		return;
 
 	pr_debug("In %s\n", __func__);
-	/* Restart by disabling and re-enabling link */
-	sw_w32(0x6192D, priv->r->mac_force_mode_ctrl(priv->cpu_port));
+	sw_w32(RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_GLITE_PORT_TYPE |
+	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_PORT_TYPE |
+	       RTL838X_MAC_FORCE_MODE_CTRL_FC_EN |
+	       FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL,
+	                  RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+	       RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN |
+	       RTL838X_MAC_FORCE_MODE_CTRL_EN,
+	       priv->r->mac_force_mode_ctrl(priv->cpu_port));
 	msleep(20);
-	sw_w32(0x6192F, priv->r->mac_force_mode_ctrl(priv->cpu_port));
+	sw_w32(RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_GLITE_PORT_TYPE |
+	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_PORT_TYPE |
+	       RTL838X_MAC_FORCE_MODE_CTRL_FC_EN |
+	       FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL,
+	                  RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
+	       RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL |
+	       RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN |
+	       RTL838X_MAC_FORCE_MODE_CTRL_LINK_EN |
+	       RTL838X_MAC_FORCE_MODE_CTRL_EN,
+	       priv->r->mac_force_mode_ctrl(priv->cpu_port));
 }
 
 static void rtl838x_mac_pcs_get_state(struct phylink_config *config,
@@ -2019,8 +2137,27 @@ static void rtl838x_mac_link_down(struct phylink_config *config,
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
 
 	pr_debug("In %s\n", __func__);
-	/* Stop TX/RX to port */
-	sw_w32_mask(0x03, 0, priv->r->mac_port_ctrl(priv->cpu_port));
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		sw_w32_mask(RTL838X_MAC_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL8390_FAMILY_ID:
+		sw_w32_mask(RTL839X_MAC_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9300_FAMILY_ID:
+		sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9310_FAMILY_ID:
+		sw_w32_mask(RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
+			    0, priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	default:
+		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
+		return;
+	}
 }
 
 static void rtl838x_mac_link_up(struct phylink_config *config,
@@ -2032,8 +2169,31 @@ static void rtl838x_mac_link_up(struct phylink_config *config,
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
 
 	pr_debug("In %s\n", __func__);
-	/* Restart TX/RX to port */
-	sw_w32_mask(0, 0x03, priv->r->mac_port_ctrl(priv->cpu_port));
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL838X_MAC_PORT_CTRL_TXRX_EN,
+			    priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL8390_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL839X_MAC_PORT_CTRL_TXRX_EN,
+			    priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9300_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
+			    priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	case RTL9310_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
+			    priv->r->mac_port_ctrl(priv->cpu_port));
+		break;
+	default:
+		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
+		return;
+	}
 }
 
 static void rtl83xx_get_mac_hw(struct net_device *dev, u8 mac[])
@@ -2806,9 +2966,9 @@ static int rtl838x_set_features(struct net_device *dev, netdev_features_t featur
 
 	if ((features ^ dev->features) & NETIF_F_RXCSUM) {
 		if (!(features & NETIF_F_RXCSUM))
-			sw_w32_mask(BIT(3), 0, priv->r->mac_port_ctrl(priv->cpu_port));
+			sw_w32_mask(RTL838X_MAC_PORT_CTRL_RX_CHK_CRC_EN, 0, priv->r->mac_port_ctrl(priv->cpu_port));
 		else
-			sw_w32_mask(0, BIT(3), priv->r->mac_port_ctrl(priv->cpu_port));
+			sw_w32_mask(0, RTL838X_MAC_PORT_CTRL_RX_CHK_CRC_EN, priv->r->mac_port_ctrl(priv->cpu_port));
 	}
 
 	return 0;
@@ -2820,9 +2980,9 @@ static int rtl839x_set_features(struct net_device *dev, netdev_features_t featur
 
 	if ((features ^ dev->features) & NETIF_F_RXCSUM) {
 		if (!(features & NETIF_F_RXCSUM))
-			sw_w32_mask(BIT(3), 0, priv->r->mac_port_ctrl(priv->cpu_port));
+			sw_w32_mask(RTL839X_MAC_PORT_CTRL_RX_CHK_CRC_EN, 0, priv->r->mac_port_ctrl(priv->cpu_port));
 		else
-			sw_w32_mask(0, BIT(3), priv->r->mac_port_ctrl(priv->cpu_port));
+			sw_w32_mask(0, RTL839X_MAC_PORT_CTRL_RX_CHK_CRC_EN, priv->r->mac_port_ctrl(priv->cpu_port));
 	}
 
 	return 0;
@@ -2834,9 +2994,9 @@ static int rtl930x_set_features(struct net_device *dev, netdev_features_t featur
 
 	if ((features ^ dev->features) & NETIF_F_RXCSUM) {
 		if (!(features & NETIF_F_RXCSUM))
-			sw_w32_mask(BIT(4), 0, priv->r->mac_port_ctrl(priv->cpu_port));
+			sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_RX_CHK_CRC_EN, 0, priv->r->mac_port_ctrl(priv->cpu_port));
 		else
-			sw_w32_mask(0, BIT(4), priv->r->mac_port_ctrl(priv->cpu_port));
+			sw_w32_mask(0, RTL930X_MAC_L2_PORT_CTRL_RX_CHK_CRC_EN, priv->r->mac_port_ctrl(priv->cpu_port));
 	}
 
 	return 0;

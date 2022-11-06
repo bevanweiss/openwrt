@@ -14,6 +14,10 @@
 #include <linux/crc32.h>
 #include <linux/sfp.h>
 
+#include "../dsa/rtl83xx/rtl838x.h"
+#include "../dsa/rtl83xx/rtl839x.h"
+#include "../dsa/rtl83xx/rtl930x.h"
+#include "../dsa/rtl83xx/rtl931x.h"
 #include "rtl83xx-phy.h"
 
 extern struct rtl83xx_soc_info soc_info;
@@ -3008,8 +3012,7 @@ int rtl9300_configure_serdes(struct phy_device *phydev)
 
 	rtl9300_phy_enable_10g_1g(sds_num);
 
-	/* Disable MAC */
-	sw_w32_mask(0, 1, RTL930X_MAC_FORCE_MODE_CTRL);
+	sw_w32_mask(0, RTL930X_MAC_FORCE_MODE_CTRL_EN, RTL930X_MAC_FORCE_MODE_CTRL_REG(0));
 	msleep(20);
 
 	/* ----> dal_longan_sds_mode_set */
@@ -3018,14 +3021,12 @@ int rtl9300_configure_serdes(struct phy_device *phydev)
 	/* Configure link to MAC */
 	rtl9300_serdes_mac_link_config(sds_num, true, true);	/* MAC Construct */
 
-	/* Disable MAC */
-	sw_w32_mask(0, 1, RTL930X_MAC_FORCE_MODE_CTRL);
+	sw_w32_mask(0, RTL930X_MAC_FORCE_MODE_CTRL_EN, RTL930X_MAC_FORCE_MODE_CTRL_REG(0));
 	msleep(20);
 
 	rtl9300_force_sds_mode(sds_num, PHY_INTERFACE_MODE_NA);
 
-	/* Re-Enable MAC */
-	sw_w32_mask(1, 0, RTL930X_MAC_FORCE_MODE_CTRL);
+	sw_w32_mask(RTL930X_MAC_FORCE_MODE_CTRL_EN, 0, RTL930X_MAC_FORCE_MODE_CTRL_REG(0));
 
 	rtl9300_force_sds_mode(sds_num, phy_mode);
 

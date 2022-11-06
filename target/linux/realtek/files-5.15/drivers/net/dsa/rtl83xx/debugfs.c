@@ -460,7 +460,7 @@ static const struct file_operations port_egress_fops = {
 
 static const struct debugfs_reg32 port_ctrl_regs[] = {
 	{ .name = "port_isolation", .offset = RTL838X_PORT_ISO_CTRL(0), },
-	{ .name = "mac_force_mode", .offset = RTL838X_MAC_FORCE_MODE_CTRL, },
+	{ .name = "mac_force_mode", .offset = RTL838X_MAC_FORCE_MODE_CTRL_REG(0), },
 };
 
 void rtl838x_dbgfs_cleanup(struct rtl838x_switch_priv *priv)
