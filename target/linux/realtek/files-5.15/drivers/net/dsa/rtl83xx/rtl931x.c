@@ -473,6 +473,20 @@ irqreturn_t rtl931x_switch_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static int rtl931x_smi_wait_op(const int timeout)
+{
+	int ret = 0;
+	u32 val;
+
+	ret = readx_poll_timeout(sw_r32, RTL931X_SMI_ACCESS_PHY_CTRL_REG,
+				 val, !(val & RTL931X_SMI_ACCESS_PHY_CTRL_CMD),
+				 20, timeout);
+	if (ret)
+		pr_err("%s: timeout\n", __func__);
+
+	return ret;
+}
+
 int rtl931x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 {
 	u32 v;
@@ -499,12 +513,14 @@ int rtl931x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 	v |= BIT(4) | 1; /* Write operation and execute */
 	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
 
-	do {
-	} while (sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0) & 0x1);
+	err = rtl931x_smi_wait_op(100000);
+	if (err)
+		goto errout;
 
 	if (sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0) & 0x2)
 		err = -EIO;
 
+errout:
 	mutex_unlock(&smi_lock);
 
 	return err;
@@ -524,8 +540,8 @@ int rtl931x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 	v = reg << 6 | page << 11 | 1;
 	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
 
-	do {
-	} while (sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0) & 0x1);
+	if (rtl931x_smi_wait_op(100000))
+		goto errout;
 
 	v = sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0);
 	*val = sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_3);
@@ -534,6 +550,7 @@ int rtl931x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 	pr_debug("%s: port %d, page: %d, reg: %x, val: %x, v: %08x\n",
 		__func__, port, page, reg, *val, v);
 
+errout:
 	mutex_unlock(&smi_lock);
 
 	return 0;
@@ -563,9 +580,9 @@ int rtl931x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 	v = type << 2 | BIT(0); /* MMD-access-type | EXEC */
 	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
 
-	do {
-		v = sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0);
-	} while (v & BIT(0));
+	err = rtl931x_smi_wait_op(100000);
+	if (err)
+		goto errout;
 
 	/* Check for error condition */
 	if (v & BIT(1))
@@ -576,6 +593,7 @@ int rtl931x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 	pr_debug("%s: port %d, dev: %x, regnum: %x, val: %x (err %d)\n", __func__,
 		 port, devnum, mdiobus_c45_regad(regnum), *val, err);
 
+errout:
 	mutex_unlock(&smi_lock);
 
 	return err;
@@ -605,12 +623,14 @@ int rtl931x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 	v = BIT(4) | type << 2 | BIT(0); /* WRITE | MMD-access-type | EXEC */
 	sw_w32(v, RTL931X_SMI_INDRT_ACCESS_CTRL_0);
 
-	do {
-		v = sw_r32(RTL931X_SMI_INDRT_ACCESS_CTRL_0);
-	} while (v & BIT(0));
+	err = rtl931x_smi_wait_op(100000);
+	if (err)
+		goto errout;
 
 	pr_debug("%s: port %d, dev: %x, regnum: %x, val: %x (err %d)\n", __func__,
 		 port, devnum, mdiobus_c45_regad(regnum), val, err);
+
+errout:
 	mutex_unlock(&smi_lock);
 
 	return err;

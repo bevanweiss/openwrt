@@ -3,6 +3,7 @@
 #include <asm/mach-realtek/otto.h>
 #include <linux/bitops.h>
 #include <linux/inetdevice.h>
+#include <linux/iopoll.h>
 #include <linux/irq.h>
 #include <linux/mdio.h>
 #include <linux/mutex.h>
@@ -869,6 +870,20 @@ irqreturn_t rtl930x_switch_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static int rtl930x_smi_wait_op(const int timeout)
+{
+	int ret = 0;
+	u32 val;
+
+	ret = readx_poll_timeout(sw_r32, RTL930X_SMI_ACCESS_PHY_CTRL_REG,
+				 val, !(val & RTL930X_SMI_ACCESS_PHY_CTRL_CMD),
+				 20, timeout);
+	if (ret)
+		pr_err("%s: timeout\n", __func__);
+
+	return ret;
+}
+
 int rtl930x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 {
 	u32 v;
@@ -887,13 +902,15 @@ int rtl930x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 	v = reg << 20 | page << 3 | 0x1f << 15 | BIT(2) | BIT(0);
 	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
 
-	do {
-		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
-	} while (v & 0x1);
+	err = rtl930x_smi_wait_op(100000);
+	if (err)
+		goto errout;
 
+	v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
 	if (v & BIT(25))
 		err = -EIO;
 
+errout:
 	mutex_unlock(&smi_lock);
 
 	return err;
@@ -913,10 +930,12 @@ int rtl930x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 	v = reg << 20 | page << 3 | 0x1f << 15 | 1;
 	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
 
-	do {
-		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
-	} while ( v & 0x1);
 
+	err = rtl930x_smi_wait_op(100000);
+	if (err)
+		goto errout;
+
+	v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
 	if (v & BIT(25)) {
 		pr_debug("Error reading phy %d, register %d\n", port, reg);
 		err = -EIO;
@@ -925,6 +944,7 @@ int rtl930x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 
 	pr_debug("%s: port %d, page: %d, reg: %x, val: %x\n", __func__, port, page, reg, *val);
 
+errout:
 	mutex_unlock(&smi_lock);
 
 	return err;
@@ -950,11 +970,13 @@ int rtl930x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 	v = BIT(2) | BIT(1) | BIT(0); /* WRITE | MMD-access | EXEC */
 	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
 
-	do {
-		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
-	} while (v & BIT(0));
+	err = rtl930x_smi_wait_op(100000);
+	if (err)
+		goto errout;
 
 	pr_debug("%s: port %d, regnum: %x, val: %x (err %d)\n", __func__, port, regnum, val, err);
+
+errout:
 	mutex_unlock(&smi_lock);
 	return err;
 }
@@ -976,13 +998,15 @@ int rtl930x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 	v = BIT(1) | BIT(0); /* MMD-access | EXEC */
 	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
 
-	do {
-		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
-	} while (v & BIT(0));
+	err = rtl930x_smi_wait_op(100000);
+	if (err)
+		goto errout;
+
 	/* There is no error-checking via BIT 25 of v, as it does not seem to be set correctly */
 	*val = (sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_2) & 0xffff);
 	pr_debug("%s: port %d, regnum: %x, val: %x (err %d)\n", __func__, port, regnum, *val, err);
 
+errout:
 	mutex_unlock(&smi_lock);
 
 	return err;
