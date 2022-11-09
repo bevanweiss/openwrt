@@ -20,6 +20,150 @@
 #include "../dsa/rtl83xx/rtl931x.h"
 #include "rtl83xx-phy.h"
 
+#define RTL930X_SDS_PORT_CNT    12
+
+/* SDS Registers on rtl930x are not continuous! Look up tables are needed
+ * to get the correct SDS configuration register address.
+ */
+
+/* SerDes mode config */
+static const u16 rtl930x_sds_mode_reg_offset[] = {
+	0x0194, 0x0194, 0x0194, 0x0194, /* SDS 0 - 3 */
+	0x02a0, 0x02a0, 0x02a0, 0x02a0, /* SDS 4 - 7 */
+	0x02a4, 0x02a4, /* SDS 8 - 9 */
+	0x0198, 0x0198 /* SDS 10 - 11 */
+};
+#define _RLT930X_SDS_MODE_REG_OFFSET(s) \
+        (rtl930x_sds_mode_reg_offset[(s) % ARRAY_SIZE(rtl930x_sds_mode_reg_offset)])
+#define RTL930X_SDS_MODE_REG(s)                         _RLT930X_SDS_MODE_REG_OFFSET(s)
+#define RTL930X_SDS_MODE_FEC(s)                                 BIT(((((s) % 4) + 1) * (5 + 1)) - 1)
+#define _RTL930X_SDS_MODE_SEL_MASK                              GENMASK(4, 0)
+#define RTL930X_SDS_MODE_SEL_MASK(s) \
+        ((_RTL930X_SDS_MODE_SEL_MASK) << ((s) % 4) * (5 + 1))
+#define RTL930X_SDS_MODE_SEL_OFF                                        0x1f
+/* Reserved                                                             0x1e - 0x1c */
+#define RTL930X_SDS_MODE_SEL_10GKR_1000BASEX_AUTO                       0x1b
+#define RTL930X_SDS_MODE_SEL_10GBASER                                   0x1a
+#define RTL930X_SDS_MODE_SEL_RXAUI_PLUS                                 0x19
+/* Reserved                                                             0x18 */
+#define RTL930X_SDS_MODE_SEL_RXAUI_LITE                                 0x17
+#define RTL930X_SDS_MODE_SEL_2500BASEX                                  0x16
+/* Reserved                                                             0x15 - 0x13 */
+#define RTL930X_SDS_MODE_SEL_HISGMII                                    0x12
+/* Reserved                                                             0x11 */
+#define RTL930X_SDS_MODE_SEL_XSGMII                                     0x10
+/* Reserved                                                             0x0f - 0x0e */
+#define RTL930X_SDS_MODE_SEL_USXGMII                                    0x0d
+/* Reserved                                                             0x0c - 0x0a */
+#define RTL930X_SDS_MODE_SEL_RSGMII                                     0x09
+/* Reserved                                                             0x07 - 0x08 */
+#define RTL930X_SDS_MODE_SEL_QSGMII                                     0x06
+#define RTL930X_SDS_MODE_SEL_100BASEX                                   0x05
+#define RTL930X_SDS_MODE_SEL_1000BASEX                                  0x04
+/* Reserved                                                             0x03 */
+#define RTL930X_SDS_MODE_SEL_SGMII                                      0x02
+/* Reserved                                                             0x00 - 0x01 */
+#define RTL930X_SDS_MODE_SEL_GET(s, r) \
+        (((r) >> (((s) % 4) * (5 + 1))) & _RTL930X_SDS_MODE_SEL_MASK)
+#define RTL930X_SDS_MODE_SEL_SET(s, m) \
+        (((m) & _RTL930X_SDS_MODE_SEL_MASK) << (((s) % 4) * (5 + 1)))
+
+/* Serdes Interface Controller */
+#define RTL930X_SDS_INTF_CTRL_PORT_MIN  0
+#define RTL930X_SDS_INTF_CTRL_PORT_MAX  9
+#define RTL930X_SDS_INTF_CTRL2_PORT_MIN 10
+#define RTL930X_SDS_INTF_CTRL2_PORT_MAX 11
+
+static const u16 rtl930x_sds_intf_ctrl_reg_offset[] = {
+	0x019c, 0x01a0, 0x01a4, 0x01a8, /* SDS 0 - 3 */
+	0x02a8, 0x02ac, 0x02b0, 0x02b4, 0x02b8, 0x02bc, /* SDS 4 - 9 */
+	0x01ac, 0x01b0, /* SDS 10 - 11 */
+};
+#define _RTL930X_SDS_INTF_CTRL_REG_OFFSET(s) \
+        (rtl930x_sds_intf_ctrl_reg_offset[(s) % ARRAY_SIZE(rtl930x_sds_intf_ctrl_reg_offset)])
+#define RTL930X_SDS_INTF_CTRL_REG(s)                    _RTL930X_SDS_INTF_CTRL_REG_OFFSET(s)
+/* Reserved                                                     31 - 25 */
+#define RTL930X_SDS_INTF_CTRL_LINK_OK_TGXR                      BIT(24)
+#define RTL930X_SDS_INTF_CTRL_SDET_OUT                          BIT(23)
+#define RTL930X_SDS_INTF_CTRL_FIB100_DET                        BIT(22)
+#define RTL930X_SDS_INTF_CTRL_FIB100_SDET                       BIT(21)
+#define RTL930X_SDS_INTF_CTRL_FIB_ISO                           BIT(20)
+#define RTL930X_SDS_INTF_CTRL_RX_SYM_ERR_ALL                    BIT(19)
+#define RTL930X_SDS_INTF_CTRL_RX_SYM_ERR_TGXR                   BIT(18)
+#define RTL930X_SDS_INTF_CTRL_INTP_TGX                          BIT(17)
+#define RTL930X_SDS_INTF_CTRL_INTP_TGR                          BIT(16)
+/* Reserved                                                     15 - 10 */
+#define RTL930X_SDS_INTF_CTRL_ISO_ON                            BIT(9)
+#define RTL930X_SDS_INTF_CTRL_LOAD_SYS_PAR                      BIT(8)
+#define RTL930X_SDS_INTF_CTRL_UNIDIR_TX_ABLE                    BIT(7)
+#define RTL930X_SDS_INTF_CTRL_TX_DISABLE                        BIT(6)
+#define RTL930X_SDS_INTF_CTRL_RX_DISABLE                        BIT(5)
+#define RTL930X_SDS_INTF_CTRL_BCST_ON                           BIT(4)
+#define RTL930X_SDS_INTF_CTRL_INTP_SRC_TGX                      BIT(3)
+#define RTL930X_SDS_INTF_CTRL_INTP_SRC_TGR                      BIT(2)
+#define RTL930X_SDS_INTF_CTRL_TX_SWAP_TGX                       BIT(1)
+#define RTL930X_SDS_INTF_CTRL_RX_SWAP_TGX                       BIT(0)
+
+/* SDS 10 and 11 have different bit mapping  */
+/* Reserved                                                     31 - 11 */
+#define RTL930X_SDS_INTF_CTRL2_SDET_OUT                         BIT(10)
+#define RTL930X_SDS_INTF_CTRL2_FIB100_DET                       BIT(9)
+#define RTL930X_SDS_INTF_CTRL2_FIB100_SDET                      BIT(8)
+#define RTL930X_SDS_INTF_CTRL2_FIB_ISO                          BIT(7)
+#define RTL930X_SDS_INTF_CTRL2_RX_SYM_ERR_ALL                   BIT(6)
+#define RTL930X_SDS_INTF_CTRL2_ISO_ON                           BIT(5)
+#define RTL930X_SDS_INTF_CTRL2_LOAD_SYS_PAR                     BIT(4)
+#define RTL930X_SDS_INTF_CTRL2_UNIDIR_TX_ABLE                   BIT(3)
+#define RTL930X_SDS_INTF_CTRL2_TX_DISABLE                       BIT(2)
+#define RTL930X_SDS_INTF_CTRL2_RX_DISABLE                       BIT(1)
+#define RTL930X_SDS_INTF_CTRL2_BCST_ON                          BIT(0)
+
+/* SerDes wrap interface controller */
+static const u16 rtl930x_sds_wrap_intf_ctrl1_reg_offset[] = {
+	0x01b4, 0x01b8, /* SDS 0 - 1 */
+	0x02c0, 0x02c4, 0x02c8, /* SDS 2 - 4 */
+	0x02bc, /* SDS 5 */
+};
+#define _RTL930X_SDS_WRAP_INTF_CTRL1_REG_OFFSET(s) \
+        (rtl930x_sds_wrap_intf_ctrl1_reg_offset[(s) % ARRAY_SIZE(rtl930x_sds_wrap_intf_ctrl1_reg_offset)])
+#define RTL930X_WRAP_SDS_INTF_CTRL1_REG(s)              _RTL930X_SDS_WRAP_INTF_CTRL1_REG_OFFSET(s)
+/* Reserved                                                     31 - 22 */
+#define RTL930X_WRAP_SDS_INTF_CTRL1_BCST_IDX_MASK               GENMASK(21, 17) /* Not valid on SDS5 */
+#define RTL930X_WRAP_SDS_INTF_CTRL1_LPI_GMII_SEL                BIT(16)
+#define RTL930X_WRAP_SDS_INTF_CTRL1_CMD_STOP_GLI_CLK_MASK       GENMASK(15, 8)
+#define RTL930X_WRAP_SDS_INTF_CTRL1_STS_UPD_TX_MASK             GENMASK(7, 0)
+
+static const u16 rtl930x_sds_wrap_intf_ctrl2_reg_offset[] = {
+	0x01c0, 0x01c4, /* SDS 0 - 1 */
+	0x02cc, 0x02e0, 0x02e4, /* SDS 2 - 4 */
+	0x01c8, /* SDS 5 */
+};
+#define _RTL930X_SDS_WRAP_INTF_CTRL2_REG_OFFSET(s) \
+        (rtl930x_sds_wrap_intf_ctrl2_reg_offset[(s) % ARRAY_SIZE(rtl930x_sds_wrap_intf_ctrl2_reg_offset)])
+#define RTL930X_WRAP_SDS_INTF_CTRL2_REG(s)              _RTL930X_SDS_WRAP_INTF_CTRL2_REG_OFFSET(s)
+/* Reserved                                                     31 - 18 */
+#define RTL930X_WRAP_SDS_INTF_CTRL2_LINK_OK_SUM_MASK            GENMASK(17, 16)
+#define RTL930X_WRAP_SDS_INTF_CTRL2_LINK_OK_MASK                GENMASK(15, 8)
+#define RTL930X_WRAP_SDS_INTF_CTRL2_STS_UPD_RX_MASK             GENMASK(7, 0)
+
+/* Serdes USXGMII submode config */
+static const u16 rtl930x_usxgmii_sds_submode_reg_offset[] = {
+	0x0000, 0x0000, /* SDS 0 - 1 cannot be configured, but lets keep indexing logical */
+	0x01cc, 0x01d0, /* SDS 2 - 3 */
+	0x02d8, 0x02dc, 0x02e0, 0x02e4, 0x02e8, 0x02ec, 0x02f0, /* SDS 4 - 9 */
+};
+#define _RTL930X_SDS_SUBMODE_CTRL_REG_OFFSET(s) \
+        (rtl930x_usxgmii_sds_submode_reg_offset[(s) % ARRAY_SIZE(rtl930x_usxgmii_sds_submode_reg_offset)])
+#define RTL930X_SDS_SUBMODE_CTRL_REG(s)                 _RTL930X_SDS_SUBMODE_CTRL_REG_OFFSET(s)
+#define _RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_MASK          GENMASK(4, 0)
+#define RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_MASK(s) \
+        (_RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_MASK << (((s) % 4) * 5))
+#define RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_USXGMII                0x00
+#define RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_GET(s, r) \
+        (((r) >> (((s) % 4) * 5)) & _RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_MASK)
+#define RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_SET(s, m) \
+        (((m) & _RTL930X_SDS_SUBMODE_CTRL_USXGMII_SUBMODE_MASK) << (((s) % 4) * 5))
+
 extern struct rtl83xx_soc_info soc_info;
 extern struct mutex smi_lock;
 
