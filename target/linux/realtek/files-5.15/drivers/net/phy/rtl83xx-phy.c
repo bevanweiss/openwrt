@@ -312,6 +312,23 @@ void rtl9300_sds_set(int sds_num, u32 mode)
 	            RTL930X_SDS_MODE_SEL_SET(sds_num, mode),
 	            RTL930X_SDS_MODE_REG(sds_num));
 
+	/* For USXGMII we need to set the 10GSXGMII sub-mode 0 */
+	if (mode == RTL930X_SDS_MODE_SEL_USXGMII) {
+		sw_w32_mask(RTL930X_SDS_MODE_SEL_MASK(sds_num),
+		            0, RTL930X_SDS_MODE_REG(sds_num));
+
+		if ((sds_num >= RTL930X_SDS_INTF_CTRL_PORT_MIN) &&
+		    (sds_num <= RTL930X_SDS_INTF_CTRL_PORT_MAX))
+			sw_w32(RTL930X_SDS_INTF_CTRL_SDET_OUT |
+			       RTL930X_SDS_INTF_CTRL_RX_SYM_ERR_TGXR,
+			       RTL930X_SDS_INTF_CTRL_REG(sds_num));
+
+		if (sds_num == 1)
+			sw_w32(RTL930X_WRAP_SDS_INTF_CTRL2_LINK_OK_SUM_MASK |
+			       RTL930X_WRAP_SDS_INTF_CTRL2_LINK_OK_MASK,
+			       RTL930X_WRAP_SDS_INTF_CTRL2_REG(sds_num));
+	}
+
 	pr_debug("%s: 194:%08x 198:%08x 2a0:%08x 2a4:%08x\n", __func__,
 		sw_r32(0x194), sw_r32(0x198), sw_r32(0x2a0), sw_r32(0x2a4));
 }
