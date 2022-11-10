@@ -152,14 +152,7 @@ u16 rtl9300_sds_regs[] = { 0x0194, 0x0194, 0x0194, 0x0194, 0x02a0, 0x02a0, 0x02a
 			   0x02A4, 0x02A4, 0x0198, 0x0198 };
 u8  rtl9300_sds_lsb[]  = { 0, 6, 12, 18, 0, 6, 12, 18, 0, 6, 0, 6};
 
-/* Reset the SerDes by powering it off and set a new operations mode
- * of the SerDes. 0x1f is off. Other modes are
- * 0x02: SGMII		0x04: 1000BX_FIBER	0x05: FIBER100
- * 0x06: QSGMII		0x09: RSGMII		0x0d: USXGMII
- * 0x10: XSGMII		0x12: HISGMII		0x16: 2500Base_X
- * 0x17: RXAUI_LITE	0x19: RXAUI_PLUS	0x1a: 10G Base-R
- * 0x1b: 10GR1000BX_AUTO			0x1f: OFF
- */
+/* Reset the SerDes by powering it off and set a new operations mode */
 void rtl9300_sds_rst(int sds_num, u32 mode)
 {
 	pr_info("%s %d\n", __func__, mode);
@@ -168,28 +161,10 @@ void rtl9300_sds_rst(int sds_num, u32 mode)
 		return;
 	}
 
-	sw_w32_mask(0x1f << rtl9300_sds_lsb[sds_num], 0x1f << rtl9300_sds_lsb[sds_num],
-		    rtl9300_sds_regs[sds_num]);
+	rtl9300_sds_set(sds_num, 0x1f);
 	msleep(10);
 
-	sw_w32_mask(0x1f << rtl9300_sds_lsb[sds_num], mode << rtl9300_sds_lsb[sds_num],
-		    rtl9300_sds_regs[sds_num]);
-	msleep(10);
-
-	pr_debug("%s: 194:%08x 198:%08x 2a0:%08x 2a4:%08x\n", __func__,
-	         sw_r32(0x194), sw_r32(0x198), sw_r32(0x2a0), sw_r32(0x2a4));
-}
-
-void rtl9300_sds_set(int sds_num, u32 mode)
-{
-	pr_info("%s %d\n", __func__, mode);
-	if (sds_num < 0 || sds_num > 11) {
-		pr_err("Wrong SerDes number: %d\n", sds_num);
-		return;
-	}
-
-	sw_w32_mask(0x1f << rtl9300_sds_lsb[sds_num], mode << rtl9300_sds_lsb[sds_num],
-		    rtl9300_sds_regs[sds_num]);
+	rtl9300_sds_set(sds_num, mode);
 	msleep(10);
 
 	pr_debug("%s: 194:%08x 198:%08x 2a0:%08x 2a4:%08x\n", __func__,
