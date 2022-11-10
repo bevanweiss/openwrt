@@ -474,6 +474,7 @@ static int rtl83xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 			state->speed = SPEED_2500;
 		else
 			state->speed = SPEED_100; /* Is in fact 500Mbit */
+		break;
 	}
 
 	state->pause &= (MLO_PAUSE_RX | MLO_PAUSE_TX);
@@ -532,14 +533,14 @@ static int rtl93xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 	case 1:
 		state->speed = SPEED_100;
 		break;
-	case 2:
+	case 2: fallthrough;
 	case 7:
 		state->speed = SPEED_1000;
 		break;
 	case 4:
 		state->speed = SPEED_10000;
 		break;
-	case 5:
+	case 5: fallthrough;
 	case 8:
 		state->speed = SPEED_2500;
 		break;
@@ -548,6 +549,7 @@ static int rtl93xx_phylink_mac_link_state(struct dsa_switch *ds, int port,
 		break;
 	default:
 		pr_err("%s: unknown speed: %d\n", __func__, (u32)speed & 0xf);
+		break;
 	}
 
 	if (priv->family_id == RTL9310_FAMILY_ID
@@ -734,7 +736,7 @@ static void rtl931x_phylink_mac_config(struct dsa_switch *ds, int port,
 		band = rtl931x_sds_cmu_band_get(sds_num, PHY_INTERFACE_MODE_XGMII);
 		rtl931x_sds_init(sds_num, PHY_INTERFACE_MODE_XGMII);
 		break;
-	case PHY_INTERFACE_MODE_10GBASER:
+	case PHY_INTERFACE_MODE_10GBASER: fallthrough;
 	case PHY_INTERFACE_MODE_10GKR:
 		band = rtl931x_sds_cmu_band_get(sds_num, PHY_INTERFACE_MODE_10GBASER);
 		rtl931x_sds_init(sds_num, PHY_INTERFACE_MODE_10GBASER);
@@ -811,7 +813,7 @@ static void rtl93xx_phylink_mac_config(struct dsa_switch *ds, int port,
 		case PHY_INTERFACE_MODE_XGMII:
 			sds_mode = 0x10;
 			break;
-		case PHY_INTERFACE_MODE_10GBASER:
+		case PHY_INTERFACE_MODE_10GBASER: fallthrough;
 		case PHY_INTERFACE_MODE_10GKR:
 			sds_mode = 0x1b; /* 10G 1000X Auto */
 			break;
@@ -1283,7 +1285,7 @@ void rtl83xx_port_stp_state_set(struct dsa_switch *ds, int port, u8 state)
 	case BR_STATE_DISABLED: /* 0 */
 		port_state[index] |= (0 << bit);
 		break;
-	case BR_STATE_BLOCKING:  /* 4 */
+	case BR_STATE_BLOCKING: fallthrough; /* 4 */
 	case BR_STATE_LISTENING: /* 1 */
 		port_state[index] |= (1 << bit);
 		break;
@@ -1292,6 +1294,7 @@ void rtl83xx_port_stp_state_set(struct dsa_switch *ds, int port, u8 state)
 		break;
 	case BR_STATE_FORWARDING: /* 3 */
 		port_state[index] |= (3 << bit);
+		break;
 	default:
 		break;
 	}

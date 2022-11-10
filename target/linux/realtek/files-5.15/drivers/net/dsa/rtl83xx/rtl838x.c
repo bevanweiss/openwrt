@@ -806,11 +806,11 @@ static void rtl838x_write_pie_templated(u32 r[], struct pie_rule *pr, enum templ
 				data_m = pr->sip_m >> 16;
 			}
 			break;
-		case TEMPLATE_FIELD_SIP2:
-		case TEMPLATE_FIELD_SIP3:
-		case TEMPLATE_FIELD_SIP4:
-		case TEMPLATE_FIELD_SIP5:
-		case TEMPLATE_FIELD_SIP6:
+		case TEMPLATE_FIELD_SIP2: fallthrough;
+		case TEMPLATE_FIELD_SIP3: fallthrough;
+		case TEMPLATE_FIELD_SIP4: fallthrough;
+		case TEMPLATE_FIELD_SIP5: fallthrough;
+		case TEMPLATE_FIELD_SIP6: fallthrough;
 		case TEMPLATE_FIELD_SIP7:
 			data = pr->sip6.s6_addr16[5 - (field_type - TEMPLATE_FIELD_SIP2)];
 			data_m = pr->sip6_m.s6_addr16[5 - (field_type - TEMPLATE_FIELD_SIP2)];
@@ -833,11 +833,11 @@ static void rtl838x_write_pie_templated(u32 r[], struct pie_rule *pr, enum templ
 				data_m = pr->dip_m >> 16;
 			}
 			break;
-		case TEMPLATE_FIELD_DIP2:
-		case TEMPLATE_FIELD_DIP3:
-		case TEMPLATE_FIELD_DIP4:
-		case TEMPLATE_FIELD_DIP5:
-		case TEMPLATE_FIELD_DIP6:
+		case TEMPLATE_FIELD_DIP2: fallthrough;
+		case TEMPLATE_FIELD_DIP3: fallthrough;
+		case TEMPLATE_FIELD_DIP4: fallthrough;
+		case TEMPLATE_FIELD_DIP5: fallthrough;
+		case TEMPLATE_FIELD_DIP6: fallthrough;
 		case TEMPLATE_FIELD_DIP7:
 			data = pr->dip6.s6_addr16[5 - (field_type - TEMPLATE_FIELD_DIP2)];
 			data_m = pr->dip6_m.s6_addr16[5 - (field_type - TEMPLATE_FIELD_DIP2)];
@@ -969,10 +969,11 @@ static void rtl838x_read_pie_templated(u32 r[], struct pie_rule *pr, enum templa
 				      r[4 - i / 2], r[3 - i / 2]);
 			ipv6_addr_set(&pr->sip6_m, pr->sip_m, r[5 - i / 2],
 				      r[4 - i / 2], r[3 - i / 2]);
-		case TEMPLATE_FIELD_SIP3:
-		case TEMPLATE_FIELD_SIP4:
-		case TEMPLATE_FIELD_SIP5:
-		case TEMPLATE_FIELD_SIP6:
+			break;
+		case TEMPLATE_FIELD_SIP3: fallthrough;
+		case TEMPLATE_FIELD_SIP4: fallthrough;
+		case TEMPLATE_FIELD_SIP5: fallthrough;
+		case TEMPLATE_FIELD_SIP6: fallthrough;
 		case TEMPLATE_FIELD_SIP7:
 			break;
 		case TEMPLATE_FIELD_DIP0:
@@ -989,10 +990,11 @@ static void rtl838x_read_pie_templated(u32 r[], struct pie_rule *pr, enum templa
 				      r[4 - i / 2], r[3 - i / 2]);
 			ipv6_addr_set(&pr->dip6_m, pr->dip_m, r[5 - i / 2],
 				      r[4 - i / 2], r[3 - i / 2]);
-		case TEMPLATE_FIELD_DIP3:
-		case TEMPLATE_FIELD_DIP4:
-		case TEMPLATE_FIELD_DIP5:
-		case TEMPLATE_FIELD_DIP6:
+			break;
+		case TEMPLATE_FIELD_DIP3: fallthrough;
+		case TEMPLATE_FIELD_DIP4: fallthrough;
+		case TEMPLATE_FIELD_DIP5: fallthrough;
+		case TEMPLATE_FIELD_DIP6: fallthrough;
 		case TEMPLATE_FIELD_DIP7:
 			break;
 		case TEMPLATE_FIELD_IP_TOS_PROTO:
@@ -1013,6 +1015,7 @@ static void rtl838x_read_pie_templated(u32 r[], struct pie_rule *pr, enum templa
 			break;
 		default:
 			pr_info("%s: unknown field %d\n", __func__, field_type);
+			break;
 		}
 	}
 }

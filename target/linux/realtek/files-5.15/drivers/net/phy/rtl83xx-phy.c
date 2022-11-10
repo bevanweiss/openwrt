@@ -1849,7 +1849,7 @@ void rtl9300_sds_tx_config(int sds, phy_interface_t phy_if)
 	case PHY_INTERFACE_MODE_1000BASEX:
 		page = 0x25;
 		break;
-	case PHY_INTERFACE_MODE_HSGMII:
+	case PHY_INTERFACE_MODE_HSGMII: fallthrough;
 	case PHY_INTERFACE_MODE_2500BASEX:
 		page = 0x29;
 		break;
@@ -3169,7 +3169,7 @@ static void rtl931x_sds_fiber_mode_set(u32 sds, phy_interface_t mode)
 		val = 0x9;
 		break;
 
-	case PHY_INTERFACE_MODE_10GBASER:
+	case PHY_INTERFACE_MODE_10GBASER: fallthrough;
 	case PHY_INTERFACE_MODE_10GKR:
 		val = 0x35;
 		break;
@@ -3194,10 +3194,10 @@ static void rtl931x_sds_fiber_mode_set(u32 sds, phy_interface_t mode)
 static int rtl931x_sds_cmu_page_get(phy_interface_t mode)
 {
 	switch (mode) {
-	case PHY_INTERFACE_MODE_SGMII:
+	case PHY_INTERFACE_MODE_SGMII: fallthrough;
 	case PHY_INTERFACE_MODE_1000BASEX:	/* MII_1000BX_FIBER / 100BX_FIBER / 1000BX100BX_AUTO */
 		return 0x24;
-	case PHY_INTERFACE_MODE_HSGMII:
+	case PHY_INTERFACE_MODE_HSGMII: fallthrough;
 	case PHY_INTERFACE_MODE_2500BASEX:	/* MII_2500Base_X: */
 		return 0x28;
 /*	case MII_HISGMII_5G: */
@@ -3206,8 +3206,8 @@ static int rtl931x_sds_cmu_page_get(phy_interface_t mode)
 		return 0x2a;			/* Code also has 0x34 */
 	case PHY_INTERFACE_MODE_XAUI:		/* MII_RXAUI_LITE: */
 		return 0x2c;
-	case PHY_INTERFACE_MODE_XGMII:		/* MII_XSGMII */
-	case PHY_INTERFACE_MODE_10GKR:
+	case PHY_INTERFACE_MODE_XGMII: fallthrough; /* MII_XSGMII */
+	case PHY_INTERFACE_MODE_10GKR: fallthrough;
 	case PHY_INTERFACE_MODE_10GBASER:	/* MII_10GR */
 		return 0x2e;
 	default:
@@ -3226,10 +3226,10 @@ static void rtl931x_cmu_type_set(u32 asds, phy_interface_t mode, int chiptype)
 	u32 lane, frc_lc_mode_bitnum, frc_lc_mode_val_bitnum;
 
 	switch (mode) {
-	case PHY_INTERFACE_MODE_NA:
-	case PHY_INTERFACE_MODE_10GKR:
-	case PHY_INTERFACE_MODE_XGMII:
-	case PHY_INTERFACE_MODE_10GBASER:
+	case PHY_INTERFACE_MODE_NA: fallthrough;
+	case PHY_INTERFACE_MODE_10GKR: fallthrough;
+	case PHY_INTERFACE_MODE_XGMII: fallthrough;
+	case PHY_INTERFACE_MODE_10GBASER: fallthrough;
 	case PHY_INTERFACE_MODE_USXGMII:
 		return;
 
@@ -3349,7 +3349,7 @@ static void rtl931x_sds_mii_mode_set(u32 sds, phy_interface_t mode)
 	case PHY_INTERFACE_MODE_XGMII:
 		val = 0x10; /* serdes mode XSGMII */
 		break;
-	case PHY_INTERFACE_MODE_USXGMII:
+	case PHY_INTERFACE_MODE_USXGMII: fallthrough;
 	case PHY_INTERFACE_MODE_2500BASEX:
 		val = 0xD;
 		break;

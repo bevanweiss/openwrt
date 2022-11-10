@@ -1083,11 +1083,11 @@ int rtl931x_pie_data_fill(enum template_field_id field_type, struct pie_rule *pr
 			*data_m = pr->sip_m >> 16;
 		}
 		break;
-	case TEMPLATE_FIELD_SIP2:
-	case TEMPLATE_FIELD_SIP3:
-	case TEMPLATE_FIELD_SIP4:
-	case TEMPLATE_FIELD_SIP5:
-	case TEMPLATE_FIELD_SIP6:
+	case TEMPLATE_FIELD_SIP2: fallthrough;
+	case TEMPLATE_FIELD_SIP3: fallthrough;
+	case TEMPLATE_FIELD_SIP4: fallthrough;
+	case TEMPLATE_FIELD_SIP5: fallthrough;
+	case TEMPLATE_FIELD_SIP6: fallthrough;
 	case TEMPLATE_FIELD_SIP7:
 		*data = pr->sip6.s6_addr16[5 - (field_type - TEMPLATE_FIELD_SIP2)];
 		*data_m = pr->sip6_m.s6_addr16[5 - (field_type - TEMPLATE_FIELD_SIP2)];
@@ -1110,11 +1110,11 @@ int rtl931x_pie_data_fill(enum template_field_id field_type, struct pie_rule *pr
 			*data_m = pr->dip_m >> 16;
 		}
 		break;
-	case TEMPLATE_FIELD_DIP2:
-	case TEMPLATE_FIELD_DIP3:
-	case TEMPLATE_FIELD_DIP4:
-	case TEMPLATE_FIELD_DIP5:
-	case TEMPLATE_FIELD_DIP6:
+	case TEMPLATE_FIELD_DIP2: fallthrough;
+	case TEMPLATE_FIELD_DIP3: fallthrough;
+	case TEMPLATE_FIELD_DIP4: fallthrough;
+	case TEMPLATE_FIELD_DIP5: fallthrough;
+	case TEMPLATE_FIELD_DIP6: fallthrough;
 	case TEMPLATE_FIELD_DIP7:
 		*data = pr->dip6.s6_addr16[5 - (field_type - TEMPLATE_FIELD_DIP2)];
 		*data_m = pr->dip6_m.s6_addr16[5 - (field_type - TEMPLATE_FIELD_DIP2)];

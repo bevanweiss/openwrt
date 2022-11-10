@@ -1167,10 +1167,11 @@ static void rtl930x_route_read(int idx, struct rtl83xx_route *rt)
 			rt->prefix_len = find_last_bit((unsigned long int *)&ip6_m.s6_addr32,
 							 128);
 		break;
-	case 1: /* IPv4 Multicast route */
+	case 1: fallthrough; /* IPv4 Multicast route */
 	case 3: /* IPv6 Multicast route */
 		pr_warn("%s: route type not supported\n", __func__);
 		goto out;
+		break;
 	}
 
 	rt->attr.hit = !!(v & BIT(22));
@@ -1228,10 +1229,11 @@ static void rtl930x_host_route_read(int idx, struct rtl83xx_route *rt)
 			      sw_r32(rtl_table_data(r, 3)), sw_r32(rtl_table_data(r, 2)),
 			      sw_r32(rtl_table_data(r, 1)), sw_r32(rtl_table_data(r, 0)));
 		break;
-	case 1: /* IPv4 Multicast route */
+	case 1: fallthrough; /* IPv4 Multicast route */
 	case 3: /* IPv6 Multicast route */
 		pr_warn("%s: route type not supported\n", __func__);
 		goto out;
+		break;
 	}
 
 	rt->attr.hit = !!(v & BIT(20));
@@ -1295,10 +1297,11 @@ static void rtl930x_host_route_write(int idx, struct rtl83xx_route *rt)
 		sw_w32(rt->dst_ip6.s6_addr32[2], rtl_table_data(r, 3));
 		sw_w32(rt->dst_ip6.s6_addr32[3], rtl_table_data(r, 4));
 		break;
-	case 1: /* IPv4 Multicast route */
+	case 1: fallthrough; /* IPv4 Multicast route */
 	case 3: /* IPv6 Multicast route */
 		pr_warn("%s: route type not supported\n", __func__);
 		goto out;
+		break;
 	}
 
 	rtl_table_write(r, idx);
@@ -1448,11 +1451,12 @@ static void rtl930x_route_write(int idx, struct rtl83xx_route *rt)
 		sw_w32(ip6_m.s6_addr32[2], rtl_table_data(r, 8));
 		sw_w32(ip6_m.s6_addr32[3], rtl_table_data(r, 9));
 		break;
-	case 1: /* IPv4 Multicast route */
+	case 1: fallthrough; /* IPv4 Multicast route */
 	case 3: /* IPv6 Multicast route */
 		pr_warn("%s: route type not supported\n", __func__);
 		rtl_table_release(r);
 		return;
+		break;
 	}
 	sw_w32(v, rtl_table_data(r, 10));
 
@@ -1682,11 +1686,11 @@ static void rtl930x_write_pie_templated(u32 r[], struct pie_rule *pr, enum templ
 				data_m = pr->sip_m >> 16;
 			}
 			break;
-		case TEMPLATE_FIELD_SIP2:
-		case TEMPLATE_FIELD_SIP3:
-		case TEMPLATE_FIELD_SIP4:
-		case TEMPLATE_FIELD_SIP5:
-		case TEMPLATE_FIELD_SIP6:
+		case TEMPLATE_FIELD_SIP2: fallthrough;
+		case TEMPLATE_FIELD_SIP3: fallthrough;
+		case TEMPLATE_FIELD_SIP4: fallthrough;
+		case TEMPLATE_FIELD_SIP5: fallthrough;
+		case TEMPLATE_FIELD_SIP6: fallthrough;
 		case TEMPLATE_FIELD_SIP7:
 			data = pr->sip6.s6_addr16[5 - (field_type - TEMPLATE_FIELD_SIP2)];
 			data_m = pr->sip6_m.s6_addr16[5 - (field_type - TEMPLATE_FIELD_SIP2)];
@@ -1709,11 +1713,11 @@ static void rtl930x_write_pie_templated(u32 r[], struct pie_rule *pr, enum templ
 				data_m = pr->dip_m >> 16;
 			}
 			break;
-		case TEMPLATE_FIELD_DIP2:
-		case TEMPLATE_FIELD_DIP3:
-		case TEMPLATE_FIELD_DIP4:
-		case TEMPLATE_FIELD_DIP5:
-		case TEMPLATE_FIELD_DIP6:
+		case TEMPLATE_FIELD_DIP2: fallthrough;
+		case TEMPLATE_FIELD_DIP3: fallthrough;
+		case TEMPLATE_FIELD_DIP4: fallthrough;
+		case TEMPLATE_FIELD_DIP5: fallthrough;
+		case TEMPLATE_FIELD_DIP6: fallthrough;
 		case TEMPLATE_FIELD_DIP7:
 			data = pr->dip6.s6_addr16[5 - (field_type - TEMPLATE_FIELD_DIP2)];
 			data_m = pr->dip6_m.s6_addr16[5 - (field_type - TEMPLATE_FIELD_DIP2)];
@@ -1743,6 +1747,7 @@ static void rtl930x_write_pie_templated(u32 r[], struct pie_rule *pr, enum templ
 			break;
 		default:
 			pr_info("%s: unknown field %d\n", __func__, field_type);
+			break;
 		}
 
 		/* On the RTL9300, the mask fields are not word aligned! */
