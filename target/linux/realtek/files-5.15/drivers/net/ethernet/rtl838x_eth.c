@@ -811,6 +811,7 @@ static irqreturn_t rtl83xx_net_irq(int irq, void *dev_id)
 	/*  Ignore TX interrupt */
 	if (status & (RTL838X_DMA_IF_INTR_STS_TX_ALL_DONE | RTL838X_DMA_IF_INTR_STS_TX_DONE)) {
 		sw_w32((RTL838X_DMA_IF_INTR_STS_TX_ALL_DONE | RTL838X_DMA_IF_INTR_STS_TX_DONE), priv->r->dma_if_intr_sts);
+                pr_warn("%s: TX IRQ's should have been disabled? 0x%x\n", __func__, status);
 	}
 
 	/* RX interrupt */
@@ -1176,9 +1177,7 @@ static void rtl838x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	       RTL838X_DMA_IF_CTRL_TX_PAD_EN,
 	       RTL838X_DMA_IF_CTRL_REG);
 
-	sw_w32(RTL838X_DMA_IF_INTR_MSK_TX_ALL_DONE |
-	       RTL838X_DMA_IF_INTR_MSK_TX_DONE |
-	       RTL838X_DMA_IF_INTR_MSK_RX_DONE |
+	sw_w32(RTL838X_DMA_IF_INTR_MSK_RX_DONE |
 	       RTL838X_DMA_IF_INTR_MSK_RUNOUT,
 	       RTL838X_DMA_IF_INTR_MSK_REG);
 
@@ -1214,8 +1213,6 @@ static void rtl839x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	sw_w32(RTL839X_DMA_IF_INTR_MSK_NTFY_DONE |
 	       RTL839X_DMA_IF_INTR_MSK_NTFY_BF_RUNOUT |
 	       RTL839X_DMA_IF_INTR_MSK_LOCAL_NTFY_BUF_RUNOUT |
-	       RTL839X_DMA_IF_INTR_MSK_TX_ALL_DONE |
-	       RTL839X_DMA_IF_INTR_MSK_TX_DONE |
 	       RTL839X_DMA_IF_INTR_MSK_RX_DONE |
 	       RTL839X_DMA_IF_INTR_MSK_RX_RUNOUT,
 	       RTL839X_DMA_IF_INTR_MSK_REG);
@@ -1935,16 +1932,12 @@ static int rtl838x_poll_rx(struct napi_struct *napi, int budget)
 		switch(priv->family_id) {
 		case RTL8380_FAMILY_ID:
 			sw_w32_mask(0,
-			            RTL838X_DMA_IF_INTR_MSK_TX_ALL_DONE |
-			            RTL838X_DMA_IF_INTR_MSK_TX_ALL_DONE |
 			            RTL838X_DMA_IF_INTR_MSK_RUNOUT |
 			            FIELD_PREP(RTL838X_DMA_IF_INTR_MSK_RX_DONE, DMA_RING(r)),
 			            RTL838X_DMA_IF_INTR_MSK_REG);
 			break;
 		case RTL8390_FAMILY_ID:
 			sw_w32_mask(0,
-			            RTL839X_DMA_IF_INTR_MSK_TX_ALL_DONE |
-			            RTL839X_DMA_IF_INTR_MSK_TX_ALL_DONE |
 			            RTL839X_DMA_IF_INTR_MSK_RX_RUNOUT |
 			            FIELD_PREP(RTL839X_DMA_IF_INTR_MSK_RX_DONE, DMA_RING(r)),
 			            RTL839X_DMA_IF_INTR_MSK_REG);
