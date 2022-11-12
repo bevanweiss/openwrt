@@ -793,7 +793,7 @@ static irqreturn_t rtl83xx_net_irq(int irq, void *dev_id)
 
 	/* RX buffer overrun */
 	if (status & RTL838X_DMA_IF_INTR_STS_RUNOUT) {
-		pr_debug("RX buffer overrun: status %x, mask: %x\n",
+		pr_err("RX buffer overrun: status %x, mask: %x\n",
 			 status, sw_r32(priv->r->dma_if_intr_msk));
 		sw_w32(RTL838X_DMA_IF_INTR_STS_RUNOUT, priv->r->dma_if_intr_sts);
 		pr_debug("%s: RX buffer overruns are ignored for now\n", __func__);
