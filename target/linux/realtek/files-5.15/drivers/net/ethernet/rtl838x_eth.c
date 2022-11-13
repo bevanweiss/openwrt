@@ -1838,8 +1838,7 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 		if (!dsa)
 			len -= 4;
 
-		skb = netdev_alloc_skb_ip_align(dev, len);
-
+                skb = napi_alloc_skb(&priv->rx_qs[r].napi, len);
 		if (likely(skb)) {
 			/* BUG: Prevent bug on RTL838x SoCs */
 			if (priv->family_id == RTL8380_FAMILY_ID) {
@@ -1925,9 +1924,7 @@ static int rtl838x_poll_rx(struct napi_struct *napi, int budget)
 		work_done += work;
 	}
 
-	if (work_done < budget) {
-		napi_complete_done(napi, work_done);
-
+	if ((work_done < budget) && napi_complete_done(napi, work_done)) {
 		switch(priv->family_id) {
 		case RTL8380_FAMILY_ID:
 			sw_w32_mask(0,
