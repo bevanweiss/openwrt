@@ -30,6 +30,9 @@
 #include "rtl838x_eth.h"
 
 #define DMA_RING(r)                                                     BIT(r)
+#define DMA_RING_WRAP                                                   BIT(1)
+#define DMA_RING_OWN_ETH                                                BIT(0)
+#define RMA_RING_OWN_CPU                                                0x0
 
 /* RTL838x series */
 #define RTL838X_MAC_ADDR_CTRL_ALE_HI_REG                (0x6b04)
@@ -709,7 +712,7 @@ static void rtl838x_rb_cleanup(struct rtl838x_eth_priv *priv, int status)
 		pr_debug("In %s working on r: %d\n", __func__, r);
 		last = (u32 *)KSEG1ADDR(sw_r32(priv->r->dma_if_rx_cur + r * 4));
 		do {
-			if ((ring->rx_r[r][ring->c_rx[r]] & 0x1))
+			if ((ring->rx_r[r][ring->c_rx[r]] & DMA_RING_OWN_ETH))
 				break;
 			pr_debug("Got something: %d\n", ring->c_rx[r]);
 			h = &ring->rx_header[r][ring->c_rx[r]];
@@ -721,9 +724,10 @@ static void rtl838x_rb_cleanup(struct rtl838x_eth_priv *priv, int status)
 			/* make sure the header is visible to the ASIC */
 			mb();
 
-			ring->rx_r[r][ring->c_rx[r]] = KSEG1ADDR(h) | 0x1 | (ring->c_rx[r] == (priv->rxringlen - 1) ?
-			                               WRAP :
-			                               0x1);
+			ring->rx_r[r][ring->c_rx[r]] = KSEG1ADDR(h) | DMA_RING_OWN_ETH;
+			if (ring->c_rx[r] == (priv->rxringlen - 1))
+				ring->rx_r[r][ring->c_rx[r]] |= DMA_RING_WRAP;
+
 			ring->c_rx[r] = (ring->c_rx[r] + 1) % priv->rxringlen;
 		} while (&ring->rx_r[r][ring->c_rx[r]] != last);
 	}
@@ -787,7 +791,7 @@ static void rtl839x_l2_notification_handler(struct rtl838x_eth_priv *priv)
 		}
 
 		/* Hand the ring entry back to the switch */
-		nb->ring[e] = nb->ring[e] | 1;
+		nb->ring[e] = nb->ring[e] | DMA_RING_OWN_ETH;
 		e = (e + 1) % NOTIFY_BLOCKS;
 
 		w->macs[i] = 0ULL;
@@ -1285,10 +1289,9 @@ static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring
 			                         j * RING_BUFFER);
 			h->size = RING_BUFFER;
 			/* All rings owned by switch, last one wraps */
-			ring->rx_r[i][j] = KSEG1ADDR(h) | 1 | (j == (priv->rxringlen - 1) ?
-			                   WRAP :
-			                   0);
+			ring->rx_r[i][j] = KSEG1ADDR(h) | DMA_RING_OWN_ETH;
 		}
+		ring->rx_r[i][j - 1] |= DMA_RING_WRAP;
 		ring->c_rx[i] = 0;
 	}
 
@@ -1303,10 +1306,10 @@ static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring
 			                         i * priv->txringlen * RING_BUFFER +
 			                         j * RING_BUFFER);
 			h->size = RING_BUFFER;
-			ring->tx_r[i][j] = KSEG1ADDR(&ring->tx_header[i][j]);
+			ring->tx_r[i][j] = KSEG1ADDR(h) | RMA_RING_OWN_CPU;
 		}
 		/* Last header is wrapping around */
-		ring->tx_r[i][j - 1] |= WRAP;
+		ring->tx_r[i][j - 1] |= DMA_RING_WRAP;
 		ring->c_tx[i] = 0;
 	}
 }
@@ -1315,8 +1318,11 @@ static void rtl839x_setup_notify_ring_buffer(struct rtl838x_eth_priv *priv)
 {
 	struct notify_b *b = priv->membase + sizeof(struct ring_b);
 
-	for (int i = 0; i < NOTIFY_BLOCKS; i++)
-		b->ring[i] = KSEG1ADDR(&b->blocks[i]) | 1 | (i == (NOTIFY_BLOCKS - 1) ? WRAP : 0);
+	for (int i = 0; i < NOTIFY_BLOCKS; i++) {
+		b->ring[i] = KSEG1ADDR(&b->blocks[i]) | DMA_RING_OWN_ETH;
+		if (i == (NOTIFY_BLOCKS - 1))
+			b->ring[i] |= DMA_RING_WRAP;
+	}
 
 	sw_w32((u32) b->ring, RTL839X_DMA_IF_NBUF_BASE_DESC_ADDR_CTRL);
 	sw_w32_mask(0x3ff << 2, 100 << 2, RTL839X_L2_NOTIFICATION_CTRL);
@@ -1714,7 +1720,7 @@ static int rtl838x_eth_tx(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	/* We can send this packet if CPU owns the descriptor */
-	if (!(ring->tx_r[q][ring->c_tx[q]] & 0x1)) {
+	if (!(ring->tx_r[q][ring->c_tx[q]] & DMA_RING_OWN_ETH)) {
 
 		/* Set descriptor for tx */
 		h = &ring->tx_header[q][ring->c_tx[q]];
@@ -1735,7 +1741,7 @@ static int rtl838x_eth_tx(struct sk_buff *skb, struct net_device *dev)
 		wmb();
 
 		/* Hand over to switch */
-		ring->tx_r[q][ring->c_tx[q]] |= 1;
+		ring->tx_r[q][ring->c_tx[q]] |= DMA_RING_OWN_ETH;
 
 		/* Before starting TX, prevent a Lextra bus bug on RTL8380 SoCs */
 		if (priv->family_id == RTL8380_FAMILY_ID) {
@@ -1819,7 +1825,7 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 		u8 *data;
 		int len;
 
-		if ((ring->rx_r[r][ring->c_rx[r]] & 0x1)) {
+		if ((ring->rx_r[r][ring->c_rx[r]] & DMA_RING_OWN_ETH)) {
 			if (&ring->rx_r[r][ring->c_rx[r]] != last) {
 				netdev_warn(dev, "Ring contention: r: %x, last %x, cur %x\n",
 				    r, (uint32_t)last, (u32) &ring->rx_r[r][ring->c_rx[r]]);
@@ -1894,9 +1900,10 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 		h->buf = data;
 		h->size = RING_BUFFER;
 
-		ring->rx_r[r][ring->c_rx[r]] = KSEG1ADDR(h) | 0x1 | (ring->c_rx[r] == (priv->rxringlen - 1) ?
-		                               WRAP :
-		                               0x1);
+		ring->rx_r[r][ring->c_rx[r]] = KSEG1ADDR(h) | DMA_RING_OWN_ETH;
+		if (ring->c_rx[r] == (priv->rxringlen - 1))
+			ring->rx_r[r][ring->c_rx[r]] |= DMA_RING_WRAP;
+
 		ring->c_rx[r] = (ring->c_rx[r] + 1) % priv->rxringlen;
 		last = (u32 *)KSEG1ADDR(sw_r32(priv->r->dma_if_rx_cur + r * 4));
 	} while (&ring->rx_r[r][ring->c_rx[r]] != last && work_done < budget);
