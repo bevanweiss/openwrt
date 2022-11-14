@@ -549,8 +549,8 @@ struct rtl838x_rx_q {
 struct rtl838x_eth_priv {
 	struct net_device *netdev;
 	struct platform_device *pdev;
-	dma_addr_t membase_dma;
-	void *membase;
+	dma_addr_t ring_dma;
+	struct ring_b *ring;
 	dma_addr_t notify_dma;
 	struct notify_b *notify;
 	dma_addr_t rxspace_dma;
@@ -710,7 +710,7 @@ bool rtl931x_decode_tag(struct p_hdr *h, struct dsa_tag *t)
 static void rtl838x_rb_cleanup(struct rtl838x_eth_priv *priv, int status)
 {
 	for (int r = 0; r < priv->rxrings; r++) {
-		struct ring_b *ring = priv->membase;
+		struct ring_b *ring = priv->ring;
 		struct p_hdr *h;
 		u32 *last;
 
@@ -1162,7 +1162,7 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 
 static void rtl838x_hw_ring_setup(struct rtl838x_eth_priv *priv)
 {
-	struct ring_b *ring = priv->membase;
+	struct ring_b *ring = priv->ring;
 
 	for (int i = 0; i < priv->rxrings; i++)
 		sw_w32(KSEG1ADDR(&ring->rx_r[i]), priv->r->dma_rx_base + i * 4);
@@ -1340,7 +1340,7 @@ static int rtl838x_eth_open(struct net_device *ndev)
 {
 	unsigned long flags;
 	struct rtl838x_eth_priv *priv = netdev_priv(ndev);
-	struct ring_b *ring = priv->membase;
+	struct ring_b *ring = priv->ring;
 
 	pr_debug("%s called: RX rings %d(length %d), TX rings %d(length %d)\n",
 		__func__, priv->rxrings, priv->rxringlen, priv->txrings, priv->txringlen);
@@ -1687,7 +1687,7 @@ static int rtl838x_eth_tx(struct sk_buff *skb, struct net_device *dev)
 {
 	int len;
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
-	struct ring_b *ring = priv->membase;
+	struct ring_b *ring = priv->ring;
 	int ret;
 	unsigned long flags;
 	struct p_hdr *h;
@@ -1807,7 +1807,7 @@ u16 rtl93xx_pick_tx_queue(struct net_device *dev, struct sk_buff *skb,
 static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 {
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
-	struct ring_b *ring = priv->membase;
+	struct ring_b *ring = priv->ring;
 	unsigned long flags;
 	int work_done = 0;
 	bool dsa = netdev_uses_dsa(dev);
@@ -2836,9 +2836,9 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 		goto err_free;
 	}
 
-	priv->membase = dmam_alloc_coherent(&pdev->dev, sizeof(struct ring_b),
-	                                    &priv->membase_dma, GFP_KERNEL);
-	if (!priv->membase) {
+	priv->ring = dmam_alloc_coherent(&pdev->dev, sizeof(struct ring_b),
+	                                 &priv->ring_dma, GFP_KERNEL);
+	if (!priv->ring) {
 		dev_err(&pdev->dev, "cannot allocate DMA buffer\n");
 		err = -ENOMEM;
 		goto err_free;
