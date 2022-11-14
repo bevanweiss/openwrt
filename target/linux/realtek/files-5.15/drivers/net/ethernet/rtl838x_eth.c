@@ -832,7 +832,7 @@ static irqreturn_t rtl83xx_net_irq(int irq, void *dev_id)
 		pr_debug("RX buffer overrun: status %x, mask: %x\n",
 			 status, sw_r32(priv->r->dma_if_intr_msk));
 		sw_w32(RTL838X_DMA_IF_INTR_STS_RUNOUT, priv->r->dma_if_intr_sts);
-		rtl838x_rb_cleanup(priv, status & 0xff);
+		pr_debug("%s: RX buffer overruns are ignored for now\n", __func__);
 	}
 
 	if (priv->family_id == RTL8390_FAMILY_ID) {
@@ -1822,7 +1822,7 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 
 		if ((ring->rx_r[r][ring->c_rx[r]] & DMA_RING_OWN_ETH)) {
 			if (&ring->rx_r[r][ring->c_rx[r]] != last) {
-				netdev_warn(dev, "Ring contention: r: %x, last %x, cur %x\n",
+				netdev_dbg(dev, "Ring contention: r: %x, last %x, cur %x\n",
 				    r, (uint32_t)last, (u32) &ring->rx_r[r][ring->c_rx[r]]);
 			}
 			break;
