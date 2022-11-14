@@ -553,6 +553,8 @@ struct rtl838x_eth_priv {
 	struct platform_device *pdev;
 	dma_addr_t membase_dma;
 	void *membase;
+	dma_addr_t notify_dma;
+	struct notify_b *notify;
 	spinlock_t lock;
 	struct mii_bus *mii_bus;
 	struct rtl838x_rx_q rx_qs[RTL930X_DMA_IF_RX_RING_MAX];
@@ -764,7 +766,7 @@ void rtl838x_fdb_sync(struct work_struct *work)
 
 static void rtl839x_l2_notification_handler(struct rtl838x_eth_priv *priv)
 {
-	struct notify_b *nb = priv->membase + sizeof(struct ring_b);
+	struct notify_b *nb = priv->notify;
         u32 e = priv->lastEvent;
 
 	while (!(nb->ring[e] & 1)) {
@@ -1312,7 +1314,7 @@ static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring
 
 static void rtl839x_setup_notify_ring_buffer(struct rtl838x_eth_priv *priv)
 {
-	struct notify_b *b = priv->membase + sizeof(struct ring_b);
+	struct notify_b *b = priv->notify;
 
 	for (int i = 0; i < NOTIFY_BLOCKS; i++) {
 		b->ring[i] = KSEG1ADDR(&b->blocks[i]) | DMA_RING_OWN_ETH;
@@ -2825,9 +2827,16 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 	SET_NETDEV_DEV(dev, &pdev->dev);
 	priv = netdev_priv(dev);
 
-	/* Allocate buffer memory */
+	priv->notify = dmam_alloc_coherent(&pdev->dev, sizeof(struct notify_b),
+	                                   &priv->notify_dma, GFP_KERNEL);
+	if (!priv->notify) {
+		dev_err(&pdev->dev, "cannot allocate notify buffer\n");
+		err = -ENOMEM;
+		goto err_free;
+	}
+
 	priv->membase = dmam_alloc_coherent(&pdev->dev, rxrings * rxringlen * RING_BUFFER +
-	                                    sizeof(struct ring_b) + sizeof(struct notify_b),
+	                                    sizeof(struct ring_b),
 	                                    &priv->membase_dma, GFP_KERNEL);
 	if (!priv->membase) {
 		dev_err(&pdev->dev, "cannot allocate DMA buffer\n");
@@ -2837,7 +2846,7 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 
 	/* Allocate ring-buffer space at the end of the allocated memory */
 	ring = priv->membase;
-	ring->rx_space = priv->membase + sizeof(struct ring_b) + sizeof(struct notify_b);
+	ring->rx_space = priv->membase + sizeof(struct ring_b);
 
 	spin_lock_init(&priv->lock);
 
