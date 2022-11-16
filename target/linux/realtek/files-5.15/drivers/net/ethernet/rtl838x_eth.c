@@ -729,9 +729,7 @@ static void rtl838x_rb_cleanup(struct rtl838x_eth_priv *priv, int status)
 			/* make sure the header is visible to the ASIC */
 			mb();
 
-			ring->rx_r[r][ring->c_rx[r]] = KSEG1ADDR(h) | DMA_RING_OWN_ETH;
-			if (ring->c_rx[r] == (priv->rxringlen - 1))
-				ring->rx_r[r][ring->c_rx[r]] |= DMA_RING_WRAP;
+			ring->rx_r[r][ring->c_rx[r]] |= DMA_RING_OWN_ETH;
 
 			ring->c_rx[r] = (ring->c_rx[r] + 1) % priv->rxringlen;
 		} while (&ring->rx_r[r][ring->c_rx[r]] != last);
@@ -1884,9 +1882,7 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 			dev->stats.rx_dropped++;
 		}
 
-		ring->rx_r[r][ring->c_rx[r]] = KSEG1ADDR(h) | DMA_RING_OWN_ETH;
-		if (ring->c_rx[r] == (priv->rxringlen - 1))
-			ring->rx_r[r][ring->c_rx[r]] |= DMA_RING_WRAP;
+		ring->rx_r[r][ring->c_rx[r]] |= DMA_RING_OWN_ETH;
 
 		ring->c_rx[r] = (ring->c_rx[r] + 1) % priv->rxringlen;
 	};
