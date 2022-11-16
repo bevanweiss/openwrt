@@ -1175,6 +1175,7 @@ static void rtl838x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	sw_w32(0xffffffff, RTL838X_DMA_IF_RX_RING_SIZE_REG(0));
 
 	sw_w32(FIELD_PREP(RTL838X_DMA_IF_CTRL_RX_TRUNCATE_LEN, RING_BUFFER) |
+	       RTL838X_DMA_IF_CTRL_RX_TRUNCATE_EN |
 	       RTL838X_DMA_IF_CTRL_TX_PAD_EN,
 	       RTL838X_DMA_IF_CTRL_REG);
 
@@ -1208,7 +1209,7 @@ static void rtl838x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 static void rtl839x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 {
 	sw_w32(FIELD_PREP(RTL839X_DMA_IF_CTRL_RX_TRUNCATE_LEN, RING_BUFFER) |
-	       RTL839X_DMA_IF_CTRL_TX_EN,
+	       RTL839X_DMA_IF_CTRL_RX_TRUNCATE_EN,
 	       RTL839X_DMA_IF_CTRL_REG);
 
 	sw_w32(RTL839X_DMA_IF_INTR_MSK_NTFY_DONE |
