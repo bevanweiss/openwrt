@@ -1232,7 +1232,7 @@ static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	/* Disable Head of Line features for all RX rings */
 	for (int i = 0; i < priv->rxrings; i++) {
 		sw_w32_mask(RTL930X_DMA_IF_RX_RING_SIZE_SET(i, _RTL930X_DMA_IF_RX_RING_SIZE_MASK),
-		            RTL930X_DMA_IF_RX_RING_SIZE_SET(i, priv->rxringlen),
+		            RTL930X_DMA_IF_RX_RING_SIZE_SET(i, min((u16)(priv->rxringlen - 2), (u16)_RTL930X_DMA_IF_RX_RING_SIZE_MASK)),
 		            priv->r->dma_if_rx_ring_size(i));
 
 		/* Some SoCs have issues with missing underflow protection */
@@ -1871,7 +1871,7 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 	};
 
 	/* Update counters */
-	priv->r->update_cntr(r, 0);
+	priv->r->update_cntr(r, work_done);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
