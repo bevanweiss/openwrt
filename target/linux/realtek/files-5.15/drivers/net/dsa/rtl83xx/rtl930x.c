@@ -1049,7 +1049,7 @@ void rtl930x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 	v = enable ? 0x3f : 0x0;
 
 	/* Set EEE/EEEP state for 100, 500, 1000MBit and 2.5, 5 and 10GBit */
-	sw_w32_mask(0, v << 10, rtl930x_mac_force_mode_ctrl(port));
+	sw_w32_mask(0, v << 10, priv->r->mac_force_mode_ctrl(port));
 
 	/* Set TX/RX EEE state */
 	v = enable ? 0x3 : 0x0;
@@ -1071,18 +1071,18 @@ int rtl930x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 		return 0;
 
 	pr_info("Setting advertised\n");
-	if (sw_r32(rtl930x_mac_force_mode_ctrl(port)) & BIT(10))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(10))
 		e->advertised |= ADVERTISED_100baseT_Full;
 
-	if (sw_r32(rtl930x_mac_force_mode_ctrl(port)) & BIT(12))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(12))
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
-	if (priv->ports[port].is2G5 && sw_r32(rtl930x_mac_force_mode_ctrl(port)) & BIT(13)) {
+	if (priv->ports[port].is2G5 && sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(13)) {
 		pr_info("ADVERTISING 2.5G EEE\n");
 		e->advertised |= ADVERTISED_2500baseX_Full;
 	}
 
-	if (priv->ports[port].is10G && sw_r32(rtl930x_mac_force_mode_ctrl(port)) & BIT(15))
+	if (priv->ports[port].is10G && sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(15))
 		e->advertised |= ADVERTISED_10000baseT_Full;
 
 	a = sw_r32(RTL930X_MAC_EEE_ABLTY);

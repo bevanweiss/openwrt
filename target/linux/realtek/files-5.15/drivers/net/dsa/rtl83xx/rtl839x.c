@@ -964,7 +964,7 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 	v = enable ? 0xf : 0x0;
 
 	/* Set EEE for 100, 500, 1000MBit and 10GBit */
-	sw_w32_mask(0xf << 8, v << 8, rtl839x_mac_force_mode_ctrl(port));
+	sw_w32_mask(0xf << 8, v << 8, priv->r->mac_force_mode_ctrl(port));
 
 	/* Set TX/RX EEE state */
 	v = enable ? 0x3 : 0x0;
@@ -984,10 +984,10 @@ int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
-	if (sw_r32(rtl839x_mac_force_mode_ctrl(port)) & BIT(8))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(8))
 		e->advertised |= ADVERTISED_100baseT_Full;
 
-	if (sw_r32(rtl839x_mac_force_mode_ctrl(port)) & BIT(10))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(10))
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
 	a = rtl839x_get_port_reg_le(RTL839X_MAC_EEE_ABLTY);

@@ -719,10 +719,10 @@ static int rtl838x_eee_port_ability(struct rtl838x_switch_priv *priv,
 	if (priv->r->mac_link_sts(port) != 1)
 		return 0;
 
-	if (sw_r32(rtl838x_mac_force_mode_ctrl(port)) & BIT(9))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(9))
 		e->advertised |= ADVERTISED_100baseT_Full;
 
-	if (sw_r32(rtl838x_mac_force_mode_ctrl(port)) & BIT(10))
+	if (sw_r32(priv->r->mac_force_mode_ctrl(port)) & BIT(10))
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
 	if (sw_r32(RTL838X_MAC_EEE_ABLTY) & BIT(port)) {
