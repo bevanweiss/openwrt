@@ -1125,22 +1125,6 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 	} while (sw_r32(priv->r->rst_glb_ctrl) & reset_mask);
 	msleep(100);
 
-	/* Setup Head of Line */
-	if (priv->family_id == RTL8380_FAMILY_ID)
-		sw_w32(0, RTL838X_DMA_IF_RX_RING_SIZE_REG(0));  /* Disabled on RTL8380 */
-	if (priv->family_id == RTL8390_FAMILY_ID)
-		sw_w32(GENMASK(31, 0), RTL839X_DMA_IF_RX_RING_CNTR_REG(0));
-	if (priv->family_id == RTL9300_FAMILY_ID || priv->family_id == RTL9310_FAMILY_ID) {
-		for (int i = 0; i < priv->rxrings; i++) {
-			sw_w32_mask(RTL930X_DMA_IF_RX_RING_SIZE_SET(i, _RTL930X_DMA_IF_RX_RING_SIZE_MASK),
-			            FIELD_PREP(_RTL930X_DMA_IF_RX_RING_SIZE_MASK, 0),
-			            priv->r->dma_if_rx_ring_size(i));
-			sw_w32_mask(RTL930X_DMA_IF_RX_RING_CNTR_SET(i, _RTL930X_DMA_IF_RX_RING_CNTR_MASK),
-			            FIELD_PREP(_RTL930X_DMA_IF_RX_RING_CNTR_MASK, priv->rxringlen),
-			            priv->r->dma_if_rx_ring_cntr(i));
-		}
-	}
-
 	/* Re-enable link change interrupt */
 	if (priv->family_id == RTL8390_FAMILY_ID) {
 		rtl839x_isr_port_link_sts_chg(GENMASK_ULL(RTL839X_PORT_CNT - 1, 0));
@@ -1171,13 +1155,13 @@ static void rtl838x_hw_ring_setup(struct rtl838x_eth_priv *priv)
 
 static void rtl838x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 {
-	/* Disable Head of Line features for all RX rings */
-	sw_w32(0xffffffff, RTL838X_DMA_IF_RX_RING_SIZE_REG(0));
-
 	sw_w32(FIELD_PREP(RTL838X_DMA_IF_CTRL_RX_TRUNCATE_LEN, RING_BUFFER) |
 	       RTL838X_DMA_IF_CTRL_RX_TRUNCATE_EN |
 	       RTL838X_DMA_IF_CTRL_TX_PAD_EN,
 	       RTL838X_DMA_IF_CTRL_REG);
+
+	/* Disable Head of Line features for all RX rings */
+	sw_w32(0xffffffff, RTL838X_DMA_IF_RX_RING_SIZE_REG(0));
 
 	sw_w32(RTL838X_DMA_IF_INTR_MSK_RX_DONE |
 	       RTL838X_DMA_IF_INTR_MSK_RUNOUT,
@@ -1211,6 +1195,9 @@ static void rtl839x_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	sw_w32(FIELD_PREP(RTL839X_DMA_IF_CTRL_RX_TRUNCATE_LEN, RING_BUFFER) |
 	       RTL839X_DMA_IF_CTRL_RX_TRUNCATE_EN,
 	       RTL839X_DMA_IF_CTRL_REG);
+
+	/* Disable Head of Line features for all RX rings */
+	sw_w32(0xffffffff, RTL839X_DMA_IF_RX_RING_CNTR_REG(0));
 
 	sw_w32(RTL839X_DMA_IF_INTR_MSK_NTFY_DONE |
 	       RTL839X_DMA_IF_INTR_MSK_NTFY_BF_RUNOUT |
@@ -1248,6 +1235,7 @@ static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	       RTL930X_DMA_IF_CTRL_RX_TRUNCATE_EN,
 	       priv->r->dma_if_ctrl);
 
+	/* Disable Head of Line features for all RX rings */
 	for (int i = 0; i < priv->rxrings; i++) {
 		sw_w32_mask(RTL930X_DMA_IF_RX_RING_SIZE_SET(i, _RTL930X_DMA_IF_RX_RING_SIZE_MASK),
 		            RTL930X_DMA_IF_RX_RING_SIZE_SET(i, priv->rxringlen),
