@@ -638,8 +638,12 @@ static void rtl838x_phylink_mac_config(struct dsa_switch *ds, int port,
 	case SPEED_100:
 		reg |= FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M);
 		break;
+	case SPEED_10:
+		reg |= FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M);
+		break;
 	default:
-		break; /* Ignore, including 10MBit which has a speed value of 0 */
+		pr_warn("%s: Unsupported speed: %d\n", __func__, state->speed);
+		break;
 	}
 
 	reg &= ~(RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL |
@@ -701,8 +705,12 @@ static void rtl839x_phylink_mac_config(struct dsa_switch *ds, int port,
 	case SPEED_100:
 		reg |= FIELD_PREP(RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M);
 		break;
+	case SPEED_10:
+		reg |= FIELD_PREP(RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL839X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M);
+		break;
 	default:
-		break; /* Ignore, including 10MBit which has a speed value of 0 */
+		pr_warn("%s: Unsupported speed: %d\n", __func__, state->speed);
+		break;
 	}
 
 	reg &= ~(RTL839X_MAC_FORCE_MODE_CTRL_DUP_SEL |
@@ -779,8 +787,14 @@ static void rtl930x_phylink_mac_config(struct dsa_switch *ds, int port,
 	case SPEED_1000:
 		reg |= FIELD_PREP(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M);
 		break;
+	case SPEED_100:
+		reg |= FIELD_PREP(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M);
+		break;
+	case SPEED_10:
+		reg |= FIELD_PREP(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M);
+		break;
 	default:
-		reg |= FIELD_PREP(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M);
+		pr_warn("%s: Unsupported speed: %d\n", __func__, state->speed);
 		break;
 	}
 
@@ -924,8 +938,14 @@ static void rtl931x_phylink_mac_config(struct dsa_switch *ds, int port,
 	case SPEED_1000:
 		reg |= FIELD_PREP(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M);
 		break;
+	case SPEED_100:
+		reg |= FIELD_PREP(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_100M);
+		break;
+	case SPEED_10:
+		reg |= FIELD_PREP(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_10M);
+		break;
 	default:
-		reg |= FIELD_PREP(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M);
+		pr_warn("%s: Unsupported speed: %d\n", __func__, state->speed);
 		break;
 	}
 
