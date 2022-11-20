@@ -1781,6 +1781,9 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 		u8 *skb_data;
 		int len;
 
+                /* Update counters in advance and continuously for higher throughput */
+                priv->r->update_cntr(r, 1);
+
 		h = &ring->rx_header[r][ring->c_rx[r]];
 		len = h->len;
 		if (!len)
@@ -1793,18 +1796,6 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 
                 skb = napi_alloc_skb(&priv->rx_qs[r].napi, len);
 		if (likely(skb)) {
-			/* BUG: Prevent bug on RTL838x SoCs */
-			if (priv->family_id == RTL8380_FAMILY_ID) {
-				sw_w32(GENMASK(31, 0), priv->r->dma_if_rx_ring_size(0));
-				for (int i = 0; i < priv->rxrings; i++) {
-					unsigned int val;
-
-					/* Update each ring cnt */
-					val = sw_r32(priv->r->dma_if_rx_ring_cntr(i));
-					sw_w32(val, priv->r->dma_if_rx_ring_cntr(i));
-				}
-			}
-
 			skb_data = skb_put(skb, len);
 			/* Make sure data is visible */
 			mb();
@@ -1846,9 +1837,6 @@ static int rtl838x_hw_receive(struct net_device *dev, int r, int budget)
 
 		ring->c_rx[r] = (ring->c_rx[r] + 1) % priv->rxringlen;
 	};
-
-	/* Update counters */
-	priv->r->update_cntr(r, work_done);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
 
