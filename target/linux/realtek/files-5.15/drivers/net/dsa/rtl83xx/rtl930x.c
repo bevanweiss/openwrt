@@ -398,12 +398,12 @@ void rtl930x_imr_port_link_sts_chg(const u64 ports)
 	sw_w32((u32)((ports >> 32) & GENMASK(31, 0)), RTL930X_IMR_PORT_LINK_STS_REG(32));
 }
 
-static inline int rtl930x_mac_force_mode_ctrl(int p)
+int rtl930x_mac_force_mode_ctrl(const int p)
 {
 	return RTL930X_MAC_FORCE_MODE_CTRL + (p << 2);
 }
 
-static inline int rtl930x_mac_port_ctrl(int p)
+int rtl930x_mac_port_ctrl(const int p)
 {
 	return RTL930X_MAC_L2_PORT_CTRL(p);
 }
