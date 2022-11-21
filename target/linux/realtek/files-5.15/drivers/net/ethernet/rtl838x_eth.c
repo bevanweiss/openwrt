@@ -29,6 +29,326 @@
 #include "../dsa/rtl83xx/rtl931x.h"
 #include "rtl838x_eth.h"
 
+#define DMA_RING(r)                                                     BIT(r)
+
+/* RTL838x series */
+#define RTL838X_MAC_ADDR_CTRL_ALE_HI_REG                (0x6b04)
+#define RTL838X_MAC_ADDR_CTRL_ALE_LO_REG                (0x6b08)
+
+#define RTL838X_MAC_ADDR_CTRL_MAC_HI_REG                (0xa320)
+#define RTL838X_MAC_ADDR_CTRL_MAC_LO_REG                (0xa324)
+
+#define RTL838X_MAC_ADDR_CTRL_HI_REG                    (0xa9ec)
+#define RTL838X_MAC_ADDR_CTRL_LO_REG                    (0xa9f0)
+
+#define RTL838X_DMA_IF_RX_RING_MAX              8
+#define RTL838X_DMA_IF_RX_RING_LEN              300
+#define RTL838X_DMA_IF_RX_RING_ENTRIES          (RTL838X_DMA_IF_RX_RING_MAX * RTL838X_DMA_IF_RX_RING_LEN)
+
+#define RTL838X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(r)    (0x9f00 + (((r) / 32) * 0x4))
+#define RTL838X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL838X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_REG(r)     (0x9f20 + (((r) / 32) * 0x4))
+#define RTL838X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
+#define RTL838X_DMA_IF_TX_RING_MAX              2
+#define RTL838X_DMA_IF_TX_RING_LEN              160
+#define RTL839X_DMA_IF_TX_RING_ENTRIES          (RTL839X_DMA_IF_TX_RING_MAX * RTL839X_DMA_IF_TX_RING_LEN)
+
+#define RTL838X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(r)    (0x9f40 + (((r) / 32) * 0x4))
+#define RTL838X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL838X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_REG(r)     (0x9f48 + (((r) / 32) * 0x4))
+#define RTL838X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
+#define RTL838X_DMA_IF_INTR_MSK_REG                     (0x9f50)
+/* Reserved                                                     31 - 20 */
+#define RTL838X_DMA_IF_INTR_MSK_TX_ALL_DONE                     GENMASK(19, 18)
+#define RTL838X_DMA_IF_INTR_MSK_TX_DONE                         GENMASK(17, 16)
+#define RTL838X_DMA_IF_INTR_MSK_RX_DONE                         GENMASK(15, 8)
+#define RTL838X_DMA_IF_INTR_MSK_RUNOUT                          GENMASK(7, 0)
+
+#define RTL838X_DMA_IF_INTR_STS_REG                     (0x9f54)
+/* Reserved                                                     31 - 20 */
+#define RTL838X_DMA_IF_INTR_STS_TX_ALL_DONE                     GENMASK(19, 18)
+#define RTL838X_DMA_IF_INTR_STS_TX_DONE                         GENMASK(17, 16)
+#define RTL838X_DMA_IF_INTR_STS_RX_DONE                         GENMASK(15, 8)
+#define RTL838X_DMA_IF_INTR_STS_RUNOUT                          GENMASK(7, 0)
+
+#define RTL838X_DMA_IF_CTRL_REG                         (0x9f58)
+/* Reserved                                                     31 - 30 */
+#define RTL838X_DMA_IF_CTRL_RX_TRUNCATE_LEN                     GENMASK(29, 16)
+/* Reserved                                                     15 - 6 */
+#define RTL838X_DMA_IF_CTRL_TX_PAD_EN                           BIT(5)
+#define RTL838X_DMA_IF_CTRL_RX_TRUNCATE_EN                      BIT(4)
+#define RTL838X_DMA_IF_CTRL_TX_EN                               BIT(3)
+#define RTL838X_DMA_IF_CTRL_RX_EN                               BIT(2)
+#define RTL838X_DMA_IF_CTRL_TX_FETCH                            BIT(1)
+#define RTL838X_DMA_IF_CTRL_TX_BUSY                             BIT(0)
+
+#define RTL838X_DMA_IF_RX_RING_SIZE_REG(r)              (0xb7e4 + (((r) / 8) * 0x4))
+#define _RTL838X_DMA_IF_RX_RING_SIZE_MASK                       GENMASK(3, 0)
+#define RTL838X_DMA_IF_RX_RING_SIZE_GET(reg, ring) \
+        (((reg) >> (((ring) % 8) * 4)) & _RTL838X_DMA_IF_RX_RING_SIZE_MASK)
+#define RTL838X_DMA_IF_RX_RING_SIZE_SET(r, s) \
+        (((s) & _RTL838X_DMA_IF_RX_RING_SIZE_MASK) << (((r) % 8) * 4))
+
+#define RTL838X_DMA_IF_RX_RING_CNTR_REG(r)              (0xb7e8 + (((r) / 8) * 0x4))
+#define _RTL838X_DMA_IF_RX_RING_CNTR_MASK                       GENMASK(3, 0)
+#define RTL838X_DMA_IF_RX_RING_CNTR_GET(reg, ring) \
+        (((reg) >> (((ring) % 8) * 4)) & _RTL838X_DMA_IF_RX_RING_CNTR_MASK)
+#define RTL838X_DMA_IF_RX_RING_CNTR_SET(r, c) \
+        (((c) & _RTL838X_DMA_IF_RX_RING_CNTR_MASK) << (((r) % 8) * 4))
+
+/* RTL839x series */
+#define RTL839X_MAC_ADDR_CTRL_HI_REG                    (0x02b4)
+#define RTL839X_MAC_ADDR_CTRL_LO_REG                    (0x02b8)
+
+#define RTL839X_DMA_IF_RX_RING_SIZE_REG(r)              (0x6038 + (((r) / 8) * 0x4))
+#define _RTL839X_DMA_IF_RX_RING_SIZE_MASK                       GENMASK(3, 0)
+#define RTL839X_DMA_IF_RX_RING_SIZE_GET(reg, ring) \
+        (((reg) >> (((ring) % 8) * 4)) & _RTL839X_DMA_IF_RX_RING_SIZE_MASK)
+#define RTL839X_DMA_IF_RX_RING_SIZE_SET(r, s) \
+        (((s) & _RTL839X_DMA_IF_RX_RING_SIZE_MASK) << (((r) % 8) * 4))
+
+#define RTL839X_DMA_IF_RX_RING_CNTR_REG(r)              (0x603c + (((r) / 8) * 0x4))
+#define _RTL839X_DMA_IF_RX_RING_CNTR_MASK                       GENMASK(3, 0)
+#define RTL839X_DMA_IF_RX_RING_CNTR_GET(reg, ring) \
+        (((reg) >> (((ring) % 8) * 4)) & _RTL839X_DMA_IF_RX_RING_CNTR_MASK)
+#define RTL839X_DMA_IF_RX_RING_CNTR_SET(r, c) \
+        (((c) & _RTL839X_DMA_IF_RX_RING_CNTR_MASK) << (((r) % 8) * 4))
+
+#define RTL839X_DMA_IF_RX_RING_MAX              8
+#define RTL839X_DMA_IF_RX_RING_LEN              300
+#define RTL839X_DMA_IF_RX_RING_ENTRIES          (RTL839X_DMA_IF_RX_RING_MAX * RTL839X_DMA_IF_RX_RING_LEN)
+
+#define RTL839X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(r)    (0x780c + (((r) / 32) * 0x4))
+#define RTL839X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL839X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_REG(r)     (0x782c + (((r) / 32) * 0x4))
+#define RTL839X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
+#define RTL839X_DMA_IF_TX_RING_MAX              2
+#define RTL839X_DMA_IF_TX_RING_LEN              160
+#define RTL839X_DMA_IF_TX_RING_ENTRIES          (RTL839X_DMA_IF_TX_RING_MAX * RTL839X_DMA_IF_TX_RING_LEN)
+
+#define RTL839X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(r)    (0x784c + (((r) / 32) * 0x4))
+#define RTL839X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL839X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_REG(r)     (0x7854 + (((r) / 32) * 0x4))
+#define RTL839X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
+#define RTL839X_DMA_IF_INTR_MSK_REG                     (0x7864)
+/* Reserved                                                     31 - 23 */
+#define RTL839X_DMA_IF_INTR_MSK_NTFY_DONE                       BIT(22)
+#define RTL839X_DMA_IF_INTR_MSK_NTFY_BF_RUNOUT                  BIT(21)
+#define RTL839X_DMA_IF_INTR_MSK_LOCAL_NTFY_BUF_RUNOUT           BIT(20)
+#define RTL839X_DMA_IF_INTR_MSK_TX_ALL_DONE                     GENMASK(19, 18)
+#define RTL839X_DMA_IF_INTR_MSK_TX_DONE                         GENMASK(17, 16)
+#define RTL839X_DMA_IF_INTR_MSK_RX_DONE                         GENMASK(16, 8)
+#define RTL839X_DMA_IF_INTR_MSK_RX_RUNOUT                       GENMASK(7, 0)
+
+#define RTL839X_DMA_IF_INTR_STS_REG                     (0x7868)
+/* Reserved                                                     31 - 23 */
+#define RTL839X_DMA_IF_INTR_STS_NTFY_DONE                       BIT(22)
+#define RTL839X_DMA_IF_INTR_STS_NTFY_BF_RUNOUT                  BIT(21)
+#define RTL839X_DMA_IF_INTR_STS_LOCAL_NTFY_BUF_RUNOUT           BIT(20)
+#define RTL839X_DMA_IF_INTR_STS_TX_ALL_DONE                     GENMASK(19, 18)
+#define RTL839X_DMA_IF_INTR_STS_TX_DONE                         GENMASK(17, 16)
+#define RTL839X_DMA_IF_INTR_STS_RX_DONE                         GENMASK(16, 8)
+#define RTL839X_DMA_IF_INTR_STS_RX_RUNOUT                       GENMASK(7, 0)
+
+#define RTL839X_DMA_IF_CTRL_REG                         (0x786c)
+/* Reserved                                                     31 - 19 */
+#define RTL839X_DMA_IF_CTRL_RX_TRUNCATE_LEN                     GENMASK(18, 5)
+#define RTL839X_DMA_IF_CTRL_RX_TRUNCATE_EN                      BIT(4)
+#define RTL839X_DMA_IF_CTRL_TX_EN                               BIT(3)
+#define RTL839X_DMA_IF_CTRL_RX_EN                               BIT(2)
+#define RTL839X_DMA_IF_CTRL_TX_FETCH                            BIT(1)
+#define RTL839X_DMA_IF_CTRL_TX_BUSY                             BIT(0)
+
+/* RTL930x series */
+#define RTL930X_DMA_IF_RX_RING_SIZE_REG(r)              (0x7c60 + (((r) / 3) * 0x4))
+#define _RTL930X_DMA_IF_RX_RING_SIZE_MASK                       GENMASK(9, 0)
+#define RTL930X_DMA_IF_RX_RING_SIZE_GET(reg, ring) \
+        (((reg) >> (((ring) % 3) * 10)) & _RTL930X_DMA_IF_RX_RING_SIZE_MASK)
+#define RTL930X_DMA_IF_RX_RING_SIZE_SET(r, s) \
+        (((s) & _RTL930X_DMA_IF_RX_RING_SIZE_MASK) << (((r) % 3) * 10))
+
+#define RTL930X_DMA_IF_RX_RING_CNTR_REG(r)              (0x7c8c + (((r) / 3) * 0x4))
+#define _RTL930X_DMA_IF_RX_RING_CNTR_MASK                       GENMASK(9, 0)
+#define RTL930X_DMA_IF_RX_RING_CNTR_GET(reg, ring) \
+        (((reg) >> (((ring) % 3)) * 10) & _RTL930X_DMA_IF_RX_RING_CNTR_MASK)
+#define RTL930X_DMA_IF_RX_RING_CNTR_SET(r, c) \
+        (((c) & _RTL930X_DMA_IF_RX_RING_CNTR_MASK) << (((r) % 3) * 10))
+
+#define RTL930X_L2_TBL_FLUSH_CTRL1_REG                  (0x9404)
+/* Reserved                                                     31 - 22 */
+#define RTL930X_L2_TBL_FLUSH_CTRL1_PORT_ID                      GENMASK(21 ,11)
+#define RTL930X_L2_TBL_FLUSH_CTRL1_REPLACING_PORT_ID            GENMASK(10, 0)
+
+#define RTL930X_L2_TBL_FLUSH_CTRL2_REG                  (0x9408)
+/* Reserved                                                     31 */
+#define RTL930X_L2_TBL_FLUSH_CTRL2_STS                          BIT(30)
+#define RTL930X_L2_TBL_FLUSH_CTRL2_ACT                          BIT(29)
+#define RTL930X_L2_TBL_FLUSH_CTRL2_FVID_CMP                     BIT(28)
+#define RTL930X_L2_TBL_FLUSH_CTRL2_AGG_VID_CMP                  BIT(27)
+#define RTL930X_L2_TBL_FLUSH_CTRL2_PORT_CMP                     BIT(26)
+#define RTL930X_L2_TBL_FLUSH_CTRL2_ENTRY_TYPE                   GENMASK(25, 24)
+#define RTL930X_L2_TBL_FLUSH_CTRL2_FVID                         GENMASK(23, 12)
+#define RTL930X_L2_TBL_FLUSH_CTRL2_AGG_VID                      GENMASK(11, 0)
+
+#define RTL930X_MAC_L2_ADDR_CTRL_HI_REG                 (0xc714)
+#define RTL930X_MAC_L2_ADDR_CTRL_LO_REG                 (0xc718)
+
+#define RTL930X_DMA_IF_RX_RING_MAX              32
+#define RTL930X_DMA_IF_RX_RING_LEN              300
+#define RTL930X_DMA_IF_RX_RING_ENTRIES          (RTL930X_DMA_IF_RX_RING_MAX * RTL930X_DMA_IF_RX_RING_LEN)
+
+#define RTL930X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(r)    (0xdf00 + (((r) / 32) * 0x4))
+#define RTL930X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_REG(r)     (0xdf80 + (((r) / 32) * 0x4))
+#define RTL930X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_TX_RING_MAX              2
+#define RTL930X_DMA_IF_TX_RING_LEN              160
+#define RTL930X_DMA_IF_TX_RING_ENTRIES          (RTL930X_DMA_IF_TX_RING_MAX * RTL930X_DMA_IF_TX_RING_LEN)
+
+#define RTL930X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(r)    (0xe000 + (((r) / 32) * 0x4))
+#define RTL930X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_REG(r)     (0xe008 + (((r) / 32) * 0x4))
+#define RTL930X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_INTR_RX_RUNOUT_MSK_REG           (0xe010)
+#define RTL930X_DMA_IF_INTR_RX_RUNOUT_MSK_DONE                  GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_INTR_RX_DONE_MSK_REG             (0xe014)
+#define RTL930X_DMA_IF_INTR_RX_DONE_MSK_DONE                    GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_INTR_TX_DONE_MSK_REG             (0xe018)
+/* Reserved                                                     31 - 4 */
+#define RTL930X_DMA_IF_INTR_TX_DONE_MSK_ALL_DONE                GENMASK(3, 2)
+#define RTL930X_DMA_IF_INTR_TX_DONE_MSK_DONE                    GENMASK(1, 0)
+
+#define RTL930X_DMA_IF_INTR_RX_RUNOUT_STS_REG           (0xe01c)
+#define RTL930X_DMA_IF_INTR_RX_RUNOUT_STS_DONE                  GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_INTR_RX_DONE_STS_REG             (0xe020)
+#define RTL930X_DMA_IF_INTR_RX_DONE_STS_DONE                    GENMASK(31, 0)
+
+#define RTL930X_DMA_IF_INTR_TX_DONE_STS_REG             (0xe024)
+/* Reserved                                                     31 - 4 */
+#define RTL930X_DMA_IF_INTR_TX_DONE_STS_ALL_DONE                GENMASK(3, 2)
+#define RTL930X_DMA_IF_INTR_TX_DONE_STS_DONE                    GENMASK(1, 0)
+
+#define RTL930X_DMA_IF_CTRL_REG                         (0xe028)
+/* Reserved                                                     31 - 30 */
+#define RTL930X_DMA_IF_CTRL_RX_TRUNCATE_LEN                     GENMASK(29, 16)
+/* Reserved                                                     15 - 7 */
+#define RTL930X_DMA_IF_CTRL_RX_TRUNCATE_EN                      BIT(6)
+#define RTL930X_DMA_IF_CTRL_TX_EN                               BIT(5)
+#define RTL930X_DMA_IF_CTRL_RX_EN                               BIT(4)
+#define RTL930X_DMA_IF_CTRL_TX_HIGH_FETCH                       BIT(3)
+#define RTL930X_DMA_IF_CTRL_TX_LOW_FETCH                        BIT(2)
+#define RTL930X_DMA_IF_CTRL_TX_HIGH_BUSY                        BIT(1)
+#define RTL930X_DMA_IF_CTRL_TX_LOW_BUSY                         BIT(0)
+
+/* RTL931x series */
+
+#define RTL931X_MDX_CTRL_RSVD_REG                       (0x0fcc)
+/* Reserved                                                     31 - 1 */
+#define RTL931X_MDX_CTRL_RSVD_ESD_AUTO_RECOVERY                 BIT(0)
+
+#define RTL931X_DMA_IF_RX_RING_MAX              32
+#define RTL931X_DMA_IF_RX_RING_LEN              300
+#define RTL931X_DMA_IF_RX_RING_ENTRIES          (RTL931X_DMA_IF_RX_RING_MAX * RTL931X_DMA_IF_RX_RING_LEN)
+
+#define RTL931X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_REG(r)    (0x0800 + (((r) / 32) * 0x4))
+#define RTL931X_DMA_IF_RX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL931X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_REG(r)     (0x0880 + (((r) / 32) * 0x4))
+#define RTL931X_DMA_IF_RX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
+#define RTL931X_DMA_IF_INTR_RX_RUNOUT_MSK_REG           (0x0910)
+#define RTL931X_DMA_IF_INTR_RX_RUNOUT_MSK_DONE                  GENMASK(31, 0)
+
+#define RTL931X_DMA_IF_INTR_RX_DONE_MSK_REG             (0x0914)
+#define RTL931X_DMA_IF_INTR_RX_DONE_MSK_DONE                    GENMASK(31, 0)
+
+#define RTL931X_DMA_IF_INTR_TX_DONE_MSK_REG             (0x0918)
+/* Reserved                                                     31 - 4 */
+#define RTL931X_DMA_IF_INTR_TX_DONE_MSK_ALL_DONE                GENMASK(3, 2)
+#define RTL931X_DMA_IF_INTR_TX_DONE_MSK_DONE                    GENMASK(1, 0)
+
+#define RTL931X_DMA_IF_INTR_RX_RUNOUT_STS_REG           (0x091c)
+#define RTL931X_DMA_IF_INTR_RX_RUNOUT_STS_DONE                  GENMASK(31, 0)
+
+#define RTL931X_DMA_IF_INTR_RX_DONE_STS_REG             (0x0920)
+#define RTL931X_DMA_IF_INTR_RX_DONE_STS_DONE                    GENMASK(31, 0)
+
+#define RTL931X_DMA_IF_INTR_TX_DONE_STS_REG             (0x0924)
+/* Reserved                                                     31 - 4 */
+#define RTL931X_DMA_IF_INTR_TX_DONE_STS_ALL_DONE                GENMASK(3, 2)
+#define RTL931X_DMA_IF_INTR_TX_DONE_STS_DONE                    GENMASK(1, 0)
+
+#define RTL931X_DMA_IF_CTRL_REG                         (0x0928)
+/* Reserved                                                     31 - 30 */
+#define RTL931X_DMA_IF_CTRL_RX_TRUNCATE_LEN                     GENMASK(29, 16)
+/* Reserved                                                     15 - 7 */
+#define RTL931X_DMA_IF_CTRL_RX_TRUNCATE_EN                      BIT(6)
+#define RTL931X_DMA_IF_CTRL_TX_EN                               BIT(5)
+#define RTL931X_DMA_IF_CTRL_RX_EN                               BIT(4)
+#define RTL931X_DMA_IF_CTRL_TX_HIGH_FETCH                       BIT(3)
+#define RTL931X_DMA_IF_CTRL_TX_LOW_FETCH                        BIT(2)
+#define RTL931X_DMA_IF_CTRL_TX_HIGH_BUSY                        BIT(1)
+#define RTL931X_DMA_IF_CTRL_TX_LOW_BUSY                         BIT(0)
+
+#define RTL931X_MAC_L2_ADDR_CTRL_HI_REG                 (0x135c)
+#define RTL931X_MAC_L2_ADDR_CTRL_LO_REG                 (0x1360)
+
+#define RTL931X_DMA_IF_RX_RING_SIZE_REG(r)              (0x2080 + (((r) / 3) * 0x4))
+#define _RTL931X_DMA_IF_RX_RING_SIZE_MASK                       GENMASK(9, 0)
+#define RTL931X_DMA_IF_RX_RING_SIZE_GET(reg, ring) \
+        (((reg) >> (((ring) % 3) * 10)) & _RTL931X_DMA_IF_RX_RING_SIZE_MASK)
+#define RTL931X_DMA_IF_RX_RING_SIZE_SET(r, s) \
+        (((s) & _RTL931X_DMA_IF_RX_RING_SIZE_MASK) << (((r) % 3) * 10))
+
+#define RTL931X_DMA_IF_RX_RING_CNTR_REG(r)              (0x20ac + (((r) / 3) * 0x4))
+#define _RTL931X_DMA_IF_RX_RING_CNTR_MASK                       GENMASK(9, 0)
+#define RTL931X_DMA_IF_RX_RING_CNTR_GET(reg, ring) \
+        (((reg) >> (((ring) % 3) * 10)) & _RTL931X_DMA_IF_RX_RING_CNTR_MASK)
+#define RTL931X_DMA_IF_RX_RING_CNTR_SET(r, c) \
+        (((c) & _RTL931X_DMA_IF_RX_RING_CNTR_MASK) << (((r) % 3) * 10))
+
+#define RTL931X_MEM_ACL_INIT_REG                        (0x40bc)
+/* Reserved                                                     31 - 1 */
+#define RTL931X_MEM_ACL_INIT_MEM_INIT                           BIT(0)
+
+#define RTL931X_MEM_ENCAP_INIT_REG                      (0x4854)
+/* Reserved                                                     31 - 1 */
+#define RTL931X_MEM_ENCAP_INIT_MEM_INIT                         BIT(0)
+
+#define RTL931X_MEM_MIB_INIT_REG                        (0x7e18)
+/* Reserved                                                     31 - 1 */
+#define RTL931X_MEM_MIB_INIT_MEM_RST                            BIT(0)
+
+#define RTL931X_MEM_ALE_INIT_REG(p)                     (0x83f0 + (((p) / 32) * 0x4))
+
+#define RTL931X_MEM_RALE_INIT_REG                       (0x82e4)
+#define RLT931X_MEM_RALE_INIT_MASK                              GENMASK(10, 0)
+
+#define RTL931X_DMA_IF_TX_RING_MAX              2
+#define RTL931X_DMA_IF_TX_RING_LEN              160
+#define RTL931X_DMA_IF_TX_RING_ENTRIES          (RTL931X_DMA_IF_TX_RING_MAX * RTL931X_DMA_IF_TX_RING_LEN)
+
+#define RTL931X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_REG(r)    (0x9000 + (((r) / 32) * 0x4))
+#define RTL931X_DMA_IF_TX_BASE_DESC_ADDR_CTRL_MASK              GENMASK(31, 0)
+
+#define RTL931X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_REG(r)     (0x9008 + (((r) / 32) * 0x4))
+#define RTL931X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
+
 inline int rtl838x_dma_if_rx_ring_size(int i)
 {
 	return RTL838X_DMA_IF_RX_RING_SIZE + ((i >> 3) << 2);
@@ -1595,6 +1915,21 @@ static void rtl838x_mac_link_up(struct phylink_config *config,
 	pr_debug("In %s\n", __func__);
 	/* Restart TX/RX to port */
 	sw_w32_mask(0, 0x03, priv->r->mac_port_ctrl(priv->cpu_port));
+}
+
+static void rtl83xx_get_mac_hw(struct net_device *dev, u8 mac[])
+{
+	struct rtl838x_eth_priv *priv = netdev_priv(dev);
+	u32 reg;
+
+	reg = sw_r32(priv->r->mac);
+	mac[0] = (reg >> 8) & GENMASK(7, 0);
+	mac[1] = (reg >> 0) & GENMASK(7, 0);
+	reg = sw_r32(priv->r->mac + 4);
+	mac[2] = (reg >> 24) & GENMASK(7, 0);
+	mac[3] = (reg >> 16) & GENMASK(7, 0);
+	mac[4] = (reg >> 8) & GENMASK(7, 0);
+	mac[5] = (reg >> 0) & GENMASK(7, 0);
 }
 
 static void rtl838x_set_mac_hw(struct net_device *dev, u8 *mac)
