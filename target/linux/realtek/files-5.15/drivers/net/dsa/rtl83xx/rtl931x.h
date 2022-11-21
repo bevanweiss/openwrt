@@ -99,6 +99,79 @@
 #define RTL931X_LED_PORT_FIB_MASK_CTRL		(0x065c)
 #define RTL931X_LED_PORT_COMBO_MASK_CTRL	(0x0664)
 
+/* Interrupt control */
+/* IMR_GLB does not exit on RTL931X */
+
+#define RTL931X_IMR_SERDES_ERR_REG                      (0x1274)
+#define _RTL931X_IMR_SERDES_ERR_MASK                            BIT(0)
+#define RTL931X_IMR_SERDES_ERR(p) \
+        (_RTL931X_IMR_SERDES_ERR_MASK << (p))
+
+#define RTL931X_IMR_SERDES_UPD_PHY_STS_REG(p)           (0x1290 + (((p) / 32) * 0x4))
+#define _RTL931X_IMR_SERDES_UPD_PHY_STS_MASK                    BIT(0)
+#define RTL931X_IMR_SERDES_UPD_PHY_STS(p) \
+        (_RTL931X_IMR_SERDES_UPD_PHY_STS_MASK << ((p) % 32))
+
+#define RTL931X_IMR_SERDES_RXIDLE_REG                   (0x12a0)
+#define _RTL931X_IMR_SERDES_RXIDLE_MASK                         BIT(0)
+#define RTL931X_IMR_SERDES_RXIDLE(p) \
+        (_RTL931X_IMR_SERDES_RXIDLE_MASK << (p))
+
+#define RTL931X_IMR_PORT_LINK_STS_REG(p)                (0x126c + (((p) / 32) * 0x4))
+#define _RTL931X_IMR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL931X_IMR_PORT_LINK_STS(p, m) \
+        (((m) & _RTL931X_IMR_PORT_LINK_STS_MASK) << ((p) % 32))
+
+#define RTL931X_ISR_GLB_SRC_REG                         (0x12b4)
+/* Reserved                                                     31 - 17 */
+#define RTL931X_ISR_GLB_SRC_DBGO                                BIT(16)
+#define RTL931X_ISR_GLB_SRC_SERDES_RXIDLE                       BIT(15)
+#define RTL931X_ISR_GLB_SRC_RLFD                                BIT(14)
+#define RTL931X_ISR_GLB_SRC_STAT_TRIGGER                        BIT(13)
+#define RTL931X_ISR_GLB_SRC_RMT_INTR_STS_UPD                    BIT(12)
+#define RTL931X_ISR_GLB_SRC_AUTO_REC                            BIT(11)
+#define RTL931X_ISR_GLB_SRC_TX_CRC_CNTR                         BIT(10)
+#define RTL931X_ISR_GLB_SRC_SMI_CHEKC                           BIT(9)
+#define RTL931X_ISR_GLB_SRC_SERDES_UPD_PHY_STS                  BIT(8)
+#define RTL931X_ISR_GLB_SRC_TM                                  BIT(7)
+#define RTL931X_ISR_GLB_SRC_EXT_GPIO                            BIT(6)
+#define RTL931X_ISR_GLB_SRC_ETHDM                               BIT(5)
+#define RTL931X_ISR_GLB_SRC_OAM_DYGASP                          BIT(4)
+#define RTL931X_ISR_GLB_SRC_CCM                                 BIT(3)
+#define RTL931X_ISR_GLB_SRC_TIMESTAMP_LATCH                     BIT(2)
+#define RTL931X_ISR_GLB_SRC_SERDES                              BIT(1)
+#define RTL931X_ISR_GLB_SRC_LINK_CHG                            BIT(0)
+
+#define RTL931X_ISR_PORT_LINK_STS_REG(p)                (0x12b8 + ((p / 32) * 0x4))
+#define _RTL931X_ISR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL931X_ISR_PORT_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL931X_ISR_PORT_LINK_STS_MASK)
+
+#define RTL931X_ISR_SERDES_ERR_REG                      (0x12c0)
+#define _RTL931X_ISR_SERDES_ERR_MASK                            BIT(0)
+#define RTL931X_ISR_SERDES_ERR(p, r) \
+        (((r) << (p)) & _RTL931X_ISR_SERDES_ERR_MASK)
+#define RTL931X_ISR_SERDES_ERR_CLR(p) \
+        (_RTL931X_ISR_SERDES_ERR_MASK << (p))
+
+#define RTL931X_ISR_SERDES_UPD_PHY_STS_REG(p)           (0x12e8 + ((p / 32) * 0x4))
+#define _RTL931X_ISR_SERDES_UPD_PHY_STS_MASK                    BIT(0)
+#define RTL931X_ISR_SERDES_UPD_PHY_STS(p, r) \
+        (((r) << ((p) % 32)) & _RTL931X_ISR_SERDES_UPD_PHY_STS_MASK)
+#define RTL931X_ISR_SERDES_UPD_PHY_STS_CLR(p) \
+        (_RTL931X_ISR_SERDES_UPD_PHY_STS_MASK << ((p) % 32))
+
+#define RTL931X_ISR_SERDES_RXIDLE_REG                   (0x12f8)
+#define _RTL931X_ISR_SERDES_RXIDLE_MASK                         BIT(0)
+#define RTL931X_ISR_SERDES_LINK_FAULT(p, r) \
+        (((r) << (p)) & _RTL931X_ISR_SERDES_RXIDLE_MASK)
+#define RTL931X_ISR_SERDES_LINK_FAULT_CLR(p) \
+        (_RTL931X_ISR_SERDES_RXIDLE_MASK << (p))
+
+void rtl931x_imr_port_link_sts_chg(const u64 ports);
+void rtl931x_imr_serdes_upd_phy_sts(const u64 ports);
+void rtl931x_isr_port_link_sts_chg(const u64 ports);
+void rtl931x_isr_serdes_upd_phy_sts(const u64 ports);
 int rtl931x_sds_cmu_band_get(int sds, phy_interface_t mode);
 int rtl931x_sds_cmu_band_set(int sds, bool enable, u32 band, phy_interface_t mode);
 void rtl931x_sds_init(u32 sds, phy_interface_t mode);

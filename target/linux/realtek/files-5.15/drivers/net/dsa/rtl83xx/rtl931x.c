@@ -318,6 +318,30 @@ static void rtl931x_vlan_set_tagged(u32 vlan, struct rtl838x_vlan_info *info)
 	rtl_table_release(r);
 }
 
+void rtl931x_imr_port_link_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL931X_IMR_PORT_LINK_STS_REG(0));
+	sw_w32((u32)((ports >> 32) & GENMASK(31, 0)), RTL931X_IMR_PORT_LINK_STS_REG(32));
+}
+
+void rtl931x_isr_port_link_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL931X_ISR_PORT_LINK_STS_REG(0));
+	sw_w32((u32)((ports >> 32) & GENMASK(31, 0)), RTL931X_ISR_PORT_LINK_STS_REG(32));
+}
+
+void rtl931x_imr_serdes_upd_phy_sts(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL931X_IMR_SERDES_UPD_PHY_STS_REG(0));
+	sw_w32((u32)((ports >> 32) & GENMASK(31, 0)), RTL931X_IMR_SERDES_UPD_PHY_STS_REG(32));
+}
+
+void rtl931x_isr_serdes_upd_phy_sts(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL931X_ISR_SERDES_UPD_PHY_STS_REG(0));
+	sw_w32((u32)((ports >> 32) & GENMASK(31, 0)), RTL931X_ISR_SERDES_UPD_PHY_STS_REG(32));
+}
+
 static void rtl931x_vlan_set_untagged(u32 vlan, u64 portmask)
 {
 	struct table_reg *r = rtl_table_get(RTL9310_TBL_3, 0);

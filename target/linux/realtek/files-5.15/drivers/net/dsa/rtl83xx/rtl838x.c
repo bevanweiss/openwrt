@@ -254,6 +254,26 @@ static u32 rtl838x_l2_hash_key(struct rtl838x_switch_priv *priv, u64 seed)
 	return h;
 }
 
+void rtl838x_imr_port_link_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL838X_IMR_PORT_LINK_STS_REG(0));
+}
+
+void rtl838x_imr_port_media_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL838X_IMR_PORT_MEDIA_STS_REG(0));
+}
+
+void rtl838x_isr_port_link_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL838X_ISR_PORT_LINK_STS_REG(0));
+}
+
+void rtl838x_isr_port_media_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL838X_ISR_PORT_MEDIA_STS_REG(0));
+}
+
 static inline int rtl838x_mac_force_mode_ctrl(int p)
 {
 	return RTL838X_MAC_FORCE_MODE_CTRL + (p << 2);

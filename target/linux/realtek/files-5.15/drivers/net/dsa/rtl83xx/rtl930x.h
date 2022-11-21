@@ -121,8 +121,82 @@
 #define RTL930X_LED_PORT_FIB_MASK_CTRL		(0xcc40)
 #define RTL930X_LED_PORT_COMBO_MASK_CTRL	(0xcc44)
 
+/* Interrupt control */
+#define RTL930X_IMR_GLB_REG                             (0xc628)
+/* Reserved                                                     31 - 1 */
+#define RTL930X_IMR_GLB_EXT_CPU                               BIT(0)
+
+#define RTL930X_IMR_PORT_LINK_STS_REG(p)                (0xc62c + (((p) / 32) * 0x4))
+#define _RTL930X_IMR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL930X_IMR_PORT_LINK_STS(p) \
+        (_RTL930X_IMR_PORT_LINK_STS_MASK << ((p) % 32))
+
+#define RTL930X_IMR_SERDES_LINK_FAULT_REG               (0xc634)
+#define _RTL930X_IMR_SERDES_LINK_FAULT_MASK                     BIT(0)
+#define RTL930X_IMR_SERDES_LINK_FAULT(p) \
+        (_RTL930X_IMR_SERDES_LINK_FAULT_MASK << (p))
+
+#define RTL930X_IMR_SERDES_RX_SYM_ERR_REG               (0xc638)
+#define _RTL930X_IMR_SERDES_RX_SYM_ERR_MASK                     BIT(0)
+#define RTL930X_IMR_SERDES_RX_SYM_ERR(r) \
+        (_RTL930X_IMR_SERDES_RX_SYM_ERR_MASK << (p))
+
+#define RTL930X_IMR_SERDES_UPD_PHY_STS_REG(p)           (0xc650 + (((p) / 32) * 0x4))
+#define _RTL930X_IMR_SERDES_UPD_PHY_STS_MASK                    BIT(0)
+#define RTL930X_IMR_SERDES_UPD_PHY_STS(p) \
+        (_RTL930X_IMR_SERDES_UPD_PHY_STS_MASK << ((p) % 32))
+
+#define RTL930X_ISR_GLB_REG                             (0xc658)
+/* Reserved                                                     31 - 22 */
+#define RTL930X_ISR_GLB_SDS_RX_SYM_ERR                          BIT(21)
+#define RTL930X_ISR_GLB_ROUT_L2_NTFY_BUF                        BIT(20)
+#define RTL930X_ISR_GLB_ROUT_PBUF                               BIT(19)
+#define RTL930X_ISR_GLB_RLFD                                    BIT(18)
+#define RTL930X_ISR_GLB_SDS_UPD_PHY_STS                         BIT(17)
+#define RTL930X_ISR_GLB_AUTO_REC                                BIT(16)
+/* Reserved                                                     15 */
+#define RTL930X_ISR_GLB_SMI_CHECK                               BIT(14)
+#define RTL930X_ISR_GLB_TERMAL_DETECT                           BIT(13)
+#define RTL930X_ISR_GLB_EXT_GPIO                                BIT(12)
+/* Reserved                                                     11 */
+#define RTL930X_ISR_GLB_OAM_DYGASP                              BIT(10)
+/* Reserved                                                     9 - 3 */
+#define RTL930X_ISR_GLB_SERDES_LINK_FAULT_P                     BIT(2)
+/* Reserved                                                     1 */
+#define RTL930X_ISR_GLB_LINK_CHG                                BIT(0)
+
+#define RTL930X_ISR_PORT_LINK_STS_REG(p)                (0xc660 + ((p / 32) * 0x4))
+#define _RTL930X_ISR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL930X_ISR_PORT_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL930X_ISR_PORT_LINK_STS_MASK)
+#define RTL930X_ISR_PORT_LINK_STS_CLR(p) \
+        (_RTL930X_ISR_PORT_LINK_STS_MASK << ((p) % 32))
+
+#define RTL930X_ISR_SERDES_LINK_FAULT_REG               (0xc668)
+#define _RTL930X_ISR_SERDES_LINK_FAULT_MASK                     BIT(0)
+#define RTL930X_ISR_SERDES_LINK_FAULT(p, r) \
+        (((r) >> (p)) & _RTL930X_ISR_SERDES_LINK_FAULT_MASK)
+#define RTL930X_ISR_SERDES_LINK_FAULT_CLR(p) \
+        (_RTL930X_ISR_SERDES_LINK_FAULT_MASK << (p))
+
+#define RTL930X_ISR_SERDES_RX_SYM_ERR_REG               (0xc66c)
+#define _RTL930X_ISR_SERDES_RX_SYM_ERR_MASK                     BIT(0)
+#define RTL930X_ISR_SERDES_RX_SYM_ERR(p, r) \
+        (((r) >> (p)) & _RTL930X_ISR_SERDES_RX_SYM_ERR_MASK)
+#define RTL930X_ISR_SERDES_RX_SYM_ERR_CLR(r) \
+        (_RTL930X_ISR_SERDES_RX_SYM_ERR_MASK << (p))
+
+#define RTL930X_ISR_SERDES_UPD_PHY_STS_REG(p)           (0xc690 + ((p) * 0x4))
+#define _RTL930X_ISR_SERDES_UPD_PHY_STS_MASK                    BIT(0)
+#define RTL930X_ISR_SERDES_UPD_PHY_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL930X_ISR_SERDES_UPD_PHY_STS_MASK)
+#define RTL930X_ISR_SERDES_UPD_PHY_STS_CLR(r) \
+        (_RTL930X_ISR_SERDES_UPD_PHY_STS_MASK << ((p) % 32))
+
 void rtl930x_dbgfs_init(struct rtl838x_switch_priv *priv);
 u32 rtl930x_hash(struct rtl838x_switch_priv *priv, u64 seed);
+void rtl930x_imr_port_link_sts_chg(const u64 ports);
+void rtl930x_isr_port_link_sts_chg(const u64 ports);
 void rtl930x_print_matrix(void);
 int rtl9300_sds_power(int mac, int val);
 void rtl9300_sds_rst(int sds_num, u32 mode);

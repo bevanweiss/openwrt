@@ -163,9 +163,68 @@
 /* MISC Register definitions */
 #define RTL839X_CHIP_INFO			(0x0ff4)
 
+/* Interrupt control */
+#define RTL839X_IMR_GLB_REG                             (0x0064)
+/* Reserved                                                     31 - 1 */
+#define RTL839X_IMR_GLB_EXT_CPU                                 BIT(0)
+
+#define RTL839X_IMR_PORT_LINK_STS_REG(p)                (0x0068 + (((p) / 32) * 0x4))
+#define _RTL839X_IMR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL839X_IMR_PORT_LINK_STS(p) \
+        (_RTL839X_IMR_PORT_LINK_STS_MASK << ((p) % 32))
+
+#define RTL839X_IMR_PORT_MEDIA_STS_REG(p)               (0x0070 + (((p) / 32) * 0x4))
+/* Reserved                                                     31 - 4 */
+#define _RTL839X_IMR_PORT_MEDIA_STS_CHG_MASK                    BIT(0)
+#define RTL839X_IMR_PORT_MEDIA_STS_CHG(p) \
+        (_RTL839X_IMR_PORT_MEDIA_STS_CHG_MASK << ((p) % 32))
+
+#define RTL839X_IMR_SERDES_REG                          (0x008c)
+#define _RTL839X_IMR_SERDES_LINK_STS_MASK                       BIT(0)
+#define RTL839X_IMR_SERDES_LINK_STS(p) \
+        (_RTL839X_IMR_SERDES_LINK_STS_MASK << (p))
+
+#define RTL839X_ISR_GLB_SRC_REG                         (0x009c)
+/* Reserved                                                     31 - 10 */
+#define RTL839X_ISR_GLB_SRC_EXT_GPIO                            BIT(9)
+#define RTL839X_ISR_GLB_SRC_ETHDM                               BIT(8)
+#define RTL839X_ISR_GLB_SRC_OAM_DYGASP                          BIT(7)
+#define RTL839X_ISR_GLB_SRC_CCM                                 BIT(6)
+#define RTL839X_ISR_GLB_SRC_TIMESTAMP_LATCH                     BIT(5)
+#define RTL839X_ISR_GLB_SRC_EEE_CHG                             BIT(4)
+#define RTL839X_ISR_GLB_SRC_SERDES                              BIT(3)
+#define RTL839X_ISR_GLB_SRC_FEFI                                BIT(2)
+#define RTL839X_ISR_GLB_SRC_MEDIA_CHG                           BIT(1)
+#define RTL839X_ISR_GLB_SRC_LINK_CHG                            BIT(0)
+
+#define RTL839X_ISR_PORT_LINK_STS_REG(p)                (0x00a0 + ((p / 32) * 0x4))
+#define _RTL839X_ISR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL839X_ISR_PORT_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL839X_ISR_PORT_LINK_STS_MASK)
+#define RTL839X_ISR_PORT_LINK_STS_CLR(p) \
+        (((r) & _RTL839X_ISR_PORT_LINK_STS_MASK) << ((p) % 32))
+
+#define RTL839X_ISR_PORT_MEDIA_STS_REG(p)               (0x00a8 + ((p / 32) * 0x4))
+#define _RTL839X_ISR_PORT_MEDIA_STS_CHG_MASK                    BIT(0)
+#define RTL839X_ISR_PORT_MEDIA_STS_CHG(p, r) \
+        (((r) >> ((p) % 32)) & _RTL839X_ISR_PORT_MEDIA_STS_CHG_MASK)
+#define RTL839X_ISR_PORT_MEDIA_STS_CHG_CLR(p) \
+        (_RTL839X_ISR_PORT_MEDIA_STS_CHG_MASK << ((p) % 32))
+
+#define RTL839X_ISR_SERDES_REG                          (0x00c4)
+#define _RTL839X_ISR_SERDES_LINK_FAULT_MASK                     BIT(0)
+#define RTL839X_ISR_SERDES_LINK_FAULT(p, r) \
+        (((r) >> (p)) & _RTL839X_ISR_SERDES_LINK_FAULT_MASK)
+#define RTL839X_ISR_SERDES_LINK_FAULT_CLR(p) \
+        (_RTL839X_ISR_SERDES_LINK_FAULT_MASK << (p))
+
 void rtl839x_exec_tbl2_cmd(u32 cmd);
 void rtl8390_get_version(struct rtl838x_switch_priv *priv);
 u32 rtl839x_hash(struct rtl838x_switch_priv *priv, u64 seed);
+void rtl839x_imr_port_link_sts_chg(const u64 ports);
+void rtl839x_imr_port_media_sts_chg(const u64 ports);
+void rtl839x_isr_port_link_sts_chg(const u64 ports);
+void rtl839x_isr_port_media_sts_chg(const u64 ports);
 void rtl839x_print_matrix(void);
 irqreturn_t rtl839x_switch_irq(int irq, void *dev_id);
 void rtl839x_vlan_profile_dump(int index);

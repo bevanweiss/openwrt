@@ -386,6 +386,18 @@ static void rtl930x_stp_set(struct rtl838x_switch_priv *priv, u16 msti, u32 port
 	priv->r->exec_tbl0_cmd(cmd);
 }
 
+void rtl930x_isr_port_link_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL930X_ISR_PORT_LINK_STS_REG(0));
+	sw_w32((u32)((ports >> 32) & GENMASK(31, 0)), RTL930X_ISR_PORT_LINK_STS_REG(32));
+}
+
+void rtl930x_imr_port_link_sts_chg(const u64 ports)
+{
+	sw_w32((u32)(ports & GENMASK(31, 0)), RTL930X_IMR_PORT_LINK_STS_REG(0));
+	sw_w32((u32)((ports >> 32) & GENMASK(31, 0)), RTL930X_IMR_PORT_LINK_STS_REG(32));
+}
+
 static inline int rtl930x_mac_force_mode_ctrl(int p)
 {
 	return RTL930X_MAC_FORCE_MODE_CTRL + (p << 2);

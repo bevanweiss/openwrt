@@ -163,10 +163,63 @@
 #define RTL838X_DMY_REG31			(0x3b28)
 #define RTL838X_INT_MODE_CTRL			(0x005c)
 
+/* Interrupt control */
+#define RTL838X_IMR_GLB_REG                             (0x1100)
+/* Reserved                                                     31 - 1 */
+#define RTL838X_IMR_GLB_SWITCH                                  BIT(0)
+
+#define RTL838X_IMR_PORT_LINK_STS_REG(p)                (0x1104 + (((p) / 32) * 0x4))
+#define _RTL838X_IMR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL838X_IMR_PORT_LINK_STS(p) \
+        (_RTL838X_IMR_PORT_LINK_STS_MASK << ((p) % 32))
+
+#define RTL838X_IMR_PORT_MEDIA_STS_REG(p)               (0x1108 + (((p) / 32) * 0x4))
+/* Reserved                                                     31 - 4 */
+#define _RTL838X_IMR_PORT_MEDIA_STS_CHG_MASK                    BIT(0)
+#define RTL838X_IMR_PORT_MEDIA_STS_CHG(p) \
+        (_RTL838X_IMR_PORT_MEDIA_STS_CHG_MASK << ((p) % 32))
+
+#define RTL838X_ISR_GLB_SRC_REG                         (0x1148)
+/* Reserved                                                     31 - 15 */
+#define RTL838X_ISR_GLB_SRC_SYSCLK_GATE                         BIT(14)
+#define RTL838X_ISR_GLB_SRC_TM                                  BIT(13)
+#define RTL838X_ISR_GLB_SRC_EXTRA_GPIO                          BIT(12)
+#define RTL838X_ISR_GLB_SRC_INT_GPHY                            BIT(11)
+#define RTL838X_ISR_GLB_SRC_GPIO                                BIT(10)
+#define RTL838X_ISR_GLB_SRC_ACL_HIT                             BIT(9)
+#define RTL838X_ISR_GLB_SRC_FID_SALRN_CONSTRT                   BIT(8)
+#define RTL838X_ISR_GLB_SRC_TIMESTAMP_LATCH                     BIT(7)
+#define RTL838X_ISR_GLB_SRC_SERDES5                             BIT(6)
+#define RTL838X_ISR_GLB_SRC_SERDES4                             BIT(5)
+#define RTL838X_ISR_GLB_SRC_SERDES23                            BIT(4)
+#define RTL838X_ISR_GLB_SRC_SERDES01                            BIT(3)
+#define RTL838X_ISR_GLB_SRC_SALARN_CONSTRT                      BIT(2)
+#define RTL838X_ISR_GLB_SRC_MEDIA_CHG                           BIT(1)
+#define RTL838X_ISR_GLB_SRC_LINK_CHG                            BIT(0)
+
+#define RTL838X_ISR_PORT_MEDIA_STS_REG(p)               (0x1150 + (((p) / 32) * 0x4))
+/* Reserved                                                     31 - 4 */
+#define _RTL838X_ISR_PORT_MEDIA_STS_CHG_MASK                    BIT(0)
+#define RTL838X_ISR_PORT_MEDIA_STS_CHG(p, r) \
+        (((r) >> ((p) % 32)) & _RTL838X_ISR_PORT_MEDIA_STS_CHG_MASK)
+#define RTL838X_ISR_PORT_MEDIA_STS_CHG_CLR(p) \
+        (_RTL838X_ISR_PORT_MEDIA_STS_CHG_MASK << ((p) % 32))
+
+#define RTL838X_ISR_PORT_LINK_STS_REG(p)                (0x114c + ((p / 32) * 0x4))
+#define _RTL838X_ISR_PORT_LINK_STS_MASK                         BIT(0)
+#define RTL838X_ISR_PORT_LINK_STS(p, r) \
+        (((r) >> ((p) % 32)) & _RTL838X_ISR_PORT_LINK_STS_MASK)
+#define RTL838X_ISR_PORT_LINK_STS_CLR(p) \
+        (_RTL838X_ISR_PORT_LINK_STS_MASK << ((p) % 32))
+
 void rtl838x_dbgfs_init(struct rtl838x_switch_priv *priv);
 void rtl8380_get_version(struct rtl838x_switch_priv *priv);
 u32 rtl838x_hash(struct rtl838x_switch_priv *priv, u64 seed);
 void rtl838x_print_matrix(void);
+void rtl838x_imr_port_link_sts_chg(const u64 ports);
+void rtl838x_imr_port_media_sts_chg(const u64 ports);
+void rtl838x_isr_port_link_sts_chg(const u64 ports);
+void rtl838x_isr_port_media_sts_chg(const u64 ports);
 int rtl8380_sds_power(int mac, int val);
 void rtl8380_sds_rst(int mac);
 irqreturn_t rtl838x_switch_irq(int irq, void *dev_id);
