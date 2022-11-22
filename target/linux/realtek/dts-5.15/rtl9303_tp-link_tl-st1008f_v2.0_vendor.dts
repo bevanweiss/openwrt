@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/dts-v1/;
+
+#include "rtl9303_tp-link_tl-st1008f_v2.0.dts"
+
+/ {
+	model = "TP-LINK TL-ST1008F v2.0 Switch (vendor)";
+};
+
+&partitions {
+	/delete-node/ partition@f0000;
+
+	partition@f0000 {
+		reg = <0xf0000 0x10000>;
+		label = "sysinfo";
+	};
+
+	partition@100000 {
+		label = "jffs-cfg";
+		reg = <0x100000 0x100000>;
+	};
+
+	partition@200000 {
+		label = "jffs-log";
+		reg = <0x200000 0x100000>;
+	};
+
+	partition@300000 {
+		reg = <0x300000 0xe80000>;
+		compatible = "openwrt,uimage", "denx, uimage";
+		label = "runtime1";
+		openwrt,ih-magic = <0x93000000>;
+	};
+
+	partition@1180000 {
+		reg = <0x1180000 0xe80000>;
+		label = "runtime2";
+	};
+};

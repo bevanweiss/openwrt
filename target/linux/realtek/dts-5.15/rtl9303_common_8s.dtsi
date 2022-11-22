@@ -1,0 +1,145 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+
+/ {
+	sfp0: sfp-p0 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_0>;
+	};
+
+	sfp1: sfp-p8 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_1>;
+	};
+
+	sfp2: sfp-p16 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_2>;
+	};
+
+	sfp3: sfp-p20 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_3>;
+	};
+
+	sfp4: sfp-p24 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_4>;
+	};
+
+	sfp5: sfp-p25 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_5>;
+	};
+
+	sfp6: sfp-p26 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_6>;
+	};
+
+	sfp7: sfp-p27 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_7>;
+	};
+};
+
+&ethernet0 {
+	mdio0: mdio-bus {
+		compatible = "realtek,rtl9303-mdio", "realtek,rtl930x-mdio", "realtek,rtl838x-mdio";
+		regmap = <&ethernet0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* 8 SFP+ 10Gbps internal ports */
+		phy0: ethernet-phy@0 {
+			reg = <0>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			phy-is-integrated;
+			sds = <2>;
+		};
+
+		phy8: ethernet-phy@8 {
+			compatible = "ethernet-phy-ieee802.3-c45";
+			reg = <8>;
+			phy-is-integrated;
+			sds = <3>;
+		};
+
+		phy16: ethernet-phy@16 {
+			reg = <16>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			phy-is-integrated;
+			sds = <4>;
+		};
+
+		phy20: ethernet-phy@20 {
+			reg = <20>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			phy-is-integrated;
+			sds = <5>;
+		};
+
+		phy24: ethernet-phy@24 {
+			reg = <24>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			phy-is-integrated;
+			sds = <6>;
+		};
+
+		phy25: ethernet-phy@25 {
+			reg = <25>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			phy-is-integrated;
+			sds = <7>;
+		};
+
+		phy26: ethernet-phy@26 {
+			reg = <26>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			phy-is-integrated;
+			sds = <8>;
+		};
+
+		phy27: ethernet-phy@27 {
+			reg = <27>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			phy-is-integrated;
+			sds = <9>;
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+};
+
+&i2c0_0 {
+	status = "okay";
+};
+
+&i2c0_1 {
+	status = "okay";
+};
+
+&i2c0_2 {
+	status = "okay";
+};
+
+&i2c0_3 {
+	status = "okay";
+};
+
+&i2c0_4 {
+	status = "okay";
+};
+
+&i2c0_5 {
+	status = "okay";
+};
+
+&i2c0_6 {
+	status = "okay";
+};
+
+&i2c0_7 {
+	status = "okay";
+};

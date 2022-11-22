@@ -34,6 +34,24 @@ define Device/mestechs_msg9424_vendor
 endef
 TARGET_DEVICES += mestechs_msg9424_vendor
 
+define Device/tp-link_tl-st1008f_v2.0
+  $(Device/kernel)
+  $(Device/initramfs)
+  DEVICE_MODEL := ST1008F v2.0
+  DEVICE_VENDOR := TP-Link
+  IMAGE_SIZE := 31808k
+  SOC := rtl9303
+  UIMAGE_MAGIC := 0x93000000
+endef
+TARGET_DEVICES += tp-link_tl-st1008f_v2.0
+
+define Device/tp-link_tl-st1008f_v2.0_vendor
+  $(Device/tp-link_tl-st1008f_v2.0)
+  DEVICE_MODEL := ST1008F v2.0 (vendor)
+  IMAGE_SIZE := 14848k
+endef
+TARGET_DEVICES += tp-link_tl-st1008f_v2.0_vendor
+
 define Device/whitelabel_ws-sw-24p-4s_r1_v1.0
   $(Device/kernel)
   $(Device/initramfs)

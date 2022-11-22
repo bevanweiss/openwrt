@@ -1,0 +1,311 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/dts-v1/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/leds/leds-realtek.h>
+
+#include "rtl9303.dtsi"
+#include "rtl9303_common_8s.dtsi"
+
+/ {
+	compatible = "tp-link,st1008fv2.0", "realtek,rtl9303-soc", "realtek,rtl930x-soc";
+	model = "TP-LINK TL-ST1008F v2.0 Switch";
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		/* Three-state front-panel slider switch with printed labels M1, M2 and M3 */
+		m1 {
+			label = "M1";
+			gpios = <&gpio0 17 GPIO_ACTIVE_LOW>;
+			debounce-interval = <50>;
+			linux,code = <BTN_0>;
+			linux,input-type = <EV_SW>;
+		};
+
+		m2 {
+			label = "M2";
+			gpios = <&gpio0 18 GPIO_ACTIVE_LOW>;
+			debounce-interval = <50>;
+			linux,code = <BTN_1>;
+			linux,input-type = <EV_SW>;
+		};
+
+		m3 {
+			label = "M3";
+			gpios = <&gpio0 19 GPIO_ACTIVE_LOW>;
+			debounce-interval = <50>;
+			linux,code = <BTN_2>;
+			linux,input-type = <EV_SW>;
+		};
+	};
+
+	i2c_gpio {
+		compatible = "i2c-gpio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		i2c-gpio,delay-us = <2>;
+		scl-gpios = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		sda-gpios = <&gpio0 23 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+
+		gpioexp0: i2c@38 {
+			reg = <0x38>;
+			compatible = "ti,tca9534", "nxp,pca9534";
+			gpio-controller;
+			#gpio-cells = <2>;
+		};
+	};
+
+	led_set {
+		compatible = "realtek,rtl9302-leds", "realtek,rtl9300-leds";
+		active-high;
+		led_set0 = /bits/ 16 <
+			/* LED0 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_10G_LINK
+			)
+			/* LED1 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_2G5_LINK
+			)
+			/* LED2 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_1000M_LINK |
+				RTL93XX_LED_SET_100M_LINK |
+				RTL93XX_LED_SET_10M_LINK
+			)
+		>;
+	};
+
+	memory@0 {
+		reg = <0x0 0x20000000>; /* 512 MiB */
+		device_type = "memory";
+	};
+
+	watchdog1: watchdog {
+		compatible = "pericom,pt7a7514", "linux,wdt-gpio";
+		gpios = <&gpio0 21 GPIO_ACTIVE_HIGH>;
+		hw_algo = "toggle";
+		hw_margin_ms = <1200>;
+		always-running;
+	};
+};
+
+&sfp0 {
+	mod-def0-gpio = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpioexp0 0 GPIO_ACTIVE_HIGH>;
+};
+
+&sfp1 {
+	mod-def0-gpio = <&gpio0 1 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpioexp0 1 GPIO_ACTIVE_HIGH>;
+};
+
+&sfp2 {
+	mod-def0-gpio = <&gpio0 2 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpioexp0 2 GPIO_ACTIVE_HIGH>;
+};
+
+&sfp3 {
+	mod-def0-gpio = <&gpio0 3 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpioexp0 3 GPIO_ACTIVE_HIGH>;
+};
+
+&sfp4 {
+	mod-def0-gpio = <&gpio0 4 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpioexp0 4 GPIO_ACTIVE_HIGH>;
+};
+
+&sfp5 {
+	mod-def0-gpio = <&gpio0 5 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpioexp0 5 GPIO_ACTIVE_HIGH>;
+};
+
+&sfp6 {
+	mod-def0-gpio = <&gpio0 6 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpio_exp 6 GPIO_ACTIVE_HIGH>;
+};
+
+&sfp7 {
+	mod-def0-gpio = <&gpio0 7 GPIO_ACTIVE_LOW>;
+	tx-disable-gpio = <&gpioexp0 7 GPIO_ACTIVE_HIGH>;
+};
+
+&spi0 {
+	status = "okay";
+	flash@0 {
+		compatible = "winbond,w25q256jv", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <133000000>;
+
+		partitions: partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				reg = <0x0 0xe0000>;
+				label = "u-boot";
+				read-only;
+			};
+
+			partition@e0000 {
+				reg = <0xe0000 0x10000>;
+				label = "u-boot-env";
+			};
+
+			partition@f0000 {
+				reg = <0xf0000 0x1f10000>;
+				compatible = "openwrt,uimage", "denx,uimage";
+				label = "firmware";
+				openwrt,ih-magic = <0x93000000>;
+			};
+		};
+	};
+};
+
+&switch0 {
+	switch0_ports: ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			label = "lan1";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy0>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp0>;
+		};
+
+		port@8 {
+			reg = <8>;
+			label = "lan2";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy8>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp1>;
+		};
+
+		port@16 {
+			reg = <16>;
+			label = "lan3";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy16>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp2>;
+		};
+
+		port@20 {
+			reg = <20>;
+			label = "lan4";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy20>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp3>;
+		};
+
+		port@24 {
+			reg = <24>;
+			label = "lan5";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy24>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp4>;
+		};
+
+		port@25 {
+			reg = <25>;
+			label = "lan6";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy25>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp5>;
+		};
+
+		port@26 {
+			reg = <26>;
+			label = "lan7";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy26>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp6>;
+		};
+
+		port@27 {
+			reg = <27>;
+			label = "lan8";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy27>;
+			phy-mode = "10gbase-r";
+			managed = "in-band-status";
+			sfp = <&sfp7>;
+		};
+
+		/* Internal SoC <-> Switch ethernet connection */
+		port@28 {
+			reg = <28>;
+			ethernet = <&ethernet0>;
+			phy-mode = "internal";
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+			};
+		};
+	};
+};
