@@ -100,6 +100,11 @@
 #define RTL838X_DMA_IF_RX_RING_CNTR_SET(r, c) \
         (((c) & _RTL838X_DMA_IF_RX_RING_CNTR_MASK) << (((r) % 8) * 4))
 
+#define RTL838X_SC_P_EN(p)                              (0xd57c + ((p) * 0x80))
+/* Reserved                                                     31 - 8 */
+#define RTL838X_SC_P_EN_CNGST_TMR                               GENMASK(7, 4)
+#define RTL838X_SC_P_EN_CNGST_SUST_TMR_LMT                      GENMASK(3, 0)
+
 /* RTL839x series */
 #define RTL839X_MAC_ADDR_CTRL_HI_REG                    (0x02b4)
 #define RTL839X_MAC_ADDR_CTRL_LO_REG                    (0x02b8)
@@ -2284,11 +2289,11 @@ static int rtl8380_init_mac(struct rtl838x_eth_priv *priv)
 	/* Init VLAN. TODO: Understand what is being done, here */
 	if (priv->id == RTL8383_FAMILY_ID) {
 		for (int i = 0; i <= RTL838X_PORT_CNT; i++)
-			sw_w32(0, 0xd57c + i * 0x80);
+			sw_w32(0, RTL838X_SC_P_EN(i));
 	}
 	if (priv->id == RTL8380_FAMILY_ID) {
 		for (int i = 8; i <= RTL838X_PORT_CNT; i++)
-			sw_w32(0, 0xd57c + i * 0x80);
+			sw_w32(0, RTL838X_SC_P_EN(i));
 	}
 
 	return 0;
