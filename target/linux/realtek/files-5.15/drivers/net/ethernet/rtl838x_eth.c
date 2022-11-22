@@ -23,6 +23,10 @@
 #include <net/switchdev.h>
 #include <asm/cacheflush.h>
 
+#include "../dsa/rtl83xx/rtl838x.h"
+#include "../dsa/rtl83xx/rtl839x.h"
+#include "../dsa/rtl83xx/rtl930x.h"
+#include "../dsa/rtl83xx/rtl931x.h"
 #include "rtl838x_eth.h"
 
 extern struct rtl83xx_soc_info soc_info;
@@ -664,8 +668,7 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 		nbuf = sw_r32(RTL839X_DMA_IF_NBUF_BASE_DESC_ADDR_CTRL);
 
 		/* Disable link change interrupt on RTL839x */
-		sw_w32(0, RTL839X_IMR_PORT_LINK_STS_CHG);
-		sw_w32(0, RTL839X_IMR_PORT_LINK_STS_CHG + 4);
+		rtl839x_imr_port_link_sts_chg(0x0);
 
 		sw_w32(0x00000000, priv->r->dma_if_intr_msk);
 		sw_w32(0xffffffff, priv->r->dma_if_intr_sts);
@@ -712,10 +715,8 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 
 	/* Re-enable link change interrupt */
 	if (priv->family_id == RTL8390_FAMILY_ID) {
-		sw_w32(0xffffffff, RTL839X_ISR_PORT_LINK_STS_CHG);
-		sw_w32(0xffffffff, RTL839X_ISR_PORT_LINK_STS_CHG + 4);
-		sw_w32(0xffffffff, RTL839X_IMR_PORT_LINK_STS_CHG);
-		sw_w32(0xffffffff, RTL839X_IMR_PORT_LINK_STS_CHG + 4);
+		rtl839x_isr_port_link_sts_chg(GENMASK(RTL839X_PORT_CNT - 1, 0));
+		rtl839x_imr_port_link_sts_chg(GENMASK(RTL839X_PORT_CNT - 1, 0));
 
 		/* Restore notification settings: on RTL838x these bits are null */
 		sw_w32_mask(7 << 20, int_saved & (7 << 20), priv->r->dma_if_intr_msk);

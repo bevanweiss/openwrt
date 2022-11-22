@@ -630,12 +630,12 @@ static void rtl839x_enable_bcast_flood(int port, bool enable)
 irqreturn_t rtl839x_switch_irq(int irq, void *dev_id)
 {
 	struct dsa_switch *ds = dev_id;
-	u32 status = sw_r32(RTL839X_ISR_GLB_SRC);
-	u64 ports = rtl839x_get_port_reg_le(RTL839X_ISR_PORT_LINK_STS_CHG);
+	u32 status = sw_r32(RTL839X_ISR_GLB_SRC_REG);
+	u64 ports = rtl839x_get_port_reg_le(RTL839X_ISR_PORT_LINK_STS_REG(0));
 	u64 link;
 
 	/* Clear status */
-	rtl839x_set_port_reg_le(ports, RTL839X_ISR_PORT_LINK_STS_CHG);
+	rtl839x_isr_port_link_sts_chg(ports);
 	pr_debug("RTL8390 Link change: status: %x, ports %llx\n", status, ports);
 
 	for (int i = 0; i < RTL839X_PORT_CNT; i++) {
@@ -1875,10 +1875,10 @@ const struct rtl838x_reg rtl839x_reg = {
 	.exec_tbl0_cmd = rtl839x_exec_tbl0_cmd,
 	.exec_tbl1_cmd = rtl839x_exec_tbl1_cmd,
 	.tbl_access_data_0 = rtl839x_tbl_access_data_0,
-	.isr_glb_src = RTL839X_ISR_GLB_SRC,
-	.isr_port_link_sts_chg = RTL839X_ISR_PORT_LINK_STS_CHG,
-	.imr_port_link_sts_chg = RTL839X_IMR_PORT_LINK_STS_CHG,
-	.imr_glb = RTL839X_IMR_GLB,
+	.isr_glb_src = RTL839X_ISR_GLB_SRC_REG,
+	.isr_port_link_sts_chg = rtl839x_isr_port_link_sts_chg,
+	.imr_port_link_sts_chg = rtl839x_imr_port_link_sts_chg,
+	.imr_glb = RTL839X_IMR_GLB_REG,
 	.vlan_tables_read = rtl839x_vlan_tables_read,
 	.vlan_set_tagged = rtl839x_vlan_set_tagged,
 	.vlan_set_untagged = rtl839x_vlan_set_untagged,

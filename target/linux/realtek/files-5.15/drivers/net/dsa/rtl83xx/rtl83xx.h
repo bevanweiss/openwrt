@@ -507,8 +507,8 @@ struct rtl838x_reg {
 	void (*exec_tbl1_cmd)(u32 cmd);
 	int (*tbl_access_data_0)(int i);
 	int isr_glb_src;
-	int isr_port_link_sts_chg;
-	int imr_port_link_sts_chg;
+	void (*isr_port_link_sts_chg)(const u64 ports);
+	void (*imr_port_link_sts_chg)(const u64 ports);
 	int imr_glb;
 	void (*vlan_tables_read)(u32 vlan, struct rtl838x_vlan_info *info);
 	void (*vlan_set_tagged)(u32 vlan, struct rtl838x_vlan_info *info);

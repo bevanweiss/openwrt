@@ -379,12 +379,12 @@ static inline int rtl931x_l2_port_new_sa_fwd(int p)
 irqreturn_t rtl931x_switch_irq(int irq, void *dev_id)
 {
 	struct dsa_switch *ds = dev_id;
-	u32 status = sw_r32(RTL931X_ISR_GLB_SRC);
-	u64 ports = rtl839x_get_port_reg_le(RTL931X_ISR_PORT_LINK_STS_CHG);
+	u32 status = sw_r32(RTL931X_ISR_GLB_SRC_REG);
+	u64 ports = rtl839x_get_port_reg_le(RTL931X_ISR_PORT_LINK_STS_REG(0));
 	u64 link;
 
 	/* Clear status */
-	rtl839x_set_port_reg_le(ports, RTL931X_ISR_PORT_LINK_STS_CHG);
+	rtl931x_isr_port_link_sts_chg(ports);
 	pr_debug("RTL931X Link change: status: %x, ports %016llx\n", status, ports);
 
 	link = rtl839x_get_port_reg_le(RTL931X_MAC_LINK_STS_ADDR);
@@ -1745,9 +1745,9 @@ const struct rtl838x_reg rtl931x_reg = {
 	.exec_tbl0_cmd = rtl931x_exec_tbl0_cmd,
 	.exec_tbl1_cmd = rtl931x_exec_tbl1_cmd,
 	.tbl_access_data_0 = rtl931x_tbl_access_data_0,
-	.isr_glb_src = RTL931X_ISR_GLB_SRC,
-	.isr_port_link_sts_chg = RTL931X_ISR_PORT_LINK_STS_CHG,
-	.imr_port_link_sts_chg = RTL931X_IMR_PORT_LINK_STS_CHG,
+	.isr_glb_src = RTL931X_ISR_GLB_SRC_REG,
+	.isr_port_link_sts_chg = rtl931x_isr_port_link_sts_chg,
+	.imr_port_link_sts_chg = rtl931x_imr_port_link_sts_chg,
 	/* imr_glb does not exist on RTL931X */
 	.vlan_tables_read = rtl931x_vlan_tables_read,
 	.vlan_set_tagged = rtl931x_vlan_set_tagged,

@@ -778,11 +778,11 @@ void rtl9300_dump_debug(void)
 irqreturn_t rtl930x_switch_irq(int irq, void *dev_id)
 {
 	struct dsa_switch *ds = dev_id;
-	u32 ports = sw_r32(RTL930X_ISR_PORT_LINK_STS_CHG);
+	u32 ports = sw_r32(RTL930X_ISR_PORT_LINK_STS_REG(0));
 	u32 link;
 
 	/* Clear status */
-	sw_w32(ports, RTL930X_ISR_PORT_LINK_STS_CHG);
+	rtl930x_isr_port_link_sts_chg(ports);
 
 	for (int i = 0; i < RTL930X_PORT_CNT; i++) {
 		if (ports & BIT(i)) {
@@ -2568,10 +2568,10 @@ const struct rtl838x_reg rtl930x_reg = {
 	.exec_tbl0_cmd = rtl930x_exec_tbl0_cmd,
 	.exec_tbl1_cmd = rtl930x_exec_tbl1_cmd,
 	.tbl_access_data_0 = rtl930x_tbl_access_data_0,
-	.isr_glb_src = RTL930X_ISR_GLB,
-	.isr_port_link_sts_chg = RTL930X_ISR_PORT_LINK_STS_CHG,
-	.imr_port_link_sts_chg = RTL930X_IMR_PORT_LINK_STS_CHG,
-	.imr_glb = RTL930X_IMR_GLB,
+	.isr_glb_src = RTL930X_ISR_GLB_REG,
+	.isr_port_link_sts_chg = rtl930x_isr_port_link_sts_chg,
+	.imr_port_link_sts_chg = rtl930x_imr_port_link_sts_chg,
+	.imr_glb = RTL930X_IMR_GLB_REG,
 	.vlan_tables_read = rtl930x_vlan_tables_read,
 	.vlan_set_tagged = rtl930x_vlan_set_tagged,
 	.vlan_set_untagged = rtl930x_vlan_set_untagged,

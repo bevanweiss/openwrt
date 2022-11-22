@@ -1577,11 +1577,37 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 	for (int i = 0; i <= priv->cpu_port; i++)
 		priv->ports[i].dp = dsa_to_port(priv->ds, i);
 
-	/* Enable link and media change interrupts. Are the SERDES masks needed? */
-	sw_w32_mask(0, 3, priv->r->isr_glb_src);
+	/* Clear link and media change interrupts. Are the SERDES masks needed? */
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL838X_ISR_GLB_SRC_MEDIA_CHG |
+		            RTL838X_ISR_GLB_SRC_LINK_CHG,
+		            priv->r->isr_glb_src);
+		break;
+	case RTL8390_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL839X_ISR_GLB_SRC_MEDIA_CHG |
+		            RTL839X_ISR_GLB_SRC_LINK_CHG,
+		            priv->r->isr_glb_src);
+		break;
+	case RTL9300_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL838X_ISR_GLB_SRC_LINK_CHG,
+		            priv->r->isr_glb_src);
+		break;
+	case RTL9310_FAMILY_ID:
+		sw_w32_mask(0,
+		            RTL838X_ISR_GLB_SRC_LINK_CHG,
+		            priv->r->isr_glb_src);
+		break;
+	default:
+		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
+		break;
+	}
 
-	priv->r->set_port_reg_le(priv->irq_mask, priv->r->isr_port_link_sts_chg);
-	priv->r->set_port_reg_le(priv->irq_mask, priv->r->imr_port_link_sts_chg);
+	priv->r->isr_port_link_sts_chg(priv->irq_mask);
+	priv->r->imr_port_link_sts_chg(priv->irq_mask);
 
 	priv->link_state_irq = platform_get_irq(pdev, 0);
 	pr_info("LINK state irq: %d\n", priv->link_state_irq);
@@ -1608,9 +1634,27 @@ static int __init rtl83xx_sw_probe(struct platform_device *pdev)
 		/* Need to free allocated switch here */
 	}
 
-	/* Enable interrupts for switch, on RTL931x, the IRQ is always on globally */
-	if (soc_info.family != RTL9310_FAMILY_ID)
-		sw_w32(0x1, priv->r->imr_glb);
+	/* Enable interrupts for switch */
+	switch (priv->family_id) {
+	case RTL8380_FAMILY_ID:
+		sw_w32(RTL838X_IMR_GLB_SWITCH,
+		       priv->r->imr_glb);
+		break;
+	case RTL8390_FAMILY_ID:
+		sw_w32(RTL839X_IMR_GLB_EXT_CPU,
+		       priv->r->imr_glb);
+		break;
+	case RTL9300_FAMILY_ID:
+		sw_w32(RTL930X_IMR_GLB_EXT_CPU,
+		       priv->r->imr_glb);
+		break;
+	case RTL9310_FAMILY_ID:
+		/* RTL9310 does not have IMR_GLB register, the IRQ is always on globally */
+		break;
+	default:
+		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
+		break;
+	}
 
 	rtl83xx_get_l2aging(priv);
 
