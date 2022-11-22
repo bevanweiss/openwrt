@@ -365,14 +365,15 @@ static int __init rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 		priv->ports[pn].led_set = led_set;
 
 		/* Check for the integrated SerDes of the RTL8380M first */
-		if (of_property_read_bool(phy_node, "phy-is-integrated")
-		    && priv->id == 0x8380 && pn >= 24) {
+		if (of_property_read_bool(phy_node, "phy-is-integrated") &&
+		    (priv->id == RTL8380_FAMILY_ID) &&
+		    (pn >= 24)) {
 			pr_debug("----> FÓUND A SERDES\n");
 			priv->ports[pn].phy = PHY_RTL838X_SDS;
 			continue;
 		}
 
-		if (priv->id >= 0x9300) {
+		if (priv->id >= RTL9300_FAMILY_ID) {
 			priv->ports[pn].phy_is_integrated = false;
 			if (of_property_read_bool(phy_node, "phy-is-integrated")) {
 				priv->ports[pn].phy_is_integrated = true;

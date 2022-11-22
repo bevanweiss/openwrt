@@ -222,11 +222,11 @@ int rtl839x_read_sds_phy(int phy_addr, int phy_reg)
 	/* For the RTL8393 internal SerDes, we simulate a PHY ID in registers 2/3
 	 * which would otherwise read as 0.
 	 */
-	if (soc_info.id == 0x8393) {
+	if (soc_info.id == RTL8393_FAMILY_ID) {
 		if (phy_reg == 2)
 			return 0x1c;
 		if (phy_reg == 3)
-			return 0x8393;
+			return RTL8393_FAMILY_ID;
 	}
 
 	/* Register RTL839X_SDS12_13_XSG0 is 2048 bit broad, the MSB (bit 15) of the
@@ -3698,7 +3698,7 @@ static int rtl8214fc_phy_probe(struct phy_device *phydev)
 	int ret = 0;
 
 	/* 839x has internal SerDes */
-	if (soc_info.id == 0x8393)
+	if (soc_info.id == RTL8393_FAMILY_ID)
 		return -ENODEV;
 
 	/* All base addresses of the PHYs start at multiples of 8 */
@@ -3813,7 +3813,7 @@ static int rtl838x_serdes_probe(struct phy_device *phydev)
 		return -ENODEV;
 
 	/* On the RTL8380M, PHYs 24-27 connect to the internal SerDes */
-	if (soc_info.id == 0x8380) {
+	if (soc_info.id == RTL8380_FAMILY_ID) {
 		if (addr == 24)
 			return rtl8380_configure_serdes(phydev);
 		return 0;

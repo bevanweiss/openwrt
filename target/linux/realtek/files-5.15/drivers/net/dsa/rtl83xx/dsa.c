@@ -1749,7 +1749,7 @@ static int rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
 	u64 seed = priv->r->l2_hash_seed(mac, vid);
 	int mc_group;
 
-	if (priv->id >= 0x9300)
+	if (priv->id >= RTL9300_FAMILY_ID)
 		return -EOPNOTSUPP;
 
 	pr_debug("In %s port %d, mac %llx, vid: %d\n", __func__, port, mac, vid);

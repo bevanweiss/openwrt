@@ -99,7 +99,7 @@ static void rtl838x_rate_control_init(struct rtl838x_switch_priv *priv)
 {
 	pr_info("Enabling Storm control\n");
 	/* TICK_PERIOD_PPS */
-	if (priv->id == 0x8380)
+	if (priv->id == RTL8380_FAMILY_ID)
 		sw_w32_mask(0x3ff << 20, 434 << 20, RTL838X_SCHED_LB_TICK_TKN_CTRL_0);
 
 	/* Set burst rate */
@@ -116,7 +116,7 @@ static void rtl838x_rate_control_init(struct rtl838x_switch_priv *priv)
 	sw_w32_mask(0, 1, RTL838X_SCHED_CTRL);
 
 	/* On SoCs except RTL8382M, set burst size of port egress */
-	if (priv->id != 0x8382)
+	if (priv->id != RTL8382_FAMILY_ID)
 		sw_w32_mask(0xffff, 0x800, RTL838X_SCHED_LB_THR);
 
 	/* Enable storm control on all ports with a PHY and limit rates,

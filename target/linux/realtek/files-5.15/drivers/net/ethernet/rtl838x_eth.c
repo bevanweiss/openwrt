@@ -1572,11 +1572,11 @@ static int rtl8390_init_mac(struct rtl838x_eth_priv *priv)
 
 static int rtl8380_init_mac(struct rtl838x_eth_priv *priv)
 {
-	if (priv->family_id == 0x8390)
+	if (priv->family_id == RTL8390_FAMILY_ID)
 		return rtl8390_init_mac(priv);
 
 	/* At present we do not know how to set up EEE on any other SoC than RTL8380 */
-	if (priv->family_id != 0x8380)
+	if (priv->family_id != RTL8380_FAMILY_ID)
 		return 0;
 
 	pr_info("%s\n", __func__);
@@ -1585,11 +1585,11 @@ static int rtl8380_init_mac(struct rtl838x_eth_priv *priv)
 	sw_w32(0x5001417, RTL838X_EEE_TX_TIMER_GELITE_CTRL);
 
 	/* Init VLAN. TODO: Understand what is being done, here */
-	if (priv->id == 0x8382) {
+	if (priv->id == RTL8383_FAMILY_ID) {
 		for (int i = 0; i <= 28; i++)
 			sw_w32(0, 0xd57c + i * 0x80);
 	}
-	if (priv->id == 0x8380) {
+	if (priv->id == RTL8380_FAMILY_ID) {
 		for (int i = 8; i <= 28; i++)
 			sw_w32(0, 0xd57c + i * 0x80);
 	}
@@ -1623,7 +1623,7 @@ static int rtl838x_mdio_read_paged(struct mii_bus *bus, int mii_id, u16 page, in
 	int err;
 	struct rtl838x_eth_priv *priv = bus->priv;
 
-	if (mii_id >= 24 && mii_id <= 27 && priv->id == 0x8380)
+	if (mii_id >= 24 && mii_id <= 27 && priv->id == RTL8380_FAMILY_ID)
 		return rtl838x_read_sds_phy(mii_id, regnum);
 
 	if (regnum & (MII_ADDR_C45 | MII_ADDR_C22_MMD)) {
@@ -1654,7 +1654,7 @@ static int rtl839x_mdio_read_paged(struct mii_bus *bus, int mii_id, u16 page, in
 	int err;
 	struct rtl838x_eth_priv *priv = bus->priv;
 
-	if (mii_id >= 48 && mii_id <= 49 && priv->id == 0x8393)
+	if (mii_id >= 48 && mii_id <= 49 && priv->id == RTL8393_FAMILY_ID)
 		return rtl839x_read_sds_phy(mii_id, regnum);
 
 	if (regnum & (MII_ADDR_C45 | MII_ADDR_C22_MMD)) {
@@ -1759,7 +1759,7 @@ static int rtl838x_mdio_write_paged(struct mii_bus *bus, int mii_id, u16 page,
 	struct rtl838x_eth_priv *priv = bus->priv;
 	int err;
 
-	if (mii_id >= 24 && mii_id <= 27 && priv->id == 0x8380) {
+	if (mii_id >= 24 && mii_id <= 27 && priv->id == RTL8380_FAMILY_ID) {
 		if (mii_id == 26)
 			offset = 0x100;
 		sw_w32(value, RTL838X_SDS4_FIB_REG0 + offset + (regnum << 2));
@@ -1793,7 +1793,7 @@ static int rtl839x_mdio_write_paged(struct mii_bus *bus, int mii_id, u16 page,
 	struct rtl838x_eth_priv *priv = bus->priv;
 	int err;
 
-	if (mii_id >= 48 && mii_id <= 49 && priv->id == 0x8393)
+	if (mii_id >= 48 && mii_id <= 49 && priv->id == RTL8393_FAMILY_ID)
 		return rtl839x_write_sds_phy(mii_id, regnum, value);
 
 	if (regnum & (MII_ADDR_C45 | MII_ADDR_C22_MMD)) {
