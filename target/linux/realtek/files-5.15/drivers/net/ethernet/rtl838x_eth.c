@@ -1883,6 +1883,9 @@ static int rtl838x_poll_rx(struct napi_struct *napi, int budget)
 		}
 	}
 
+	/* Avoid stalls during high load */
+	priv->r->update_cntr(r, 0);
+
 	return work_done;
 }
 
