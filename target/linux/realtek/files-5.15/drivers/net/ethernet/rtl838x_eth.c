@@ -2074,21 +2074,31 @@ static void rtl838x_set_mac_hw(struct net_device *dev, u8 *mac)
 {
 	struct rtl838x_eth_priv *priv = netdev_priv(dev);
 	unsigned long flags;
+	u32 hi, lo;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	pr_debug("In %s\n", __func__);
-	sw_w32((mac[0] << 8) | mac[1], priv->r->mac);
-	sw_w32((mac[2] << 24) | (mac[3] << 16) | (mac[4] << 8) | mac[5], priv->r->mac + 4);
 
+	hi = mac[0] << 8 |
+	     mac[1] << 0;
+	lo = mac[2] << 24 |
+	     mac[3] << 16 |
+	     mac[4] << 8 |
+	     mac[5] << 0;
+	sw_w32(hi, priv->r->mac);
+	sw_w32(lo, priv->r->mac);
+
+	/* It seems like the RTL838x requires the MAC address to be programmed into
+	 * multiple registers. We are not sure as to why and what they mean yet
+	 * however.
+	 */
 	if (priv->family_id == RTL8380_FAMILY_ID) {
 		/* 2 more registers, ALE/MAC block */
-		sw_w32((mac[0] << 8) | mac[1], RTL838X_MAC_ALE);
-		sw_w32((mac[2] << 24) | (mac[3] << 16) | (mac[4] << 8) | mac[5],
-		       (RTL838X_MAC_ALE + 4));
+		sw_w32(hi, RTL838X_MAC_ADDR_CTRL_ALE_HI_REG);
+		sw_w32(lo, RTL838X_MAC_ADDR_CTRL_ALE_LO_REG);
 
-		sw_w32((mac[0] << 8) | mac[1], RTL838X_MAC2);
-		sw_w32((mac[2] << 24) | (mac[3] << 16) | (mac[4] << 8) | mac[5],
-		       RTL838X_MAC2 + 4);
+		sw_w32(hi, RTL838X_MAC_ADDR_CTRL_MAC_HI_REG);
+		sw_w32(lo, RTL838X_MAC_ADDR_CTRL_MAC_LO_REG);
 	}
 	spin_unlock_irqrestore(&priv->lock, flags);
 }
