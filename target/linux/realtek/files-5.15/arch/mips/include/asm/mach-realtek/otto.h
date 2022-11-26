@@ -353,7 +353,20 @@
 #define RTL9313_FAMILY_ID   (0x9313)
 
 /* SPI Support */
-#define RTL931X_SPI_CTRL0		(0x103C)
+#define RTL931X_SPI_CTRL0_REG                   (0x103C)
+/* Reserved                                             31 - 26 */
+#define RTL931X_SPI_CTRL0_DATA_WIDTH_MASK               GENMASK(25, 17)
+#define RTL931X_SPI_CTRL0_ADDR_WIDTH_MASK               GENMASK(16, 14)
+#define RTL931X_SPI_CTRL0_CLK_SEL_MASK                  GENMASK(13, 11)
+#define RTL931X_SPI_CTRL0_CLK_SEL_DIV(d) \
+        (((((d) + 1) / 2) - 1) & RTL931X_SPI_CTRL0_CLK_SEL_MASK) /* DIV16 - DIV2; 0x7 - 0x0 */
+#define RTL931X_SPI_CTRL0_GPIO_SPI_SEL                  BIT(10)
+#define RTL931X_SPI_CTRL0_GPIO12_CSB1_SEL               BIT(9)
+#define RTL931X_SPI_CTRL0_GPIO11_CSB0_SEL               BIT(8)
+#define RTL931X_SPI_CTRL0_CPHA                          BIT(7)
+#define RTL931X_SPI_CTRL0_CPOL                          BIT(6)
+#define RTL931X_SPI_CTRL0_TCLSH_MASK                    GENMASK(5, 3)
+#define RTL931X_SPI_CTRL0_TCHSH_MASK                    GENMASK(2, 0)
 
 /* Basic SoC Features */
 /* Number of Ethernet ports */

@@ -4,6 +4,7 @@
  */
 
 #include <asm/mach-realtek/otto.h>
+#include <linux/bitfield.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>
@@ -2122,7 +2123,9 @@ static int rtl931x_chip_init(struct rtl838x_eth_priv *priv)
 	sw_w32(0x1, RTL931X_MDX_CTRL_RSVD);
 
 	/* Init SPI, is this for thermal control or what? */
-	sw_w32_mask(0x7 << 11, 0x2 << 11, RTL931X_SPI_CTRL0);
+	sw_w32_mask(RTL931X_SPI_CTRL0_CLK_SEL_MASK,
+	            FIELD_PREP(RTL931X_SPI_CTRL0_CLK_SEL_MASK, RTL931X_SPI_CTRL0_CLK_SEL_DIV(6)),
+	            RTL931X_SPI_CTRL0_REG);
 
 	return 0;
 }
