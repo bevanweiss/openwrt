@@ -592,19 +592,29 @@ extern int rtl930x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val);
 extern int rtl931x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val);
 extern int rtl931x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val);
 
-/* On the RTL93XX, the RTL93XX_DMA_IF_RX_RING_CNTR track the fill level of
- * the rings. Writing x into these registers substracts x from its content.
+/* The RTLXXXX_DMA_IF_RX_RING_CNTR tracks the fill level of the rings.
+ * Writing x into these registers substracts x from its content.
  * When the content reaches the ring size, the ASIC no longer adds
  * packets to this receive queue.
  */
 void rtl838x_update_cntr(int r, int released)
 {
-	/* This feature is not available on RTL838x SoCs */
+	/* The RTL838X counter modifications are not atomic. A decrement
+	 * from the CPU might get lost when new packets arrive and the counter
+	 * is increased in the same moment from the SOC. As software buffers
+	 * are much larger than the maximum possible value of 15 it is no
+	 * problem to clear the counter.
+	 */
+	sw_w32_mask(RTL838X_DMA_IF_RX_RING_CNTR_SET(r, _RTL838X_DMA_IF_RX_RING_CNTR_MASK),
+	            RTL838X_DMA_IF_RX_RING_CNTR_SET(r, released),
+	            RTL838X_DMA_IF_RX_RING_CNTR_REG(r));
 }
 
 void rtl839x_update_cntr(int r, int released)
 {
-	/* This feature is not available on RTL839x SoCs */
+	sw_w32_mask(RTL839X_DMA_IF_RX_RING_CNTR_SET(r, _RTL839X_DMA_IF_RX_RING_CNTR_MASK),
+	            RTL839X_DMA_IF_RX_RING_CNTR_SET(r, released),
+	            RTL839X_DMA_IF_RX_RING_CNTR_REG(r));
 }
 
 void rtl930x_update_cntr(int r, int released)
