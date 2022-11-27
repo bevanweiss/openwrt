@@ -240,46 +240,6 @@ inline int rtl931x_mac_port_ctrl_eth(int p)
 	return RTL931X_MAC_L2_PORT_CTRL_ADDR + (p << 7);
 }
 
-inline int rtl838x_dma_if_rx_ring_size(int i)
-{
-	return RTL838X_DMA_IF_RX_RING_SIZE + ((i >> 3) << 2);
-}
-
-inline int rtl839x_dma_if_rx_ring_size(int i)
-{
-	return RTL839X_DMA_IF_RX_RING_SIZE + ((i >> 3) << 2);
-}
-
-inline int rtl930x_dma_if_rx_ring_size(int i)
-{
-	return RTL930X_DMA_IF_RX_RING_SIZE + ((i / 3) << 2);
-}
-
-inline int rtl931x_dma_if_rx_ring_size(int i)
-{
-	return RTL931X_DMA_IF_RX_RING_SIZE + ((i / 3) << 2);
-}
-
-inline int rtl838x_dma_if_rx_ring_cntr(int i)
-{
-	return RTL838X_DMA_IF_RX_RING_CNTR + ((i >> 3) << 2);
-}
-
-inline int rtl839x_dma_if_rx_ring_cntr(int i)
-{
-	return RTL839X_DMA_IF_RX_RING_CNTR + ((i >> 3) << 2);
-}
-
-inline int rtl930x_dma_if_rx_ring_cntr(int i)
-{
-	return RTL930X_DMA_IF_RX_RING_CNTR + ((i / 3) << 2);
-}
-
-inline int rtl931x_dma_if_rx_ring_cntr(int i)
-{
-	return RTL931X_DMA_IF_RX_RING_CNTR + ((i / 3) << 2);
-}
-
 inline u32 rtl838x_get_mac_link_sts(int port)
 {
 	return (sw_r32(RTL838X_MAC_LINK_STS_ETH) & BIT(port));
