@@ -1847,6 +1847,7 @@ static int rtl838x_poll_rx(struct napi_struct *napi, int budget)
 {
 	struct rtl838x_rx_q *rx_q = container_of(napi, struct rtl838x_rx_q, napi);
 	struct rtl838x_eth_priv *priv = rx_q->priv;
+	unsigned long flags;
 	int work_done = 0;
 	int r = rx_q->id;
 	int work;
@@ -1858,25 +1859,28 @@ static int rtl838x_poll_rx(struct napi_struct *napi, int budget)
 		work_done += work;
 	}
 
+	spin_lock_irqsave(&priv->lock, flags);
 	if ((work_done < budget) && napi_complete_done(napi, work_done)) {
 		switch(priv->family_id) {
 		case RTL8380_FAMILY_ID:
 			sw_w32_mask(0,
-			            RTL838X_DMA_IF_INTR_MSK_RUNOUT |
 			            FIELD_PREP(RTL838X_DMA_IF_INTR_MSK_RX_DONE, DMA_RING(r)),
 			            RTL838X_DMA_IF_INTR_MSK_REG);
 			break;
 		case RTL8390_FAMILY_ID:
 			sw_w32_mask(0,
-			            RTL839X_DMA_IF_INTR_MSK_RX_RUNOUT |
 			            FIELD_PREP(RTL839X_DMA_IF_INTR_MSK_RX_DONE, DMA_RING(r)),
 			            RTL839X_DMA_IF_INTR_MSK_REG);
 			break;
 		case RTL9300_FAMILY_ID:
-			sw_w32(RTL930X_DMA_IF_INTR_RX_DONE_MSK_DONE, RTL930X_DMA_IF_INTR_RX_DONE_MSK_REG);
+			sw_w32_mask(0,
+			            FIELD_PREP(RTL930X_DMA_IF_INTR_RX_DONE_MSK_DONE, DMA_RING(r)),
+			            RTL930X_DMA_IF_INTR_RX_DONE_MSK_REG);
 			break;
 		case RTL9310_FAMILY_ID:
-			sw_w32(RTL931X_DMA_IF_INTR_RX_DONE_MSK_DONE, RTL931X_DMA_IF_INTR_RX_DONE_MSK_REG);
+			sw_w32_mask(0,
+			            FIELD_PREP(RTL931X_DMA_IF_INTR_RX_DONE_MSK_DONE, DMA_RING(r)),
+			            RTL931X_DMA_IF_INTR_RX_DONE_MSK_REG);
 			break;
 		default:
 			pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
@@ -1885,6 +1889,8 @@ static int rtl838x_poll_rx(struct napi_struct *napi, int budget)
 
 	/* Avoid stalls during high load */
 	priv->r->update_cntr(r, 0);
+
+	spin_unlock_irqrestore(&priv->lock, flags);
 
 	return work_done;
 }
