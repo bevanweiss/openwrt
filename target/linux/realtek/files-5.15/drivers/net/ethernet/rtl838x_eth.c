@@ -1220,7 +1220,7 @@ static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 
 	sw_w32(RTL930X_DMA_IF_INTR_RX_RUNOUT_MSK_DONE, priv->r->dma_if_intr_rx_runout_msk);
 	sw_w32(RTL930X_DMA_IF_INTR_RX_DONE_MSK_DONE, priv->r->dma_if_intr_rx_done_msk);
-	sw_w32(RTL930X_DMA_IF_INTR_TX_DONE_MSK_DONE, priv->r->dma_if_intr_tx_done_msk);
+	sw_w32(0, priv->r->dma_if_intr_tx_done_msk);
 
 	sw_w32_mask(0,
 	            RTL930X_DMA_IF_CTRL_RX_EN |
