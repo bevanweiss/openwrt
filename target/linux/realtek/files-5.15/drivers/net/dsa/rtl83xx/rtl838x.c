@@ -2,6 +2,7 @@
 
 #include <asm/mach-realtek/otto.h>
 #include <linux/bitops.h>
+#include <linux/delay.h>
 #include <linux/inetdevice.h>
 #include <linux/iopoll.h>
 #include <linux/irq.h>
@@ -1872,7 +1873,7 @@ int rtl838x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 		goto errout;
 
 	sw_w32(BIT(port), RTL838X_SMI_ACCESS_PHY_CTRL_0);
-	mdelay(10);
+	msleep(10);
 
 	sw_w32_mask(0xffff0000, val << 16, RTL838X_SMI_ACCESS_PHY_CTRL_2);
 
@@ -1906,7 +1907,7 @@ int rtl838x_read_mmd_phy(u32 port, u32 addr, u32 reg, u32 *val)
 		goto errout;
 
 	sw_w32(1 << port, RTL838X_SMI_ACCESS_PHY_CTRL_0);
-	mdelay(10);
+	msleep(10);
 
 	sw_w32_mask(0xffff0000, port << 16, RTL838X_SMI_ACCESS_PHY_CTRL_2);
 
@@ -1946,7 +1947,7 @@ int rtl838x_write_mmd_phy(u32 port, u32 addr, u32 reg, u32 val)
 		goto errout;
 
 	sw_w32(1 << port, RTL838X_SMI_ACCESS_PHY_CTRL_0);
-	mdelay(10);
+	msleep(10);
 
 	sw_w32_mask(0xffff0000, val << 16, RTL838X_SMI_ACCESS_PHY_CTRL_2);
 

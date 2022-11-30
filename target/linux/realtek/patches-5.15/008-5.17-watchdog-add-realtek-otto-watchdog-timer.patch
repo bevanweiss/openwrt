@@ -284,7 +284,7 @@ Signed-off-by: Guenter Roeck <linux@roeck-us.net>
 +	v = FIELD_PREP(OTTO_WDT_CTRL_RST_MODE, reset_mode) | OTTO_WDT_CTRL_ENABLE;
 +	iowrite32(v, ctrl->base + OTTO_WDT_REG_CTRL);
 +
-+	mdelay(3 * otto_wdt_tick_ms(ctrl, 0));
++	msleep(3 * otto_wdt_tick_ms(ctrl, 0));
 +
 +	return 0;
 +}

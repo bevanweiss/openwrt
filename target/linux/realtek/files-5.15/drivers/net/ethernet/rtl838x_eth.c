@@ -4,6 +4,7 @@
  */
 
 #include <asm/mach-realtek/otto.h>
+#include <linux/delay.h>
 #include <linux/dma-mapping.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>
@@ -641,7 +642,7 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 
 	pr_info("RESETTING %x, CPU_PORT %d\n", priv->family_id, priv->cpu_port);
 	sw_w32_mask(0x3, 0, priv->r->mac_port_ctrl(priv->cpu_port));
-	mdelay(100);
+	msleep(100);
 
 	/* Disable and clear interrupts */
 	if (priv->family_id == RTL9300_FAMILY_ID || priv->family_id == RTL9310_FAMILY_ID) {
@@ -680,7 +681,7 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 	do { /* Wait for reset of NIC and Queues done */
 		udelay(20);
 	} while (sw_r32(priv->r->rst_glb_ctrl) & reset_mask);
-	mdelay(100);
+	msleep(100);
 
 	/* Setup Head of Line */
 	if (priv->family_id == RTL8380_FAMILY_ID)
@@ -953,7 +954,7 @@ static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 		sw_w32_mask(RX_EN_93XX | TX_EN_93XX, 0, priv->r->dma_if_ctrl);
 	else
 		sw_w32_mask(RX_EN | TX_EN, 0, priv->r->dma_if_ctrl);
-	mdelay(200); /* Test, whether this is needed */
+	msleep(200); /* Test, whether this is needed */
 
 	/* Block all ports */
 	if (priv->family_id == RTL8380_FAMILY_ID) {
@@ -983,7 +984,7 @@ static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 		sw_w32_mask(0x3, 0, priv->r->mac_force_mode_ctrl + priv->cpu_port *4);
 	else if (priv->family_id == RTL9310_FAMILY_ID)
 		sw_w32_mask(BIT(0) | BIT(9), 0, priv->r->mac_force_mode_ctrl + priv->cpu_port *4);
-	mdelay(100);
+	msleep(100);
 
 	/* Disable all TX/RX interrupts */
 	if (priv->family_id == RTL9300_FAMILY_ID || priv->family_id == RTL9310_FAMILY_ID) {
@@ -1000,7 +1001,7 @@ static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 
 	/* Disable TX/RX DMA */
 	sw_w32(0x00000000, priv->r->dma_if_ctrl);
-	mdelay(200);
+	msleep(200);
 }
 
 static int rtl838x_eth_stop(struct net_device *ndev)
@@ -1449,7 +1450,7 @@ static void rtl838x_mac_an_restart(struct phylink_config *config)
 	pr_debug("In %s\n", __func__);
 	/* Restart by disabling and re-enabling link */
 	sw_w32(0x6192D, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
-	mdelay(20);
+	msleep(20);
 	sw_w32(0x6192F, priv->r->mac_force_mode_ctrl + priv->cpu_port * 4);
 }
 
