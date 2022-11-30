@@ -891,7 +891,7 @@ int rtl930x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
 	} while (v & 0x1);
 
-	if (v & 0x2)
+	if (v & BIT(25))
 		err = -EIO;
 
 	mutex_unlock(&smi_lock);
