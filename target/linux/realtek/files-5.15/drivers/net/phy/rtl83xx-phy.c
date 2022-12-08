@@ -2989,7 +2989,7 @@ int rtl9300_configure_serdes(struct phy_device *phydev)
 	pr_info("%s CMU BAND is %d\n", __func__, rtl9300_sds_cmu_band_get(sds_num));
 
 	/* Turn Off Serdes */
-	rtl9300_sds_rst(sds_num, 0x1f);
+	rtl9300_sds_set(sds_num, 0x1f);
 
 	pr_info("%s PATCHING SerDes %d\n", __func__, sds_num);
 	if (sds_num % 2) {
