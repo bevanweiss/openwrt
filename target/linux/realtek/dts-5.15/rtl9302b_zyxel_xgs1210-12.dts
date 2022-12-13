@@ -1,0 +1,136 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+
+/dts-v1/;
+
+#include "rtl9302b_zyxel_xgs12xx.dtsi"
+
+/ {
+	compatible = "zyxel,xgs1210-12", "realtek,rtl9302b-soc", "realtek,rtl9302-soc", "realtek,rtl930x-soc";
+	model = "Zyxel XGS1210-12 Switch";
+
+	sfp0: sfp-p11 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_0>;
+		los-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+		tx-disable-gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+	};
+
+	sfp1: sfp-p12 {
+		compatible = "sff,sfp";
+		i2c-bus = <&i2c0_1>;
+		los-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+		mod-def0-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+		tx-disable-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&firmware_partition {
+	openwrt,ih-magic = <0x93001210>;
+};
+
+&i2c0 {
+	status = "okay";
+};
+
+&i2c0_1 {
+	status = "okay";
+};
+
+&mdio0 {
+	/* External single port 1Gbit/2.5Gbit  RTL8226 PHY (HSGMII) */
+	phy24: ethernet-phy@24 {
+		reg = <24>;
+		compatible = "ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <1 8>;
+		sds = <6>;
+	};
+
+	phy25: ethernet-phy@25 {
+		reg = <25>;
+		compatible = "ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <2 9>;
+		sds = <7>;
+	};
+
+	/* SFP+ Ports */
+	phy26: ethernet-phy@26 {
+		reg = <26>;
+		compatible = "ethernet-phy-ieee802.3-c45";
+		phy-is-integrated;
+		sds = <8>;
+	};
+
+	phy27: ethernet-phy@27 {
+		reg = <27>;
+		compatible = "ethernet-phy-ieee802.3-c45";
+		phy-is-integrated;
+		sds = <9>;
+	};
+};
+
+&status_led {
+	status = "okay";
+};
+
+&switch0_ports {
+	port@24 {
+		reg = <24>;
+		label = "lan9";
+		led-num = <(
+			RTL93XX_LED_NUM0 | /* Amber/Lime | RGB */
+			RTL93XX_LED_NUM1 | /* Amber      | Red */
+			RTL93XX_LED_NUM2 | /* Lime       | Green */
+			RTL93XX_LED_NUM3   /* off        | Blue */
+		)>;
+		led-set = <1>;
+		phy-mode = "hsgmii";
+		phy-handle = <&phy24>;
+	};
+
+	port@25 {
+		reg = <25>;
+		label = "lan10";
+		led-num = <(
+			RTL93XX_LED_NUM0 | /* Amber/Lime | RGB */
+			RTL93XX_LED_NUM1 | /* Amber      | Red */
+			RTL93XX_LED_NUM2 | /* Lime       | Green */
+			RTL93XX_LED_NUM3   /* off        | Blue */
+		)>;
+		led-set = <1>;
+		phy-mode = "hsgmii";
+		phy-handle = <&phy25>;
+	};
+
+	port@26 {
+		reg = <26>;
+		label = "lan11";
+		led-num = <(
+			RTL93XX_LED_NUM0 | /* Amber */
+			RTL93XX_LED_NUM1   /* Lime */
+		)>;
+		led-set = <3>;
+		phy-mode = "10gbase-r";
+		phy-handle = <&phy26>;
+		managed = "in-band-status";
+		sfp = <&sfp0>;
+	};
+
+	port@27 {
+		reg = <27>;
+		label = "lan12";
+		led-num = <(
+			RTL93XX_LED_NUM0 | /* Amber */
+			RTL93XX_LED_NUM1   /* Lime */
+		)>;
+		led-set = <3>;
+		managed = "in-band-status";
+		phy-mode = "10gbase-r";
+		phy-handle = <&phy27>;
+		sfp = <&sfp1>;
+	};
+};
+
+&reset_button {
+	status = "okay";
+};

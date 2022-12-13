@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+
+&partitions {
+	/delete-node/ partition@f0000;
+	partition@f0000 {
+		reg = <0xf0000 0x10000>;
+		label = "u-boot-sysenv";
+	};
+
+	partition@100000 {
+		reg = <0x100000 0x100000>;
+		label = "jffs2-cfg";
+	};
+
+	partition@200000 {
+		reg = <0x200000 0x100000>;
+		label = "jffs2-log";
+	};
+
+	firmware_partition: partition@300000 {
+		reg = <0x300000 0xce0000>;
+		label = "firmware";
+		compatible = "openwrt,uimage", "denx,uimage";
+	};
+
+	partition@fe0000 {
+		/*
+		 * This partition gets written to by the
+		 * U-Boot built-in realtek HTP flash write
+		 * test! Do not use for critical data!
+		 */
+		reg = <0xfe0000 0x10000>;
+		label = "flash_write_test";
+	};
+
+	partition@ff0000 {
+		/*
+		 * This partition gets written to by the
+		 * U-Boot built-in realtek HTP self-test!
+		 * Do not use for critical data!
+		 */
+		reg = <0xff0000 0x10000>;
+		label = "HTP_logs";
+	};
+};
