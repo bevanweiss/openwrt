@@ -835,19 +835,15 @@ static irqreturn_t rtl83xx_net_irq(int irq, void *dev_id)
 		rtl838x_rb_cleanup(priv, status & 0xff);
 	}
 
-	if (priv->family_id == RTL8390_FAMILY_ID && (status & RTL839X_DMA_IF_INTR_STS_LOCAL_NTFY_BUF_RUNOUT)) {
-		sw_w32(RTL839X_DMA_IF_INTR_MSK_LOCAL_NTFY_BUF_RUNOUT, priv->r->dma_if_intr_sts);
-		rtl839x_l2_notification_handler(priv);
-	}
-
-	if (priv->family_id == RTL8390_FAMILY_ID && (status & RTL839X_DMA_IF_INTR_STS_NTFY_BF_RUNOUT)) {
-		sw_w32(RTL839X_DMA_IF_INTR_STS_NTFY_BF_RUNOUT, priv->r->dma_if_intr_sts);
-		rtl839x_l2_notification_handler(priv);
-	}
-
-	if (priv->family_id == RTL8390_FAMILY_ID && (status & RTL839X_DMA_IF_INTR_STS_NTFY_DONE)) {
-		sw_w32(RTL839X_DMA_IF_INTR_STS_NTFY_DONE, priv->r->dma_if_intr_sts);
-		rtl839x_l2_notification_handler(priv);
+	if (priv->family_id == RTL8390_FAMILY_ID) {
+		if (status & (RTL839X_DMA_IF_INTR_STS_LOCAL_NTFY_BUF_RUNOUT |
+		              RTL839X_DMA_IF_INTR_STS_NTFY_BF_RUNOUT |
+		              RTL839X_DMA_IF_INTR_STS_NTFY_DONE)) {
+			sw_w32(RTL839X_DMA_IF_INTR_MSK_LOCAL_NTFY_BUF_RUNOUT |
+			       RTL839X_DMA_IF_INTR_STS_NTFY_BF_RUNOUT |
+			       RTL839X_DMA_IF_INTR_STS_NTFY_DONE, priv->r->dma_if_intr_sts);
+			rtl839x_l2_notification_handler(priv);
+		}
 	}
 
 	return IRQ_HANDLED;
