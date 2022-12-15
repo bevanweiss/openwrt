@@ -818,7 +818,7 @@ static irqreturn_t rtl83xx_net_irq(int irq, void *dev_id)
 	if (status & RTL838X_DMA_IF_INTR_STS_RX_DONE) {
 		/* ACK and disable RX interrupt for this ring */
 		sw_w32_mask(RTL838X_DMA_IF_INTR_MSK_RX_DONE & status, 0, priv->r->dma_if_intr_msk);
-		sw_w32(RTL838X_DMA_IF_INTR_STS_RX_DONE & status, priv->r->dma_if_intr_sts);
+		sw_w32(RTL838X_DMA_IF_INTR_STS_RX_DONE, priv->r->dma_if_intr_sts);
 		for (int i = 0; i < priv->rxrings; i++) {
 			if (status & FIELD_PREP(RTL838X_DMA_IF_INTR_MSK_RX_DONE, DMA_RING(i))) {
 				pr_debug("Scheduling queue: %d\n", i);
@@ -831,7 +831,7 @@ static irqreturn_t rtl83xx_net_irq(int irq, void *dev_id)
 	if (status & RTL838X_DMA_IF_INTR_STS_RUNOUT) {
 		pr_debug("RX buffer overrun: status %x, mask: %x\n",
 			 status, sw_r32(priv->r->dma_if_intr_msk));
-		sw_w32(status, priv->r->dma_if_intr_sts);
+		sw_w32(RTL838X_DMA_IF_INTR_STS_RUNOUT, priv->r->dma_if_intr_sts);
 		rtl838x_rb_cleanup(priv, status & 0xff);
 	}
 
