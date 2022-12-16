@@ -556,6 +556,8 @@ struct rtl838x_eth_priv {
 	u32 lastEvent;
 	u16 rxrings;
 	u16 rxringlen;
+	u16 txrings;
+	u16 txringlen;
 	u32 smi_bus[MAX_PORTS];
 	u8 smi_addr[MAX_PORTS];
 	u32 sds_id[MAX_PORTS];
@@ -1132,7 +1134,7 @@ static void rtl838x_hw_ring_setup(struct rtl838x_eth_priv *priv)
 	for (int i = 0; i < priv->rxrings; i++)
 		sw_w32(KSEG1ADDR(&ring->rx_r[i]), priv->r->dma_rx_base + i * 4);
 
-	for (int i = 0; i < RTL838X_DMA_IF_TX_RING_MAX; i++)
+	for (int i = 0; i < priv->txrings; i++)
 		sw_w32(KSEG1ADDR(&ring->tx_r[i]), priv->r->dma_tx_base + i * 4);
 }
 
@@ -1264,15 +1266,15 @@ static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring
 		ring->c_rx[i] = 0;
 	}
 
-	for (int i = 0; i < RTL838X_DMA_IF_TX_RING_MAX; i++) {
+	for (int i = 0; i < priv->txrings; i++) {
 		struct p_hdr *h;
 		int j;
 
-		for (j = 0; j < RTL838X_DMA_IF_TX_RING_LEN; j++) {
+		for (j = 0; j < priv->txringlen; j++) {
 			h = &ring->tx_header[i][j];
 			memset(h, 0, sizeof(struct p_hdr));
 			h->buf = (u8 *)KSEG1ADDR(ring->tx_space +
-			                         i * RTL838X_DMA_IF_TX_RING_LEN * RING_BUFFER +
+			                         i * priv->txringlen * RING_BUFFER +
 			                         j * RING_BUFFER);
 			h->size = RING_BUFFER;
 			ring->tx_r[i][j] = KSEG1ADDR(&ring->tx_header[i][j]);
@@ -1309,7 +1311,7 @@ static int rtl838x_eth_open(struct net_device *ndev)
 	struct ring_b *ring = priv->membase;
 
 	pr_debug("%s called: RX rings %d(length %d), TX rings %d(length %d)\n",
-		__func__, priv->rxrings, priv->rxringlen, RTL838X_DMA_IF_TX_RING_MAX, RTL838X_DMA_IF_TX_RING_LEN);
+		__func__, priv->rxrings, priv->rxringlen, priv->txrings, priv->txringlen);
 
 	spin_lock_irqsave(&priv->lock, flags);
 	rtl838x_hw_reset(priv);
@@ -1629,7 +1631,7 @@ static int rtl838x_eth_tx(struct sk_buff *skb, struct net_device *dev)
 	unsigned long flags;
 	struct p_hdr *h;
 	int dest_port = -1;
-	int q = skb_get_queue_mapping(skb) % RTL838X_DMA_IF_TX_RING_MAX;
+	int q = skb_get_queue_mapping(skb) % priv->txrings;
 
 	if (q) /* Check for high prio queue */
 		pr_debug("SKB priority: %d\n", skb->priority);
@@ -1704,7 +1706,7 @@ static int rtl838x_eth_tx(struct sk_buff *skb, struct net_device *dev)
 		dev->stats.tx_packets++;
 		dev->stats.tx_bytes += len;
 		dev_kfree_skb(skb);
-		ring->c_tx[q] = (ring->c_tx[q] + 1) % RTL838X_DMA_IF_TX_RING_LEN;
+		ring->c_tx[q] = (ring->c_tx[q] + 1) % priv->txringlen;
 		ret = NETDEV_TX_OK;
 	} else {
 		dev_warn(&priv->pdev->dev, "Data is owned by switch\n");
@@ -1723,10 +1725,11 @@ txdone:
 u16 rtl83xx_pick_tx_queue(struct net_device *dev, struct sk_buff *skb,
 			  struct net_device *sb_dev)
 {
+	struct rtl838x_eth_priv *priv = netdev_priv(dev);
 	static u8 last = 0;
 
 	last++;
-	return last % RTL838X_DMA_IF_TX_RING_MAX;
+	return last % priv->txrings;
 }
 
 /* Return queue number for TX. On the RTL93XX, queue 1 is the high priority queue
@@ -2927,12 +2930,13 @@ static const struct ethtool_ops rtl838x_ethtool_ops = {
 static int __init rtl838x_eth_probe(struct platform_device *pdev)
 {
 	struct net_device *dev;
+	int rxrings, rxringlen, txrings, txringlen;
 	struct device_node *dn = pdev->dev.of_node;
 	struct rtl838x_eth_priv *priv;
 	struct resource *res, *mem;
 	phy_interface_t phy_mode;
 	struct phylink *phylink;
-	int err = 0, rxrings, rxringlen;
+	int err = 0;
 	struct ring_b *ring;
 
 	pr_info("Probing RTL838X eth device pdev: %x, dev: %x\n",
@@ -2947,25 +2951,33 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 	case RTL8380_FAMILY_ID:
 		rxrings = RTL838X_DMA_IF_RX_RING_MAX;
 		rxringlen = RTL838X_DMA_IF_RX_RING_LEN;
+		txrings = RTL838X_DMA_IF_TX_RING_MAX;
+		txringlen = RTL838X_DMA_IF_TX_RING_LEN;
 		break;
 	case RTL8390_FAMILY_ID:
 		rxrings = RTL839X_DMA_IF_RX_RING_MAX;
 		rxringlen = RTL839X_DMA_IF_RX_RING_LEN;
+		txrings = RTL839X_DMA_IF_TX_RING_MAX;
+		txringlen = RTL839X_DMA_IF_TX_RING_LEN;
 		break;
 	case RTL9300_FAMILY_ID:
 		rxrings = RTL930X_DMA_IF_RX_RING_MAX;
 		rxringlen = RTL930X_DMA_IF_RX_RING_LEN;
+		txrings = RTL930X_DMA_IF_TX_RING_MAX;
+		txringlen = RTL930X_DMA_IF_TX_RING_LEN;
 		break;
 	case RTL9310_FAMILY_ID:
 		rxrings = RTL931X_DMA_IF_RX_RING_MAX;
 		rxringlen = RTL931X_DMA_IF_RX_RING_LEN;
+		txrings = RTL931X_DMA_IF_TX_RING_MAX;
+		txringlen = RTL931X_DMA_IF_TX_RING_LEN;
 		break;
 	default:
 		pr_err("%s: Unsupported chip family: %d\n", __func__, soc_info.family);
 		break;
 	};
 
-	dev = alloc_etherdev_mqs(sizeof(struct rtl838x_eth_priv), RTL838X_DMA_IF_TX_RING_MAX, rxrings);
+	dev = alloc_etherdev_mqs(sizeof(struct rtl838x_eth_priv), txrings, rxrings);
 	if (!dev) {
 		err = -ENOMEM;
 		goto err_free;
@@ -3052,6 +3064,8 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 	}
 	priv->rxringlen = rxringlen;
 	priv->rxrings = rxrings;
+	priv->txringlen = txringlen;
+	priv->txrings = txrings;
 
 	/* Obtain device IRQ number */
 	dev->irq = platform_get_irq(pdev, 0);
