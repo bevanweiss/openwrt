@@ -1275,8 +1275,10 @@ static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 		sw_w32_mask(0, BIT(priv->cpu_port), RTL931X_L2_UNKN_UC_FLD_PMSK);
 }
 
-static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring_b *ring)
+static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv)
 {
+        struct ring_b *ring = priv->ring;
+
 	for (int i = 0; i < priv->rxrings; i++) {
 	        struct p_hdr *h;
                 int j;
@@ -1340,14 +1342,13 @@ static int rtl838x_eth_open(struct net_device *ndev)
 {
 	unsigned long flags;
 	struct rtl838x_eth_priv *priv = netdev_priv(ndev);
-	struct ring_b *ring = priv->ring;
 
 	pr_debug("%s called: RX rings %d(length %d), TX rings %d(length %d)\n",
 		__func__, priv->rxrings, priv->rxringlen, priv->txrings, priv->txringlen);
 
 	spin_lock_irqsave(&priv->lock, flags);
 	rtl838x_hw_reset(priv);
-	rtl838x_setup_ring_buffer(priv, ring);
+	rtl838x_setup_ring_buffer(priv);
 	if (priv->family_id == RTL8390_FAMILY_ID) {
 		rtl839x_setup_notify_ring_buffer(priv);
 		/* Make sure the ring structure is visible to the ASIC */
