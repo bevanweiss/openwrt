@@ -14,6 +14,17 @@
 #define RTL8231_GPIO_PIN_SEL(gpio)		((0x0002) + ((gpio) >> 4))
 #define RTL8231_GPIO_DIR(gpio)			((0x0005) + ((gpio) >> 4))
 #define RTL8231_GPIO_DATA(gpio)			((0x001C) + ((gpio) >> 4))
+#define RTL838X_EXT_GPIO_DIR			(0xA08C)
+#define RTL839X_EXT_GPIO_DIR			(0x0214)
+#define RTL838X_EXT_GPIO_DATA			(0xA094)
+#define RTL839X_EXT_GPIO_DATA			(0x021c)
+#define RTL838X_EXT_GPIO_INDRT_ACCESS		(0xA09C)
+#define RTL839X_EXT_GPIO_INDRT_ACCESS		(0x0224)
+#define RTL838X_EXTRA_GPIO_CTRL			(0xA0E0)
+#define RTL838X_EXTRA_GPIO_CTRL			(0xA0E0)
+#define RTL838X_LED_GLB_CTRL			(0xA000)
+#define RTL839X_LED_GLB_CTRL			(0x00E4)
+#define RTL9302_LED_GLB_CTRL			(0xcc00)
 
 #define USEC_TIMEOUT 5000
 
