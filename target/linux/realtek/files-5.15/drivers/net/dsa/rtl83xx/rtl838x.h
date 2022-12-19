@@ -28,6 +28,7 @@
 #define RTL839X_CHIP_INFO			(0x0ff4)
 #define RTL838X_PORT_ISO_CTRL(port)		(0x4100 + ((port) << 2))
 #define RTL839X_PORT_ISO_CTRL(port)		(0x1400 + ((port) << 3))
+#define RTL931X_PORT_ISO_VB_ISO_PMSK_CTRL(port)	(0x8a04 + ((port) << 2))
 
 /* Packet statistics */
 #define RTL838X_STAT_PORT_STD_MIB		(0x1200)

@@ -527,7 +527,7 @@ int rtl931x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 
 void rtl931x_print_matrix(void)
 {
-	volatile u64 *ptr = RTL838X_SW_BASE + RTL839X_PORT_ISO_CTRL(0);
+	volatile u64 *ptr = RTL838X_SW_BASE + RTL931X_PORT_ISO_VB_ISO_PMSK_CTRL(0);
 
 	for (int i = 0; i < 52; i += 4)
 		pr_info("> %16llx %16llx %16llx %16llx\n",
