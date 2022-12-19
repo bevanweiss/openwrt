@@ -14,6 +14,7 @@
 #include <net/ipv6.h>
 #include <uapi/linux/in6.h>
 
+#include "rtl839x.h"
 #include "rtl83xx.h"
 
 #define RTL839X_VLAN_PORT_TAG_STS_UNTAG				0x0

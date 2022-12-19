@@ -11,6 +11,10 @@
 #include <linux/rhashtable.h>
 #include <linux/of_net.h>
 
+#include "rtl838x.h"
+#include "rtl839x.h"
+#include "rtl930x.h"
+#include "rtl931x.h"
 #include "rtl83xx.h"
 
 extern struct rtl83xx_soc_info soc_info;

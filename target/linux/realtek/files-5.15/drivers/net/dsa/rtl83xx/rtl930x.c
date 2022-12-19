@@ -13,6 +13,7 @@
 #include <net/ipv6.h>
 #include <uapi/linux/in6.h>
 
+#include "rtl930x.h"
 #include "rtl83xx.h"
 
 #define RTL930X_LED_GLB_CTRL_REG                        (0xcc00)

@@ -9,6 +9,7 @@
 #include <linux/types.h>
 #include <net/dsa.h>
 
+#include "rtl931x.h"
 #include "rtl83xx.h"
 
 #define RTL931X_LED_GLB_CTRL_REG                        (0x0600)

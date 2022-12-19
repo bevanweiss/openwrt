@@ -4,6 +4,10 @@
 #include <linux/debugfs.h>
 #include <linux/kernel.h>
 
+#include "rtl838x.h"
+#include "rtl839x.h"
+#include "rtl930x.h"
+#include "rtl931x.h"
 #include "rtl83xx.h"
 
 #define RTL838X_DRIVER_NAME "rtl838x"

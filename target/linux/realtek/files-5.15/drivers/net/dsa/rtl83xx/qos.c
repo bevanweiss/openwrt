@@ -4,6 +4,10 @@
 #include <net/dsa.h>
 #include <linux/delay.h>
 
+#include "rtl838x.h"
+#include "rtl839x.h"
+#include "rtl930x.h"
+#include "rtl931x.h"
 #include "rtl83xx.h"
 
 static struct rtl838x_switch_priv *switch_priv;

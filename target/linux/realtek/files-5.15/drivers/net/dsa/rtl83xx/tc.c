@@ -7,8 +7,8 @@
 #include <net/flow_offload.h>
 #include <linux/rhashtable.h>
 
-#include "rtl83xx.h"
 #include "rtl838x.h"
+#include "rtl83xx.h"
 
 /* Parse the flow rule for the matching conditions */
 static int rtl83xx_parse_flow_rule(struct rtl838x_switch_priv *priv,
