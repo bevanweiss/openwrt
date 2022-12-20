@@ -51,6 +51,13 @@
 #define RTL839X_MAC_PORT_CTRL(port)		(0x8004 + (((port) << 7)))
 #define RTL839X_PORT_ISO_CTRL(port)		(0x1400 + ((port) << 3))
 
+#define RTL839X_MAC_EEE_ABLTY_REG(p)                    (0x03c8 + (((p) / 32) * 0x4))
+#define _RTL839X_MAC_EEE_ABLTY_ABLE_MASK                        BIT(0)
+#define RTL839X_MAC_EEE_ABLTY_ABLE_ON                                   0b1
+#define RTL839X_MAC_EEE_ABLTY_ABLE_OFF                                  0b0
+#define RTL839X_MAC_EEE_ABLTY_ABLE(r, p) \
+        (((r) >> ((p) % 32)) & _RTL839X_MAC_EEE_ABLTY_ABLE_MASK)
+
 /* Packet statistics */
 #define RTL839X_STAT_CTRL			(0x04cc)
 #define RTL839X_STAT_PORT_RST			(0xf508)
@@ -127,6 +134,14 @@
 #define RTL839X_MAC_TX_PAUSE_STS(p, r) \
         (((r) >> ((p) % 32)) & _RTL839X_MAC_TX_PAUSE_STS_MASK)
 
+#define RTL839X_EEE_TX_SEL_CTRL0_REG                    (0x041c)
+#define RTL839X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_500M             GENMASK(31, 16)
+#define RTL839X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_100M             GENMASK(15, 0)
+
+#define RTL839X_EEE_TX_SEL_CTRL1_REG                    (0x0420)
+#define RTL839X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_10G              GENMASK(31, 16)
+#define RTL839X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M            GENMASK(15, 0)
+
 #define RTL839X_MAC_LINK_DUP_STS_ADDR		(0x03b0)
 #define RTL839X_MAC_LINK_SPD_STS_PORT_ADDR(p)	(0x03a0 + (((p >> 4) << 2)))
 #define RTL839X_MAC_LINK_STS_ADDR		(0x0390)
@@ -146,6 +161,39 @@
 #define RTL839X_EEE_TX_TIMER_GELITE_CTRL	(0x042c)
 #define RTL839X_EEE_TX_TIMER_GIGA_CTRL		(0x0430)
 #define RTL839X_MAC_EEE_ABLTY			(0x03c8)
+
+#define RTL839X_EEE_CTRL_REG(p)                         (0x8008 + (((p) / 1) * 0x4))
+/* Reserved                                                     31 - 2 */
+#define RTL839X_EEE_CTRL_TX_EN                                  BIT(1)
+#define RTL839X_EEE_CTRL_RX_EN                                  BIT(0)
+#define RTL839X_EEE_CTRL_TXRX_EN \
+        (RTL839X_EEE_CTRL_TX_EN | RTL839X_EEE_CTRL_RX_EN)
+
+#define RTL839X_EEE_TX_TIMER_100M_CTRL_REG              (0x0428)
+/* Reserved                                                     31 - 20 */
+#define RTL839X_EEE_TX_TIMER_100M_CTRL_TX_LOW_Q_DELAY           GENMASK(19, 8)
+#define RTL839X_EEE_TX_TIMER_100M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL839X_EEE_TX_TIMER_500M_CTRL_REG              (0x042c)
+/* Reserved                                                     31 - 29 */
+#define RTL839X_EEE_TX_TIMER_500M_CTRL_RX_WAIT_INACTIVE         BIT(28)
+#define RTL839X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE            GENMASK(27, 20)
+#define RTL839X_EEE_TX_TIMER_500M_CTRL_TX_LOW_Q_DELAY           GENMASK(19, 8)
+#define RTL839X_EEE_TX_TIMER_500M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL839X_EEE_TX_TIMER_1000M_CTRL_REG             (0x0430)
+/* Reserved                                                     31 - 29 */
+#define RTL839X_EEE_TX_TIMER_1000M_CTRL_RX_WAIT_INACTIVE        BIT(28)
+#define RTL839X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE           GENMASK(27, 20)
+#define RTL839X_EEE_TX_TIMER_1000M_CTRL_TX_LOW_Q_DELAY          GENMASK(19, 8)
+#define RTL839X_EEE_TX_TIMER_1000M_CTRL_TX_WAKE                 GENMASK(7, 0)
+
+#define RTL839X_EEE_TX_TIMER_10G_CTRL_REG               (0x0434)
+/* Reserved                                                     31 - 29 */
+#define RTL839X_EEE_TX_TIMER_10G_CTRL_RX_WAIT_INACTIVE          BIT(28)
+#define RTL839X_EEE_TX_TIMER_10G_CTRL_TX_PAUSE_WAKE             GENMASK(27, 20)
+#define RTL839X_EEE_TX_TIMER_10G_CTRL_TX_LOW_Q_DELAY            GENMASK(19, 8)
+#define RTL839X_EEE_TX_TIMER_10G_CTRL_TX_WAKE                   GENMASK(7, 0)
 
 /* L2 functionality */
 #define RTL839X_L2_CTRL_0			(0x3800)

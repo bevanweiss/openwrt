@@ -67,6 +67,13 @@
 #define RTL931X_MAC_PORT_CTRL			(0x6004)
 #define RTL931X_PORT_ISO_VB_ISO_PMSK_CTRL(port)	(0x8a04 + ((port) << 2))
 
+#define RTL931X_MAC_EEE_ABLTY_REG(p)                    (0x0f08 + (((p) / 32) * 0x4))
+#define _RTL931X_MAC_EEE_ABLTY_ABLE_MASK                        BIT(0)
+#define RTL931X_MAC_EEE_ABLTY_ABLE_ON                                   0b1
+#define RTL931X_MAC_EEE_ABLTY_ABLE_OFF                                  0b0
+#define RTL931X_MAC_EEE_ABLTY_ABLE(r, p) \
+        (((r) >> ((p) % 32)) & _RTL931X_MAC_EEE_ABLTY_ABLE_MASK)
+
 /* Packet statistics */
 #define RTL931X_STAT_CTRL			(0x5720)
 #define RTL931X_STAT_PORT_RST			(0x7ef8)
@@ -157,6 +164,90 @@
 #define RTL931X_MAC_FORCE_FC_EN			(1 << 4)
 #define RTL931X_DUPLEX_MODE			(1 << 2)
 #define RTL931X_FORCE_LINK_EN			(1 << 0)
+
+/* EEE */
+#define RTL931X_EEE_TX_SEL_CTRL0_REG                    (0x5658)
+#define RTL931X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_500M             GENMASK(31, 16)
+#define RTL931X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_100M             GENMASK(15, 0)
+
+#define RTL931X_EEE_TX_SEL_CTRL1_REG                    (0x565c)
+#define RTL931X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_10G              GENMASK(31, 16)
+#define RTL931X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M            GENMASK(15, 0)
+
+#define RTL931X_EEE_TX_SEL_CTRL2_REG                    (0x5660)
+#define RTL931X_EEE_TX_SEL_CTRL2_TX_LPI_MINIPG_5G               GENMASK(31, 16)
+#define RTL931X_EEE_TX_SEL_CTRL2_TX_LPI_MINIPG_2G5              GENMASK(15, 0)
+
+#define RTL931X_EEE_PORT_TX_REG(p)                      (0x5644 + (((p) / 32) * 0x4))
+#define _RTL931X_EEE_PORT_TX_EN_MASK                            BIT(0)
+#define RTL931X_EEE_PORT_TX_EN_ON                               0b1
+#define RTL931X_EEE_PORT_TX_EN_OFF                              0b0
+#define RTL931X_EEE_PORT_TX(r, p) \
+        (((r) >> ((p) % 32)) & _RTL931X_EEE_PORT_TX_EN_MASK)
+#define RTL931X_EEE_PORT_TX_EN(p) \
+        (((p) & _RTL931X_EEE_PORT_TX_EN_MASK) << ((p) % 32))
+
+#define RTL931X_EEE_PORT_RX_REG(p)                      (0x564c + (((p) / 32) * 0x4))
+#define _RTL831X_EEE_PORT_RX_EN_MASK                            BIT(0)
+#define RTL931X_EEE_PORT_RX_EN_ON                               0b1
+#define RTL931X_EEE_PORT_RX_EN_OFF                              0b0
+#define RTL931X_EEE_PORT_RX(r, p) \
+        (((r) >> ((p) % 32)) & _RTL831X_EEE_PORT_RX_EN_MASK)
+#define RTL931X_EEE_PORT_RX_EN(p) \
+        (((p) & _RTL831X_EEE_PORT_RX_EN_MASK) << ((p) % 32))
+
+#define RTL931X_EEEP_PORT_TX_REG(p)                     (0x5698 + (((p) / 32) * 0x4))
+#define _RTL931X_EEEP_PORT_TX_EN_MASK                           BIT(0)
+#define RTL931X_EEEP_PORT_TX_EN_ON                              0b1
+#define RTL931X_EEEP_PORT_TX_EN_OFF                             0b0
+#define RTL931X_EEEP_PORT_TX(r, p) \
+        (((r) >> ((p) % 32)) & _RTL931X_EEEP_PORT_TX_EN_MASK)
+#define RTL931X_EEEP_PORT_TX_EN(p) \
+        (((p) & _RTL931X_EEEP_PORT_TX_EN_MASK) << ((p) % 32))
+
+#define RTL931X_EEEP_PORT_RX_REG(p)                     (0x56a0 + (((p) / 32) * 0x4))
+#define _RTL831X_EEEP_PORT_RX_EN_MASK                           BIT(0)
+#define RTL931X_EEEP_PORT_RX_EN_ON                              0b1
+#define RTL931X_EEEP_PORT_RX_EN_OFF                             0b0
+#define RTL931X_EEEP_PORT_RX(r, p) \
+        (((r) >> ((p) % 32)) & _RTL831X_EEEP_PORT_RX_EN_MASK)
+#define RTL931X_EEEP_PORT_RX_EN(p) \
+        (((p) & _RTL831X_EEEP_PORT_RX_EN_MASK) << ((p) % 32))
+
+#define RTL931X_EEE_TX_TIMER_100M_CTRL_REG              (0x5670)
+/* Reserved                                                     31 - 20 */
+#define RTL931X_EEE_TX_TIMER_100M_CTRL_TX_LOW_Q_DELAY           GENMASK(19, 8)
+#define RTL931X_EEE_TX_TIMER_100M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL931X_EEE_TX_TIMER_500M_CTRL_REG              (0x5674)
+/* Reserved                                                     31 - 28 */
+#define RTL931X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE            GENMASK(27, 20)
+#define RTL931X_EEE_TX_TIMER_500M_CTRL_TX_LOW_Q_DELAY           GENMASK(19, 8)
+#define RTL931X_EEE_TX_TIMER_500M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL931X_EEE_TX_TIMER_1000M_CTRL_REG              (0x5678)
+/* Reserved                                                     31 - 28 */
+#define RTL931X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE           GENMASK(27, 20)
+#define RTL931X_EEE_TX_TIMER_1000M_CTRL_TX_LOW_Q_DELAY          GENMASK(19, 8)
+#define RTL931X_EEE_TX_TIMER_1000M_CTRL_TX_WAKE                 GENMASK(7, 0)
+
+#define RTL931X_EEE_TX_TIMER_2G5_CTRL_REG               (0x567c)
+/* Reserved                                                     31 - 28 */
+#define RTL931X_EEE_TX_TIMER_2G5_CTRL_TX_PAUSE_WAKE             GENMASK(27, 20)
+#define RTL931X_EEE_TX_TIMER_2G5_CTRL_TX_LOW_Q_DELAY            GENMASK(19, 8)
+#define RTL931X_EEE_TX_TIMER_2G5_CTRL_TX_WAKE                   GENMASK(7, 0)
+
+#define RTL931X_EEE_TX_TIMER_5G_CTRL_REG                (0x5680)
+/* Reserved                                                     31 - 28 */
+#define RTL931X_EEE_TX_TIMER_5G_CTRL_TX_PAUSE_WAKE              GENMASK(27, 20)
+#define RTL931X_EEE_TX_TIMER_5G_CTRL_TX_LOW_Q_DELAY             GENMASK(19, 8)
+#define RTL931X_EEE_TX_TIMER_5G_CTRL_TX_WAKE                    GENMASK(7, 0)
+
+#define RTL931X_EEE_TX_TIMER_10G_CTRL_REG               (0x5684)
+/* Reserved                                                     31 - 28 */
+#define RTL931X_EEE_TX_TIMER_10G_CTRL_TX_PAUSE_WAKE             GENMASK(27, 20)
+#define RTL931X_EEE_TX_TIMER_10G_CTRL_TX_LOW_Q_DELAY            GENMASK(19, 8)
+#define RTL931X_EEE_TX_TIMER_10G_CTRL_TX_WAKE                   GENMASK(7, 0)
 
 /* L2 functionality */
 #define	RTL931X_L2_PORT_AGE_CTRL		(0xc808)

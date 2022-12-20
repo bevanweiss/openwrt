@@ -68,6 +68,13 @@
 #define RTL838X_MAC_PORT_CTRL(port)		(0xd560 + (((port) << 7)))
 #define RTL838X_PORT_ISO_CTRL(port)		(0x4100 + ((port) << 2))
 
+#define RTL838X_MAC_EEE_ABLTY_REG(p)                    (0xa1a8 + (((p) / 32) * 0x4))
+#define _RTL838X_MAC_EEE_ABLTY_ABLE_MASK                        BIT(0)
+#define RTL838X_MAC_EEE_ABLTY_ABLE_ON                                   0b1
+#define RTL838X_MAC_EEE_ABLTY_ABLE_OFF                                  0b0
+#define RTL838X_MAC_EEE_ABLTY_ABLE(r, p) \
+        (((r) >> ((p) % 32)) & _RTL838X_MAC_EEE_ABLTY_ABLE_MASK)
+
 /* Packet statistics */
 #define RTL838X_STAT_CTRL			(0x3108)
 #define RTL838X_STAT_PORT_RST			(0x3104)
@@ -156,6 +163,71 @@
 #define RTL838X_EEE_TX_TIMER_GELITE_CTRL	(0xaa08)
 #define RTL838X_EEE_TX_TIMER_GIGA_CTRL		(0xaa04)
 #define RTL838X_MAC_EEE_ABLTY			(0xa1a8)
+
+#define RTL838X_EEE_PORT_TX_REG(p)                      (0x014c + (((p) / 32) * 0x4))
+#define _RTL838X_EEE_PORT_TX_EN_MASK                            BIT(0)
+#define RTL838X_EEE_PORT_TX_EN_ON                                       0b1
+#define RTL838X_EEE_PORT_TX_EN_OFF                                      0b0
+#define RTL838X_EEE_PORT_TX_GET(r, p) \
+        (((r) >> ((p) % 32)) & _RTL838X_EEE_PORT_TX_EN_MASK)
+#define RTL838X_EEE_PORT_TX_SET(p) \
+        (_RTL838X_EEE_PORT_TX_EN_MASK << ((p) % 32))
+
+#define RTL838X_EEE_PORT_RX_REG(p)                      (0x0150 + (((p) / 32) * 0x4))
+#define _RTL838X_EEE_PORT_RX_EN_MASK                            BIT(0)
+#define RTL838X_EEE_PORT_RX_EN_ON                                       0b1
+#define RTL838X_EEE_PORT_RX_EN_OFF                                      0b0
+#define RTL838X_EEE_PORT_RX_GET(r, p) \
+        (((r) >> ((p) % 32)) & _RTL838X_EEE_PORT_RX_EN_MASK)
+#define RTL838X_EEE_PORT_RX_SET(p) \
+        (_RTL838X_EEE_PORT_RX_EN_MASK << ((p) % 32))
+
+#define RTL838X_EEEP_PORT_TX_STS_REG(p)                 (0x0154 + (((p) / 32) * 0x4))
+#define _RTL838X_EEEP_PORT_TX_STS_MASK                          BIT(0)
+#define RTL838X_EEEP_PORT_TX_STS_ON                                     0b1
+#define RTL838X_EEEP_PORT_TX_STS_OFF                                    0b0
+#define RTL838X_EEEP_PORT_TX_STS(r, p) \
+        (((r) >> ((p) % 32)) & _RTL838X_EEEP_PORT_TX_STS_MASK)
+
+#define RTL838X_EEEP_PORT_RX_STS_REG(p)                 (0x0158 + (((p) / 32) * 0x4))
+#define _RTL838X_EEEP_PORT_RX_STS_MASK                          BIT(0)
+#define RTL838X_EEEP_PORT_RX_STS_ON                                     0b1
+#define RTL838X_EEEP_PORT_RX_STS_OFF                                    0b0
+#define RTL838X_EEEP_PORT_RX_STS(r, p) \
+        (((r) >> ((p) % 32)) & _RTL838X_EEEP_PORT_RX_STS_MASK)
+
+#define RTL838X_EEE_TX_TIMER_100M_CTRL_REG              (0xaa00)
+#define RTL838X_EEE_TX_TIMER_100M_CTRL_WAIT_RX_IDLE_TIMER       GENMASK(31, 24)
+#define RTL838X_EEE_TX_TIMER_100M_CTRL_WAIT_RX_IDLE             BIT(23)
+/* Reserved                                                     22 - 20 */
+#define RTL838X_EEE_TX_TIMER_100M_CTRL_TX_LOW_Q_DELAY           GENMASK(19, 8)
+#define RTL838X_EEE_TX_TIMER_100M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL838X_EEE_TX_TIMER_500M_CTRL_REG              (0xaa08)
+#define RTL838X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE            GENMASK(31, 24)
+/* Reserved                                                     23 - 20 */
+#define RTL838X_EEE_TX_TIMER_500M_CTRL_TX_LOW_Q_DELAY           GENMASK(19, 8)
+#define RTL838X_EEE_TX_TIMER_500M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL838X_EEE_TX_TIMER_1000M_CTRL_REG             (0xaa04)
+#define RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE           GENMASK(31, 24)
+/* Reserved                                                     23 - 20 */
+#define RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_LOW_Q_DELAY          GENMASK(19, 8)
+#define RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_WAKE                 GENMASK(7, 0)
+
+#define RTL838X_EEE_TX_SEL_CTRL0_REG                    (0xa9f8)
+#define RTL838X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_100M             GENMASK(31, 16)
+#define RTL838X_EEE_TX_SEL_CTRL0_RX_IDLE_TIMER_500M             GENMASK(15, 8)
+#define RTL838X_EEE_TX_SEL_CTRL0_RX_IDLE_500M                   BIT(7)
+#define RTL838X_EEE_TX_SEL_CTRL0_CFG_DEFER_EN                   BIT(6)
+#define RTL838X_EEE_TX_SEL_CTRL0_MULTIWAKE_INTLV                GENMASK(5, 4)
+#define RTL838X_EEE_TX_SEL_CTRL0_MULTIWAKE_EN                   BIT(3)
+#define RTL838X_EEE_TX_SEL_CTRL0_LINK_UP_DELAY                  GENMASK(2, 1)
+#define RTL838X_EEE_TX_SEL_CTRL0_TX_WAKE_SEL                    BIT(0)
+
+#define RTL838X_EEE_TX_SEL_CTRL1_REG                    (0xa9fc)
+#define RTL838X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_500M             GENMASK(31, 16)
+#define RTL838X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M            GENMASK(15, 0)
 
 /* L2 functionality */
 #define RTL838X_L2_CTRL_0			(0x3200)

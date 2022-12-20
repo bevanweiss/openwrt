@@ -57,6 +57,13 @@
 #define RTL930X_MAC_L2_PORT_CTRL(port)		(0x3268 + (((port) << 6)))
 #define RTL930X_MAC_PORT_CTRL(port)		(0x3260 + (((port) << 6)))
 
+#define RTL930X_MAC_EEE_ABLTY_REG(p)                    (0xcb34 + (((p) / 32) * 0x4))
+#define _RTL930X_MAC_EEE_ABLTY_ABLE_MASK                        BIT(0)
+#define RTL930X_MAC_EEE_ABLTY_ABLE_ON                                   0b1
+#define RTL930X_MAC_EEE_ABLTY_ABLE_OFF                                  0b0
+#define RTL930X_MAC_EEE_ABLTY_ABLE(r, p) \
+        (((r) >> ((p) % 32)) & _RTL930X_MAC_EEE_ABLTY_ABLE_MASK)
+
 /* Packet statistics */
 #define RTL930X_STAT_CTRL			(0x3248)
 #define RTL930X_STAT_PORT_MIB_CNTR		(0x0664)
@@ -147,6 +154,97 @@
 #define RTL930X_MAC_EEE_ABLTY			(0xcb34)
 #define RTL930X_EEE_CTRL(p)			(0x3274 + ((p) << 6))
 #define RTL930X_EEEP_PORT_CTRL(p)		(0x3278 + ((p) << 6))
+
+#define RTL930X_EEE_CTRL_REG(p)                         (0x3274 + (((p) / 1) * 0x40))
+/* Reserved                                                     31 - 2 */
+#define RTL930X_EEE_CTRL_TX_EN                                  BIT(1)
+#define RTL930X_EEE_CTRL_RX_EN                                  BIT(0)
+#define RTL930X_EEE_CTRL_TXRX_EN \
+        (RTL930X_EEE_CTRL_TX_EN | RTL930X_EEE_CTRL_RX_EN)
+
+#define RTL930X_EEEP_PORT_CTRL(p)                       (0x3278 + ((p) / 1) * 0x40)
+/* Reserved                                                     31 - 7 */
+#define RTL930X_EEEP_PORT_CTRL_RX_STS                           BIT(6)
+#define RTL930X_EEEP_PORT_CTRL_TX_STS                           BIT(5)
+#define RTL930X_EEEP_PORT_CTRL_1000M_EN                         BIT(4)
+#define RTL930X_EEEP_PORT_CTRL_500M_EN                          BIT(3)
+#define RTL930X_EEEP_PORT_CTRL_100M_EN                          BIT(2)
+#define RTL930X_EEEP_PORT_CTRL_TX_EN                            BIT(1)
+#define RTL930X_EEEP_PORT_CTRL_RX_EN                            BIT(0)
+#define RTL930X_EEEP_PORT_CTRL_TXRX_EN \
+        (RTL930X_EEEP_PORT_CTRL_TX_EN | RTL930X_EEEP_PORT_CTRL_RX_EN)
+
+#define RTL930X_EEE_TX_SEL_CTRL0_REG                    (0xc720)
+#define RTL930X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_500M             GENMASK(31, 16)
+#define RTL930X_EEE_TX_SEL_CTRL0_TX_LPI_MINIPG_100M             GENMASK(15, 0)
+
+#define RTL930X_EEE_TX_SEL_CTRL1_REG                    (0xc724)
+#define RTL930X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_10G              GENMASK(31, 16)
+#define RTL930X_EEE_TX_SEL_CTRL1_TX_LPI_MINIPG_1000M            GENMASK(15, 0)
+
+#define RTL930X_EEE_TX_SEL_CTRL2_REG                    (0xc728)
+#define RTL930X_EEE_TX_SEL_CTRL2_TX_LPI_MINIPG_5G               GENMASK(31, 16)
+#define RTL930X_EEE_TX_SEL_CTRL2_TX_LPI_MINIPG_2G5              GENMASK(15, 0)
+
+#define RTL930X_EEE_TX_TIMER_100M_CTRL_REG              (0xc730)
+/* Reserved                                                     31 - 20 */
+#define RTL930X_EEE_TX_TIMER_100M_CTRL_TX_LOW_Q_DELAY           GENMASK(19, 8)
+#define RTL930X_EEE_TX_TIMER_100M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL930X_EEE_TX_TIMER_500M_CTRL_REG              (0xc734)
+/* Reserved                                                     31 - 28 */
+#define RTL930X_EEE_TX_TIMER_500M_CTRL_TX_LOW_Q_DELAY           GENMASK(27, 16)
+#define RTL930X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE            GENMASK(15, 8)
+#define RTL930X_EEE_TX_TIMER_500M_CTRL_TX_WAKE                  GENMASK(7, 0)
+
+#define RTL930X_EEE_TX_TIMER_1000M_CTRL_REG              (0xc738)
+/* Reserved                                                     31 - 28 */
+#define RTL930X_EEE_TX_TIMER_1000M_CTRL_TX_LOW_Q_DELAY          GENMASK(27, 16)
+#define RTL930X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE           GENMASK(15, 8)
+#define RTL930X_EEE_TX_TIMER_1000M_CTRL_TX_WAKE                 GENMASK(7, 0)
+
+#define RTL930X_EEE_TX_TIMER_2G5_CTRL_REG               (0xc73c)
+/* Reserved                                                     31 - 28 */
+#define RTL930X_EEE_TX_TIMER_2G5_CTRL_TX_LOW_Q_DELAY            GENMASK(27, 16)
+#define RTL930X_EEE_TX_TIMER_2G5_CTRL_TX_PAUSE_WAKE             GENMASK(15, 8)
+#define RTL930X_EEE_TX_TIMER_2G5_CTRL_TX_WAKE                   GENMASK(7, 0)
+
+#define RTL930X_EEE_TX_TIMER_5G_CTRL_REG                (0xc740)
+/* Reserved                                                     31 - 28 */
+#define RTL930X_EEE_TX_TIMER_5G_CTRL_TX_LOW_Q_DELAY             GENMASK(27, 16)
+#define RTL930X_EEE_TX_TIMER_5G_CTRL_TX_PAUSE_WAKE              GENMASK(15, 8)
+#define RTL930X_EEE_TX_TIMER_5G_CTRL_TX_WAKE                    GENMASK(7, 0)
+
+#define RTL930X_EEE_TX_TIMER_10G_CTRL_REG               (0xc744)
+/* Reserved                                                     31 - 28 */
+#define RTL930X_EEE_TX_TIMER_10G_CTRL_TX_LOW_Q_DELAY            GENMASK(27, 16)
+#define RTL930X_EEE_TX_TIMER_10G_CTRL_TX_PAUSE_WAKE             GENMASK(15, 8)
+#define RTL930X_EEE_TX_TIMER_10G_CTRL_TX_WAKE                   GENMASK(7, 0)
+
+#define RTL930X_EEE_RX_TIMER_500M_CTRL_REG              (0xc748)
+/* Reserved                                                     31 - 9 */
+#define RTL930X_EEE_RX_TIMER_500M_CTRL_WAIT_INACTIVE            BIT(8)
+#define RTL930X_EEE_RX_TIMER_500M_CTRL_WAIT_INACTIVE_TIMER      GENMASK(7, 0)
+
+#define RTL930X_EEE_RX_TIMER_1000M_CTRL_REG              (0xc74c)
+/* Reserved                                                     31 - 9 */
+#define RTL930X_EEE_RX_TIMER_1000M_CTRL_WAIT_INACTIVE           BIT(8)
+#define RTL930X_EEE_RX_TIMER_1000M_CTRL_WAIT_INACTIVE_TIMER     GENMASK(7, 0)
+
+#define RTL930X_EEE_RX_TIMER_2G5_CTRL_REG               (0xc750)
+/* Reserved                                                     31 - 9 */
+#define RTL930X_EEE_RX_TIMER_2G5_CTRL_WAIT_INACTIVE             BIT(8)
+#define RTL930X_EEE_RX_TIMER_2G5_CTRL_WAIT_INACTIVE_TIMER       GENMASK(7, 0)
+
+#define RTL930X_EEE_RX_TIMER_5G_CTRL_REG                (0xc754)
+/* Reserved                                                     31 - 9 */
+#define RTL930X_EEE_RX_TIMER_5G_CTRL_WAIT_INACTIVE              BIT(8)
+#define RTL930X_EEE_RX_TIMER_5G_CTRL_WAIT_INACTIVE_TIMER        GENMASK(7, 0)
+
+#define RTL930X_EEE_RX_TIMER_10G_CTRL_REG               (0xc758)
+/* Reserved                                                     31 - 9 */
+#define RTL930X_EEE_RX_TIMER_10G_CTRL_WAIT_INACTIVE             BIT(8)
+#define RTL930X_EEE_RX_TIMER_10G_CTRL_WAIT_INACTIVE_TIMER       GENMASK(7, 0)
 
 /* L2 functionality */
 #define	RTL930X_L2_PORT_AGE_CTRL		(0x8fe0)
