@@ -349,44 +349,44 @@
 #define RTL931X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_REG(r)     (0x9008 + (((r) / 32) * 0x4))
 #define RTL931X_DMA_IF_TX_CUR_DESC_ADDR_CTRL_MASK               GENMASK(31, 0)
 
-inline int rtl838x_dma_if_rx_ring_size(int i)
+int rtl838x_dma_if_rx_ring_size(const int ring)
 {
-	return RTL838X_DMA_IF_RX_RING_SIZE_REG(i);
+	return RTL838X_DMA_IF_RX_RING_SIZE_REG(ring);
 }
 
-inline int rtl839x_dma_if_rx_ring_size(int i)
+int rtl839x_dma_if_rx_ring_size(const int ring)
 {
-	return RTL839X_DMA_IF_RX_RING_SIZE_REG(i);
+	return RTL839X_DMA_IF_RX_RING_SIZE_REG(ring);
 }
 
-inline int rtl930x_dma_if_rx_ring_size(int i)
+int rtl930x_dma_if_rx_ring_size(const int ring)
 {
-	return RTL930X_DMA_IF_RX_RING_SIZE_REG(i);
+	return RTL930X_DMA_IF_RX_RING_SIZE_REG(ring);
 }
 
-inline int rtl931x_dma_if_rx_ring_size(int i)
+int rtl931x_dma_if_rx_ring_size(const int ring)
 {
-	return RTL931X_DMA_IF_RX_RING_SIZE_REG(i);
+	return RTL931X_DMA_IF_RX_RING_SIZE_REG(ring);
 }
 
-inline int rtl838x_dma_if_rx_ring_cntr(int i)
+int rtl838x_dma_if_rx_ring_cntr(const int ring)
 {
-	return RTL838X_DMA_IF_RX_RING_CNTR_REG(i);
+	return RTL838X_DMA_IF_RX_RING_CNTR_REG(ring);
 }
 
-inline int rtl839x_dma_if_rx_ring_cntr(int i)
+int rtl839x_dma_if_rx_ring_cntr(const int ring)
 {
-	return RTL839X_DMA_IF_RX_RING_CNTR_REG(i);
+	return RTL839X_DMA_IF_RX_RING_CNTR_REG(ring);
 }
 
-inline int rtl930x_dma_if_rx_ring_cntr(int i)
+int rtl930x_dma_if_rx_ring_cntr(const int ring)
 {
-	return RTL930X_DMA_IF_RX_RING_CNTR_REG(i);
+	return RTL930X_DMA_IF_RX_RING_CNTR_REG(ring);
 }
 
-inline int rtl931x_dma_if_rx_ring_cntr(int i)
+int rtl931x_dma_if_rx_ring_cntr(const int ring)
 {
-	return RTL931X_DMA_IF_RX_RING_CNTR_REG(i);
+	return RTL931X_DMA_IF_RX_RING_CNTR_REG(ring);
 }
 
 extern struct rtl83xx_soc_info soc_info;

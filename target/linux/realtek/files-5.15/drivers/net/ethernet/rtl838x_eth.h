@@ -381,8 +381,8 @@ struct rtl838x_eth_reg {
 	int mac_force_mode_ctrl;
 	int dma_rx_base;
 	int dma_tx_base;
-	int (*dma_if_rx_ring_size)(int ring);
-	int (*dma_if_rx_ring_cntr)(int ring);
+	int (*dma_if_rx_ring_size)(const int ring);
+	int (*dma_if_rx_ring_cntr)(const int ring);
 	int dma_if_rx_cur;
 	int rst_glb_ctrl;
 	u32 (*get_mac_link_sts)(int port);
