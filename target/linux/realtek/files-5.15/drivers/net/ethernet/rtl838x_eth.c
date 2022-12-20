@@ -3078,12 +3078,10 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 	if (is_valid_ether_addr(dev->dev_addr)) {
 		rtl838x_set_mac_hw(dev, (u8 *)dev->dev_addr);
 	} else {
-		dev->dev_addr[0] = (sw_r32(priv->r->mac) >> 8) & 0xff;
-		dev->dev_addr[1] = sw_r32(priv->r->mac) & 0xff;
-		dev->dev_addr[2] = (sw_r32(priv->r->mac + 4) >> 24) & 0xff;
-		dev->dev_addr[3] = (sw_r32(priv->r->mac + 4) >> 16) & 0xff;
-		dev->dev_addr[4] = (sw_r32(priv->r->mac + 4) >> 8) & 0xff;
-		dev->dev_addr[5] = sw_r32(priv->r->mac + 4) & 0xff;
+	        u8 mac[ETH_ALEN];
+
+	        rtl83xx_get_mac_hw(dev, mac);
+	        memcpy(dev->dev_addr, mac, ETH_ALEN);
 	}
 	/* if the address is invalid, use a random value */
 	if (!is_valid_ether_addr(dev->dev_addr)) {
