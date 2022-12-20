@@ -697,13 +697,12 @@ static void rtl838x_port_eee_set(struct rtl838x_switch_priv *priv, int port, boo
 	    RTL838X_MAC_FORCE_MODE_CTRL_EEE_100M_EN;
 	sw_w32_mask(v, enable ? v : 0x0, priv->r->mac_force_mode_ctrl(port));
 
-	/* Set TX/RX EEE state */
 	if (enable) {
-		sw_w32_mask(0, BIT(port), RTL838X_EEE_PORT_TX_EN);
-		sw_w32_mask(0, BIT(port), RTL838X_EEE_PORT_RX_EN);
+		sw_w32_mask(0, RTL838X_EEE_PORT_TX_SET(port), RTL838X_EEE_PORT_TX_REG(port));
+		sw_w32_mask(0, RTL838X_EEE_PORT_RX_SET(port), RTL838X_EEE_PORT_RX_REG(port));
 	} else {
-		sw_w32_mask(BIT(port), 0, RTL838X_EEE_PORT_TX_EN);
-		sw_w32_mask(BIT(port), 0, RTL838X_EEE_PORT_RX_EN);
+		sw_w32_mask(RTL838X_EEE_PORT_TX_SET(port), 0, RTL838X_EEE_PORT_TX_REG(port));
+		sw_w32_mask(RTL838X_EEE_PORT_RX_SET(port), 0, RTL838X_EEE_PORT_RX_REG(port));
 	}
 	priv->ports[port].eee_enabled = enable;
 }
@@ -728,7 +727,7 @@ static int rtl838x_eee_port_ability(struct rtl838x_switch_priv *priv,
 	if (reg & RTL838X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN)
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
-	if (sw_r32(RTL838X_MAC_EEE_ABLTY) & BIT(port)) {
+	if (RTL838X_MAC_EEE_ABLTY_ABLE(sw_r32(RTL838X_MAC_EEE_ABLTY_REG(port)), port) == RTL838X_MAC_EEE_ABLTY_ABLE_ON) {
 		e->lp_advertised = ADVERTISED_100baseT_Full;
 		e->lp_advertised |= ADVERTISED_1000baseT_Full;
 		return 1;
@@ -742,9 +741,14 @@ static void rtl838x_init_eee(struct rtl838x_switch_priv *priv, bool enable)
 	pr_info("Setting up EEE, state: %d\n", enable);
 	sw_w32_mask(0x4, 0, RTL838X_SMI_GLB_CTRL);
 
-	/* Set timers for EEE */
-	sw_w32(0x5001411, RTL838X_EEE_TX_TIMER_GIGA_CTRL);
-	sw_w32(0x5001417, RTL838X_EEE_TX_TIMER_GELITE_CTRL);
+	sw_w32(FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE, 5) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_LOW_Q_DELAY, 20) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_WAKE, 17),
+	       RTL838X_EEE_TX_TIMER_1000M_CTRL_REG);
+	sw_w32(FIELD_PREP(RTL838X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE, 5) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_500M_CTRL_TX_LOW_Q_DELAY, 20) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_500M_CTRL_TX_WAKE, 23),
+	       RTL838X_EEE_TX_TIMER_500M_CTRL_REG);
 
 	/* Enable EEE MAC support on ports */
 	for (int i = 0; i < RTL838X_PORT_CNT; i++) {

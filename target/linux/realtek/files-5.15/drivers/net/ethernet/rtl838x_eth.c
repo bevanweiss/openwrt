@@ -1680,7 +1680,6 @@ static int rtl838x_eth_tx(struct sk_buff *skb, struct net_device *dev)
 
 	/* We can send this packet if CPU owns the descriptor */
 	if (!(ring->tx_r[q][ring->c_tx[q]] & DMA_RING_OWN_ETH)) {
-
 		/* Set descriptor for tx */
 		h = &ring->tx_header[q][ring->c_tx[q]];
 		h->size = len;
@@ -2011,8 +2010,14 @@ static int rtl8380_init_mac(struct rtl838x_eth_priv *priv)
 
 	pr_info("%s\n", __func__);
 	/* fix timer for EEE */
-	sw_w32(0x5001411, RTL838X_EEE_TX_TIMER_GIGA_CTRL);
-	sw_w32(0x5001417, RTL838X_EEE_TX_TIMER_GELITE_CTRL);
+	sw_w32(FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE, 5) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_LOW_Q_DELAY, 20) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_1000M_CTRL_TX_WAKE, 17),
+	       RTL838X_EEE_TX_TIMER_1000M_CTRL_REG);
+	sw_w32(FIELD_PREP(RTL838X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE, 5) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_500M_CTRL_TX_LOW_Q_DELAY, 20) |
+	       FIELD_PREP(RTL838X_EEE_TX_TIMER_500M_CTRL_TX_WAKE, 23),
+	       RTL838X_EEE_TX_TIMER_500M_CTRL_REG);
 
 	/* Init VLAN. TODO: Understand what is being done, here */
 	if (priv->id == RTL8383_FAMILY_ID) {

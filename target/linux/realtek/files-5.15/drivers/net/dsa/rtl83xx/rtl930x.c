@@ -1121,9 +1121,7 @@ void rtl930x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 	    RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_100M;
 	sw_w32_mask(v, enable ? v : 0x0, priv->r->mac_force_mode_ctrl(port));
 
-	/* Set TX/RX EEE state */
-	v = enable ? 0x3 : 0x0;
-	sw_w32(v, RTL930X_EEE_CTRL(port));
+	sw_w32(enable ? RTL930X_EEE_CTRL_TXRX_EN : 0, RTL930X_EEE_CTRL_REG(port));
 
 	priv->ports[port].eee_enabled = enable;
 }
@@ -1132,7 +1130,6 @@ void rtl930x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 int rtl930x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_eee *e, int port)
 {
 	u32 reg;
-	u32 a;
 
 	if (port >= RTL930X_PORT_ETH)
 		return -ENOTSUPP;
@@ -1157,10 +1154,8 @@ int rtl930x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 	if (priv->ports[port].is10G && (reg & RTL930X_MAC_FORCE_MODE_CTRL_EEE_EN_10G))
 		e->advertised |= ADVERTISED_10000baseT_Full;
 
-	a = sw_r32(RTL930X_MAC_EEE_ABLTY);
-	a = sw_r32(RTL930X_MAC_EEE_ABLTY);
-	pr_info("Link partner: %08x\n", a);
-	if (a & BIT(port)) {
+	(void)sw_r32(RTL930X_MAC_EEE_ABLTY_REG(port)); /* Read latch */
+	if (RTL930X_MAC_EEE_ABLTY_ABLE(sw_r32(RTL930X_MAC_EEE_ABLTY_REG(port), port) == RTL930X_MAC_EEE_ABLTY_ALBE_ON)) {
 		e->lp_advertised = ADVERTISED_100baseT_Full;
 		e->lp_advertised |= ADVERTISED_1000baseT_Full;
 		if (priv->ports[port].is2G5)
@@ -1169,10 +1164,9 @@ int rtl930x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 			e->lp_advertised |= ADVERTISED_10000baseT_Full;
 	}
 
-	/* Read 2x to clear latched state */
-	a = sw_r32(RTL930X_EEEP_PORT_CTRL(port));
-	a = sw_r32(RTL930X_EEEP_PORT_CTRL(port));
-	pr_info("%s RTL930X_EEEP_PORT_CTRL: %08x\n", __func__, a);
+	(void)sw_r32(RTL930X_MAC_EEE_ABLTY_REG(port)); /* Read latch */
+	pr_info("%s RTL930X_EEEP_PORT_CTRL: %08x\n",
+	        __func__, sw_r32(RTL930X_MAC_EEE_ABLTY_REG(port)));
 
 	return 0;
 }

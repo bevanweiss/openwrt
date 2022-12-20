@@ -992,9 +992,7 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 	    RTL839X_MAC_FORCE_MODE_CTRL_EEE_100M_EN;
 	sw_w32_mask(v, enable ? v : 0x0, priv->r->mac_force_mode_ctrl(port));
 
-	/* Set TX/RX EEE state */
-	v = enable ? 0x3 : 0x0;
-	sw_w32(v, RTL839X_EEE_CTRL(port));
+	sw_w32(enable ? RTL839X_EEE_CTRL_TXRX_EN : 0, RTL839X_EEE_CTRL_REG(port));
 
 	priv->ports[port].eee_enabled = enable;
 }
@@ -1003,7 +1001,6 @@ void rtl839x_port_eee_set(struct rtl838x_switch_priv *priv, int port, bool enabl
 int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_eee *e, int port)
 {
 	u32 reg;
-	u64 a;
 
 	if (port >= RTL839X_PORT_ETH)
 		return 0;
@@ -1018,9 +1015,7 @@ int rtl839x_eee_port_ability(struct rtl838x_switch_priv *priv, struct ethtool_ee
 	if (reg & RTL839X_MAC_FORCE_MODE_CTRL_EEE_1000M_EN)
 		e->advertised |= ADVERTISED_1000baseT_Full;
 
-	a = rtl839x_get_port_reg_le(RTL839X_MAC_EEE_ABLTY);
-	pr_info("Link partner: %016llx\n", a);
-	if (rtl839x_get_port_reg_le(RTL839X_MAC_EEE_ABLTY) & BIT_ULL(port)) {
+	if (RTL839X_MAC_EEE_ABLTY_ABLE(sw_r32(RTL839X_MAC_EEE_ABLTY_REG(port)), port) == RTL839X_MAC_EEE_ABLTY_ABLE_ON) {
 		e->lp_advertised = ADVERTISED_100baseT_Full;
 		e->lp_advertised |= ADVERTISED_1000baseT_Full;
 		return 1;
@@ -1033,12 +1028,17 @@ static void rtl839x_init_eee(struct rtl838x_switch_priv *priv, bool enable)
 {
 	pr_info("Setting up EEE, state: %d\n", enable);
 
-	/* Set wake timer for TX and pause timer both to 0x21 */
-	sw_w32_mask(0xff << 20| 0xff, 0x21 << 20| 0x21, RTL839X_EEE_TX_TIMER_GELITE_CTRL);
-	/* Set pause wake timer for GIGA-EEE to 0x11 */
-	sw_w32_mask(0xff << 20, 0x11 << 20, RTL839X_EEE_TX_TIMER_GIGA_CTRL);
-	/* Set pause wake timer for 10GBit ports to 0x11 */
-	sw_w32_mask(0xff << 20, 0x11 << 20, RTL839X_EEE_TX_TIMER_10G_CTRL);
+	sw_w32_mask(RTL839X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE |
+	            RTL839X_EEE_TX_TIMER_500M_CTRL_TX_WAKE,
+	            FIELD_PREP(RTL839X_EEE_TX_TIMER_500M_CTRL_TX_PAUSE_WAKE, 33) |
+	            FIELD_PREP(RTL839X_EEE_TX_TIMER_500M_CTRL_TX_WAKE, 33),
+	            RTL839X_EEE_TX_TIMER_500M_CTRL_REG);
+	sw_w32_mask(RTL839X_EEE_TX_TIMER_1000M_CTRL_TX_PAUSE_WAKE,
+	            FIELD_PREP(RTL839X_EEE_TX_TIMER_1000M_CTRL_TX_WAKE, 17),
+	            RTL839X_EEE_TX_TIMER_1000M_CTRL_REG);
+	sw_w32_mask(RTL839X_EEE_TX_TIMER_10G_CTRL_TX_PAUSE_WAKE,
+	            FIELD_PREP(RTL839X_EEE_TX_TIMER_10G_CTRL_TX_WAKE, 17),
+	            RTL839X_EEE_TX_TIMER_10G_CTRL_REG);
 
 	/* Setup EEE on all ports */
 	for (int i = 0; i < RTL839X_PORT_CNT; i++) {
