@@ -743,12 +743,10 @@ out:
  */
 int rtl83xx_port_is_under(const struct net_device * dev, struct rtl838x_switch_priv *priv)
 {
-/* TODO: On 5.12:
- * 	if(!dsa_slave_dev_check(dev)) {
- *		netdev_info(dev, "%s: not a DSA device.\n", __func__);
- *		return -EINVAL;
- *	}
- */
+	if(!dsa_slave_dev_check(dev)) {
+		netdev_dbg(dev, "%s: not a DSA device.\n", __func__);
+		return -EINVAL;
+	}
 
 	for (int i = 0; i < priv->cpu_port; i++) {
 		if (!priv->ports[i].dp)
