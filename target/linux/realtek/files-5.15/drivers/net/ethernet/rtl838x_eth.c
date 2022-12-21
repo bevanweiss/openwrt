@@ -609,22 +609,16 @@ void rtl839x_update_cntr(int r, int released)
 
 void rtl930x_update_cntr(int r, int released)
 {
-        u32 v = RTL930X_DMA_IF_RX_RING_CNTR_GET(sw_r32(RTL930X_DMA_IF_RX_RING_CNTR_REG(r)), r);
-
 	sw_w32_mask(RTL930X_DMA_IF_RX_RING_CNTR_SET(r, _RTL930X_DMA_IF_RX_RING_CNTR_MASK),
 	            RTL930X_DMA_IF_RX_RING_CNTR_SET(r, released),
 	            RTL930X_DMA_IF_RX_RING_CNTR_REG(r));
-	sw_w32(v, RTL930X_DMA_IF_RX_RING_CNTR_REG(r));
 }
 
 void rtl931x_update_cntr(int r, int released)
 {
-        u32 v = RTL931X_DMA_IF_RX_RING_CNTR_GET(sw_r32(RTL931X_DMA_IF_RX_RING_CNTR_REG(r)), r);
-
 	sw_w32_mask(RTL931X_DMA_IF_RX_RING_CNTR_SET(r, _RTL931X_DMA_IF_RX_RING_CNTR_MASK),
 	            RTL931X_DMA_IF_RX_RING_CNTR_SET(r, released),
 	            RTL931X_DMA_IF_RX_RING_CNTR_REG(r));
-	sw_w32(v, RTL931X_DMA_IF_RX_RING_CNTR_REG(r));
 }
 
 struct dsa_tag {
