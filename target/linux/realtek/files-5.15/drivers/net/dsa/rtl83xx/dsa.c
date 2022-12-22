@@ -1856,7 +1856,7 @@ int rtl83xx_port_mdb_del(struct dsa_switch *ds, int port,
 		}
 		goto out;
 	}
-	/* TODO: Re-enable with a newer kernel: err = -ENOENT; */
+	err = -ENOENT;
 
 out:
 	mutex_unlock(&priv->reg_mutex);
