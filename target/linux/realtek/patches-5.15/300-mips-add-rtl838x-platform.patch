@@ -9,44 +9,59 @@ configurations for the SoCs, which are introduced in addition.
 
 Submitted-by: Birger Koblitz <git@birger-koblitz.de>
 ---
- arch/mips/Kbuild.platforms                    |  1 +
- arch/mips/Kconfig                             | 57 ++++++++++++++
- 2 files changed, 58 insertions(+)
-
---- a/arch/mips/Kbuild.platforms
-+++ b/arch/mips/Kbuild.platforms
-@@ -23,6 +23,7 @@ platform-$(CONFIG_NLM_COMMON)		+= netlog
- platform-$(CONFIG_PIC32MZDA)		+= pic32/
- platform-$(CONFIG_RALINK)		+= ralink/
- platform-$(CONFIG_MIKROTIK_RB532)	+= rb532/
-+platform-$(CONFIG_REALTEK_SOC)		+= rtl838x/
- platform-$(CONFIG_SGI_IP22)		+= sgi-ip22/
- platform-$(CONFIG_SGI_IP27)		+= sgi-ip27/
- platform-$(CONFIG_SGI_IP28)		+= sgi-ip22/
 --- a/arch/mips/Kconfig
 +++ b/arch/mips/Kconfig
-@@ -1053,8 +1053,58 @@ config NLM_XLP_BOARD
+@@ -625,27 +625,6 @@ config RALINK
+ 	select ARCH_HAS_RESET_CONTROLLER
+ 	select RESET_CONTROLLER
+ 
+-config MACH_REALTEK_RTL
+-	bool "Realtek RTL838x/RTL839x based machines"
+-	select MIPS_GENERIC
+-	select DMA_NONCOHERENT
+-	select IRQ_MIPS_CPU
+-	select CSRC_R4K
+-	select CEVT_R4K
+-	select SYS_HAS_CPU_MIPS32_R1
+-	select SYS_HAS_CPU_MIPS32_R2
+-	select SYS_SUPPORTS_BIG_ENDIAN
+-	select SYS_SUPPORTS_32BIT_KERNEL
+-	select SYS_SUPPORTS_MIPS16
+-	select SYS_SUPPORTS_MULTITHREADING
+-	select SYS_SUPPORTS_VPE_LOADER
+-	select SYS_HAS_EARLY_PRINTK
+-	select SYS_HAS_EARLY_PRINTK_8250
+-	select USE_GENERIC_EARLY_PRINTK_8250
+-	select BOOT_RAW
+-	select PINCTRL
+-	select USE_OF
+-
+ config SGI_IP22
+ 	bool "SGI IP22 (Indy/Indigo2)"
+ 	select ARC_MEMORY
+@@ -1032,8 +1032,59 @@
  	  This board is based on Netlogic XLP Processor.
  	  Say Y here if you have a XLP based board.
  
 +config REALTEK_SOC
 +	bool "Realtek based platforms"
++	select ARCH_HAS_RESET_CONTROLLER
++	select BOOT_RAW
 +	select DMA_NONCOHERENT
 +	select IRQ_MIPS_CPU
++	select MIPS_GENERIC
 +	select NO_EXCEPT_FILL
++	select PINCTRL
++	select RESET_CONTROLLER
 +	select SYS_HAS_CPU_MIPS32_R1
 +	select SYS_HAS_CPU_MIPS32_R2
-+	select SYS_SUPPORTS_BIG_ENDIAN
-+	select SYS_SUPPORTS_HIGHMEM
-+	select SYS_SUPPORTS_32BIT_KERNEL
-+	select SYS_SUPPORTS_MIPS16
 +	select SYS_HAS_EARLY_PRINTK
 +	select SYS_HAS_EARLY_PRINTK_8250
++	select SYS_SUPPORTS_32BIT_KERNEL
++	select SYS_SUPPORTS_BIG_ENDIAN
++	select SYS_SUPPORTS_HIGHMEM
++	select SYS_SUPPORTS_MIPS16
 +	select USE_GENERIC_EARLY_PRINTK_8250
-+	select BOOT_RAW
-+	select PINCTRL
-+	select ARCH_HAS_RESET_CONTROLLER
-+	select RESET_CONTROLLER
 +	select USE_OF
 +
  endchoice
@@ -84,3 +99,11 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  source "arch/mips/alchemy/Kconfig"
  source "arch/mips/ath25/Kconfig"
  source "arch/mips/ath79/Kconfig"
+--- a/arch/mips/generic/Makefile
++++ b/arch/mips/generic/Makefile
+@@ -12,4 +12,5 @@
+ obj-$(CONFIG_LEGACY_BOARD_SEAD3)	+= board-sead3.o
+ obj-$(CONFIG_LEGACY_BOARD_OCELOT)	+= board-ocelot.o
+ obj-$(CONFIG_MACH_INGENIC)			+= board-ingenic.o
++obj-$(CONFIG_REALTEK_SOC)		+= board-realtek.o
+ obj-$(CONFIG_VIRT_BOARD_RANCHU)		+= board-ranchu.o

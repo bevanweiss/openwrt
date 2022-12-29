@@ -1,38 +1,34 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * prom.c
- * Early intialization code for the Realtek RTL838X SoC
- *
  * based on the original BSP by
  * Copyright (C) 2006-2012 Tony Wu (tonywu@realtek.com)
- * Copyright (C) 2020 B. Koblitz
- *
  */
 
+#include <asm/cpu-features.h>
 #include <asm/mach-realtek/otto.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/of_fdt.h>
-#include <linux/libfdt.h>
-#include <asm/bootinfo.h>
-#include <asm/addrspace.h>
-#include <asm/page.h>
-#include <asm/cpu.h>
-#include <asm/fw/fw.h>
-#include <asm/smp-ops.h>
+#include <asm/machine.h>
 #include <asm/mips-cps.h>
-
-extern char arcs_cmdline[];
+#include <asm/mips-gic.h>
+#include <asm/mipsregs.h>
+#include <asm/prom.h>
+#include <asm/setup.h>
+#include <asm/smp-ops.h>
+#include <linux/init.h>
+#include <linux/mod_devicetable.h>
+#include <linux/printk.h>
 
 struct rtl83xx_soc_info soc_info;
-const void *fdt;
 
 #ifdef CONFIG_MIPS_MT_SMP
-extern const struct plat_smp_ops vsmp_smp_ops;
-static struct plat_smp_ops rtl_smp_ops;
+/*
+ * This is needed by the VPE loader code, just set it to 0 and assume
+ * that the firmware hardcodes this value to something useful.
+ */
+unsigned long physical_memsize = 0L;
 
-static void rtl_init_secondary(void)
+extern const struct plat_smp_ops vsmp_smp_ops;
+
+static void __init rtl_init_secondary(void)
 {
 #ifndef CONFIG_CEVT_R4K
 /*
@@ -57,27 +53,7 @@ static void rtl_init_secondary(void)
 }
 #endif /* CONFIG_MIPS_MT_SMP */
 
-const char *get_system_type(void)
-{
-	return soc_info.name;
-}
-
-void __init prom_free_prom_memory(void)
-{
-
-}
-
-void __init device_tree_init(void)
-{
-	if (!fdt_check_header(&__appended_dtb)) {
-		fdt = &__appended_dtb;
-		pr_info("Using appended Device Tree.\n");
-	}
-	initial_boot_params = (void *)fdt;
-	unflatten_and_copy_device_tree();
-}
-
-void __init identify_rtl9302(void)
+static void __init identify_rtl9302(void)
 {
 	switch (sw_r32(RTL93XX_MODEL_NAME_INFO) & 0xfffffff0) {
 	case 0x93020810:
@@ -112,7 +88,7 @@ void __init identify_rtl9302(void)
 	}
 }
 
-void __init prom_init(void)
+static void __init realtek_soc_identify(void)
 {
 	uint32_t model;
 
@@ -189,23 +165,77 @@ void __init prom_init(void)
 		soc_info.family = 0;
 	}
 
-	pr_info("SoC Type: %s\n", get_system_type());
+	pr_info("SoC Type: %s\n", soc_info.name);
+}
 
-	fw_init_cmdline();
+static const void __init *realtek_fixup_fdt(const void *fdt, const void *data)
+{
+	realtek_soc_identify();
+	system_type = soc_info.name;
 
-	mips_cpc_probe();
+	return fdt;
+}
 
+static void __init realtek_register_smp_ops(void)
+{
 	if (!register_cps_smp_ops())
 		return;
 
 #ifdef CONFIG_MIPS_MT_SMP
 	if (cpu_has_mipsmt) {
+		extern const struct plat_smp_ops vsmp_smp_ops;
+		struct plat_smp_ops rtl_smp_ops;
+
 		rtl_smp_ops = vsmp_smp_ops;
 		rtl_smp_ops.init_secondary = rtl_init_secondary;
 		register_smp_ops(&rtl_smp_ops);
+
 		return;
 	}
 #endif
 
 	register_up_smp_ops();
 }
+
+static const struct of_device_id realtek_board_ids[] __initconst = {
+	{ .compatible = "realtek,otto-soc" },
+	/* RTL838x */
+	{ .compatible = "realtek,maple-soc" },
+	{ .compatible = "realtek,rtl838x-soc" },
+	{ .compatible = "realtek,rtl8380-soc" },
+	{ .compatible = "realtek,rtl8381-soc" },
+	{ .compatible = "realtek,rtl8382-soc" },
+	/* RTL839x */
+	{ .compatible = "realtek,cypress-soc" },
+	{ .compatible = "realtek,rtl839x-soc" },
+	{ .compatible = "realtek,rtl8390-soc" },
+	{ .compatible = "realtek,rtl8391-soc" },
+	{ .compatible = "realtek,rtl8392-soc" },
+	{ .compatible = "realtek,rtl8393-soc" },
+	/* RTL930x */
+	{ .compatible = "realtek,longan-soc" },
+	{ .compatible = "realtek,rtl930x-soc" },
+	{ .compatible = "realtek,rtl9300-soc" },
+	{ .compatible = "realtek,rtl9301-soc" },
+	{ .compatible = "realtek,rtl9302-soc" },
+	{ .compatible = "realtek,rtl9302a-soc" },
+	{ .compatible = "realtek,rtl9302b-soc" },
+	{ .compatible = "realtek,rtl9302c-soc" },
+	{ .compatible = "realtek,rtl9302d-soc" },
+	{ .compatible = "realtek,rtl9302e-soc" },
+	{ .compatible = "realtek,rtl9302f-soc" },
+	{ .compatible = "realtek,rtl9303-soc" },
+	/* RTL931x */
+	{ .compatible = "realtek,mango-soc" },
+	{ .compatible = "realtek,rtl931x-soc" },
+	{ .compatible = "realtek,rtl9310-soc" },
+	{ .compatible = "realtek,rtl9311-soc" },
+	{ .compatible = "realtek,rtl9313-soc" },
+	{ /* sentinel */ }
+};
+
+MIPS_MACHINE(realtek) = {
+	.matches          = realtek_board_ids,
+	.fixup_fdt        = realtek_fixup_fdt,
+	.register_smp_ops = realtek_register_smp_ops,
+};
