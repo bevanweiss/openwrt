@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <asm/mach-realtek/otto.h>
 #include <linux/gpio/driver.h>
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
-#include <asm/mach-rtl838x/mach-rtl83xx.h>
 
 /* RTL8231 registers for LED control */
 #define RTL8231_LED_FUNC0			0x0000

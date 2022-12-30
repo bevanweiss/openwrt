@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <asm/mach-realtek/otto.h>
 #include <net/dsa.h>
 #include <linux/if_bridge.h>
-#include <asm/mach-rtl838x/mach-rtl83xx.h>
 
 #include "rtl83xx.h"
 

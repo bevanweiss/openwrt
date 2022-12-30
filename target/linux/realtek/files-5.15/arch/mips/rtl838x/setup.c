@@ -9,6 +9,7 @@
  *
  */
 
+#include <asm/mach-realtek/otto.h>
 #include <linux/console.h>
 #include <linux/init.h>
 #include <linux/clkdev.h>
@@ -24,8 +25,6 @@
 #include <asm/time.h>
 #include <asm/prom.h>
 #include <asm/smp-ops.h>
-
-#include "mach-rtl83xx.h"
 
 extern struct rtl83xx_soc_info soc_info;
 

@@ -1,10 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2006-2012 Tony Wu (tonywu@realtek.com)
- * Copyright (C) 2020 B. Koblitz
  */
-#ifndef _MACH_RTL838X_H_
-#define _MACH_RTL838X_H_
+#ifndef _MACH_REALTEK_OTTO_H_
+#define _MACH_REALTEK_OTTO_H_
 
 #include <asm/types.h>
 #include <linux/bitops.h>
@@ -436,4 +435,4 @@ int rtl930x_write_phy(u32 port, u32 page, u32 reg, u32 val);
 int rtl931x_read_phy(u32 port, u32 page, u32 reg, u32 *val);
 int rtl931x_write_phy(u32 port, u32 page, u32 reg, u32 val);
 
-#endif   /* _MACH_RTL838X_H_ */
+#endif   /* _MACH_REALTEK_OTTO_H_ */

@@ -9,6 +9,7 @@
  *
  */
 
+#include <asm/mach-realtek/otto.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
@@ -21,8 +22,6 @@
 #include <asm/fw/fw.h>
 #include <asm/smp-ops.h>
 #include <asm/mips-cps.h>
-
-#include <mach-rtl83xx.h>
 
 extern char arcs_cmdline[];
 

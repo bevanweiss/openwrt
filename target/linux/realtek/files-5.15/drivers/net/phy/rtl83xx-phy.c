@@ -4,6 +4,7 @@
  * Copyright (C) 2020 B. Koblitz
  */
 
+#include <asm/mach-realtek/otto.h>
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/of.h>
@@ -13,7 +14,6 @@
 #include <linux/crc32.h>
 #include <linux/sfp.h>
 
-#include <asm/mach-rtl838x/mach-rtl83xx.h>
 #include "rtl83xx-phy.h"
 
 extern struct rtl83xx_soc_info soc_info;
