@@ -22,11 +22,11 @@ Tested-by: Stijn Tintel <stijn@linux-ipv6.be>
  config REALTEK_OTTO_WDT
  	tristate "Realtek Otto MIPS watchdog support"
 -	depends on MACH_REALTEK_RTL || COMPILE_TEST
-+	depends on RTL83XX
++	depends on REALTEK_SOC
  	depends on COMMON_CLK
  	select WATCHDOG_CORE
 -	default MACH_REALTEK_RTL
-+	default RTL83XX
++	default REALTEK_SOC
  	help
  	  Say Y here to include support for the watchdog timer on Realtek
  	  RTL838x, RTL839x, RTL930x SoCs. This watchdog has pretimeout

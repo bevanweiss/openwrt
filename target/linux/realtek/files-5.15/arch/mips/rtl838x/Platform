@@ -1,4 +1,4 @@
 #
 # Realtek RTL838x SoCs
 #
-load-$(CONFIG_RTL83XX)     += 0xffffffff80100000
+load-$(CONFIG_REALTEK_SOC)     += 0xffffffff80100000

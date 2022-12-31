@@ -3,7 +3,7 @@ From: Birger Koblitz <git@birger-koblitz.de>
 Date: Wed, 29 Dec 2021 21:54:21 +0100
 Subject: [PATCH] realtek: Create 4 different Realtek Platforms
 
-Creates RTL83XX as a basic kernel config parameter for the
+Creates REALTEK_SOC as a basic kernel config parameter for the
 RTL838X, RTL839x, RTL930X and RTL931X platforms with respective
 configurations for the SoCs, which are introduced in addition.
 
@@ -19,7 +19,7 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  platform-$(CONFIG_PIC32MZDA)		+= pic32/
  platform-$(CONFIG_RALINK)		+= ralink/
  platform-$(CONFIG_MIKROTIK_RB532)	+= rb532/
-+platform-$(CONFIG_RTL83XX)		+= rtl838x/
++platform-$(CONFIG_REALTEK_SOC)		+= rtl838x/
  platform-$(CONFIG_SGI_IP22)		+= sgi-ip22/
  platform-$(CONFIG_SGI_IP27)		+= sgi-ip27/
  platform-$(CONFIG_SGI_IP28)		+= sgi-ip22/
@@ -29,7 +29,7 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  	  This board is based on Netlogic XLP Processor.
  	  Say Y here if you have a XLP based board.
  
-+config RTL83XX
++config REALTEK_SOC
 +	bool "Realtek based platforms"
 +	select DMA_NONCOHERENT
 +	select IRQ_MIPS_CPU
@@ -53,20 +53,20 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  
 +config RTL838X
 +	bool "Realtek RTL838X based platforms"
-+	depends on RTL83XX
++	depends on REALTEK_SOC
 +	select CPU_SUPPORTS_CPUFREQ
 +	select MIPS_EXTERNAL_TIMER
 +
 +config RTL839X
 +	bool "Realtek RTL839X based platforms"
-+	depends on RTL83XX
++	depends on REALTEK_SOC
 +	select CPU_SUPPORTS_CPUFREQ
 +	select MIPS_EXTERNAL_TIMER
 +	select SYS_SUPPORTS_MULTITHREADING
 +
 +config RTL930X
 +	bool "Realtek RTL930X based platforms"
-+	depends on RTL83XX
++	depends on REALTEK_SOC
 +	select MIPS_CPU_SCACHE
 +	select MIPS_EXTERNAL_TIMER
 +	select SYS_SUPPORTS_MULTITHREADING

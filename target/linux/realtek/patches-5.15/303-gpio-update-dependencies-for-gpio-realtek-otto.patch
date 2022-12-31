@@ -4,7 +4,7 @@ Date: Wed, 5 May 2021 22:05:39 +0900
 Subject: realtek: backport gpio-realtek-otto driver from 5.13 to 5.10
 
 This patch backports "gpio-realtek-otto" driver to Kernel 5.10.
-"MACH_REALTEK_RTL" is used as a platform name in upstream, but "RTL838X"
+"MACH_REALTEK_RTL" is used as a platform name in upstream, but "REALTEK"
 is used in OpenWrt, so update the dependency by the additional patch.
 
 Submitted-by: INAGAKI Hiroshi <musashino.open@gmail.com>
@@ -19,8 +19,8 @@ Submitted-by: INAGAKI Hiroshi <musashino.open@gmail.com>
  	tristate "Realtek Otto GPIO support"
 -	depends on MACH_REALTEK_RTL
 -	default MACH_REALTEK_RTL
-+	depends on RTL83XX
-+	default RTL838X
++	depends on REALTEK_SOC
++	default REALTEK_SOC
  	select GPIO_GENERIC
  	select GPIOLIB_IRQCHIP
  	help

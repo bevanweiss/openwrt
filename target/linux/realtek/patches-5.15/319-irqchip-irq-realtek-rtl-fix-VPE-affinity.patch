@@ -4,7 +4,7 @@ Date: Fri, 21 May 2021 23:16:37 +0900
 Subject: [PATCH] realtek: backport irq-realtek-rtl driver from 5.12 to 5.10
 
 This patch backports "irq-realtek-rtl" driver to Kernel 5.10 from 5.12.
-"MACH_REALTEK_RTL" is used as a platform name in upstream, but "RTL838X"
+"MACH_REALTEK_RTL" is used as a platform name in upstream, but "REALTEK"
 is used in OpenWrt, so update the dependency by the additional patch.
 
 Submitted-by: INAGAKI Hiroshi <musashino.open@gmail.com>
