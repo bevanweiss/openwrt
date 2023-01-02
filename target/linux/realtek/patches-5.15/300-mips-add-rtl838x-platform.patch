@@ -61,7 +61,7 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  # Reordering beyond LL and SC is handled in WEAK_REORDERING_BEYOND_LLSC
 --- a/arch/mips/generic/Kconfig
 +++ b/arch/mips/generic/Kconfig
-@@ -114,6 +114,26 @@ config BOARD_INGENIC
+@@ -114,6 +114,27 @@ config BOARD_INGENIC
  	help
  	  Enable support for boards based on Ingenic SoCs.
  
@@ -80,6 +80,7 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
 +	select SYS_SUPPORTS_HIGHMEM
 +	select SYS_SUPPORTS_MIPS16
 +	select SYS_SUPPORTS_VPE_LOADER
++	select SYS_SUPPORTS_ZBOOT_UART16550
 +	select USE_GENERIC_EARLY_PRINTK_8250
 +	help
 +	  Support for Realtek based SoCs such as RTL838x, RTL839x,
@@ -96,3 +97,82 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  obj-$(CONFIG_MACH_INGENIC)			+= board-ingenic.o
 +obj-$(CONFIG_REALTEK_SOC)		+= board-realtek.o
  obj-$(CONFIG_VIRT_BOARD_RANCHU)		+= board-ranchu.o
+--- a/arch/mips/Kconfig.debug
++++ b/arch/mips/Kconfig.debug
+@@ -98,6 +98,56 @@
+ 	  to reduce the kernel image size and speed up the booting procedure a
+ 	  little.
+ 
++config ZBOOT_UART
++	int "UART number"
++	depends on DEBUG_ZBOOT
++	default 0
++	range 0 1 if REALTEK_SOC
++	help
++	  Specify the UART, e.g 0, for uart0. Note that this only works
++	  on consecutive UART blocks. As an alternative, keep this set
++	  to 0 and use ZBOOT_UART_ADDR instead.
++
++config ZBOOT_UART_ADDR
++	hex "UART base address"
++	depends on DEBUG_ZBOOT
++	default 0x18002000 if REALTEK_SOC
++	help
++	  Specify the UART base register address for the first UART.
++
++config ZBOOT_UART_ADDR_SIZE
++	hex "UART register block size"
++	depends on DEBUG_ZBOOT
++	default 0x1000 if REALTEK_SOC
++	help
++	  Specify the UART register size between each UART.
++
++config ZBOOT_UART_MULTI
++	int "UART address multiplier/shift"
++	depends on DEBUG_ZBOOT
++	default 4
++	help
++	  Specify the UART address multiplier, or 'shift'. E.g. 4 (a shift
++	  of 2) for 32bit addresses.
++
++choice
++	prompt "UART IO Access type"
++	depends on DEBUG_ZBOOT
++	default ZBOOT_UART_IOTYPE_U32 if REALTEK_SOC
++	default ZBOOT_UART_IOTYPE_U8
++
++config ZBOOT_UART_IOTYPE_U32
++	bool "unsigned 32bit IO type"
++	help
++	  Unsigned 32 bit IOTYPE, e.g. unsigned int.
++
++config ZBOOT_UART_IOTYPE_U8
++	bool "unsigned 8bit IO type"
++	help
++	  Unsigned 8 bit IOTYPE, e.g. char
++
++endchoice
++
+ config ZBOOT_INGENIC_UART
+ 	int "UART to use for compressed kernel debugging"
+ 	depends on DEBUG_ZBOOT && MACH_INGENIC_SOC
+--- a/arch/mips/boot/compressed/uart-16550.c
++++ b/arch/mips/boot/compressed/uart-16550.c
+@@ -35,6 +35,17 @@
+ #define IOTYPE unsigned int
+ #endif
+ 
++#ifdef CONFIG_ZBOOT_UART_ADDR
++#define UART_BASE ((CONFIG_ZBOOT_UART_ADDR) + ((CONFIG_ZBOOT_UART_ADDR_SIZE) * (CONFIG_ZBOOT_UART)))
++#define PORT(offset) (CKSEG1ADDR(UART_BASE) + ((CONFIG_ZBOOT_UART_MULTI) * (offset)))
++#endif
++
++#ifdef CONFIG_ZBOOT_UART_IOTYPE_U32
++#define IOTYPE unsigned int
++#elif CONFIG_ZBOOT_UART_IOTYPE_U8
++#define IOTYPE char
++#endif
++
+ #ifndef IOTYPE
+ #define IOTYPE char
+ #endif
