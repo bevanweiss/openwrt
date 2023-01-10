@@ -11,6 +11,15 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
 ---
 --- a/arch/mips/Kconfig
 +++ b/arch/mips/Kconfig
+@@ -155,7 +155,7 @@
+ 	select NO_EXCEPT_FILL
+ 	select PCI_DRIVERS_GENERIC
+ 	select SMP_UP if SMP
+-	select SWAP_IO_SPACE
++	select SWAP_IO_SPACE if (!SYS_HAS_BIG_ENDIAN_LEXRA_BUS || !CPU_BIG_ENDIAN)
+ 	select SYS_HAS_CPU_MIPS32_R1
+ 	select SYS_HAS_CPU_MIPS32_R2
+ 	select SYS_HAS_CPU_MIPS32_R6
 @@ -625,27 +625,6 @@ config RALINK
  	select ARCH_HAS_RESET_CONTROLLER
  	select RESET_CONTROLLER
@@ -39,22 +48,30 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
  config SGI_IP22
  	bool "SGI IP22 (Indy/Indigo2)"
  	select ARC_MEMORY
-@@ -1032,8 +1032,59 @@
- 	  This board is based on Netlogic XLP Processor.
- 	  Say Y here if you have a XLP based board.
+@@ -2049,6 +2049,10 @@
+ config SYS_HAS_CPU_XLP
+ 	bool
+ 
++config SYS_HAS_BIG_ENDIAN_LEXRA_BUS
++	bool
++	default n
++
+ #
+ # CPU may reorder R->R, R->W, W->R, W->W
+ # Reordering beyond LL and SC is handled in WEAK_REORDERING_BEYOND_LLSC
+--- a/arch/mips/generic/Kconfig
++++ b/arch/mips/generic/Kconfig
+@@ -114,6 +114,52 @@
+ 	help
+ 	  Enable support for boards based on Ingenic SoCs.
  
 +config REALTEK_SOC
-+	bool "Realtek based platforms"
++	bool "Support boards based on Realtek SoCs"
 +	select ARCH_HAS_RESET_CONTROLLER
-+	select BOOT_RAW
-+	select DMA_NONCOHERENT
-+	select IRQ_MIPS_CPU
-+	select MIPS_GENERIC
-+	select NO_EXCEPT_FILL
++	select MIPS_EXTERNAL_TIMER
 +	select PINCTRL
 +	select RESET_CONTROLLER
-+	select SYS_HAS_CPU_MIPS32_R1
-+	select SYS_HAS_CPU_MIPS32_R2
++	select SYS_HAS_BIG_ENDIAN_LEXRA_BUS
 +	select SYS_HAS_EARLY_PRINTK
 +	select SYS_HAS_EARLY_PRINTK_8250
 +	select SYS_SUPPORTS_32BIT_KERNEL
@@ -62,46 +79,46 @@ Submitted-by: Birger Koblitz <git@birger-koblitz.de>
 +	select SYS_SUPPORTS_HIGHMEM
 +	select SYS_SUPPORTS_MIPS16
 +	select USE_GENERIC_EARLY_PRINTK_8250
-+	select USE_OF
++	help
++	  Support for Realtek based SoCs such as RTL838x, RTL839x,
++	  RTL930x and RTL931x.
 +
- endchoice
- 
-+config RTL838X
-+	bool "Realtek RTL838X based platforms"
-+	depends on REALTEK_SOC
-+	select CPU_SUPPORTS_CPUFREQ
-+	select MIPS_EXTERNAL_TIMER
++if REALTEK_SOC
 +
-+config RTL839X
-+	bool "Realtek RTL839X based platforms"
-+	depends on REALTEK_SOC
-+	select CPU_SUPPORTS_CPUFREQ
-+	select MIPS_EXTERNAL_TIMER
-+	select SYS_SUPPORTS_MULTITHREADING
++choice
++	prompt "Realtek SoC selection"
++	default RTL838X
++	help
++	  Select Realtek MIPS SoC family.
 +
-+config RTL930X
-+	bool "Realtek RTL930X based platforms"
-+	depends on REALTEK_SOC
-+	select MIPS_CPU_SCACHE
-+	select MIPS_EXTERNAL_TIMER
-+	select SYS_SUPPORTS_MULTITHREADING
++	config RTL838X
++		bool "Realtek RTL838X based platforms"
++		depends on REALTEK_SOC
++		select CPU_SUPPORTS_CPUFREQ
 +
-+config RTL931X
-+	bool "Realtek RTL931X based platforms"
-+	depends on RTL930X
-+	select MIPS_GIC
-+	select COMMON_CLK
-+	select CLKSRC_MIPS_GIC
-+	select SYS_SUPPORTS_VPE_LOADER
-+	select SYS_SUPPORTS_SMP
-+	select SYS_SUPPORTS_MIPS_CPS
++	config RTL839X
++		bool "Realtek RTL839X based platforms"
++		depends on REALTEK_SOC
++		select CPU_SUPPORTS_CPUFREQ
 +
- source "arch/mips/alchemy/Kconfig"
- source "arch/mips/ath25/Kconfig"
- source "arch/mips/ath79/Kconfig"
++	config RTL930X
++		bool "Realtek RTL930X based platforms"
++		depends on REALTEK_SOC
++
++	config RTL931X
++		bool "Realtek RTL931X based platforms"
++		depends on REALTEK_SOC
++
++endchoice
++
++endif
++
+ config VIRT_BOARD_RANCHU
+ 	bool "Support Ranchu platform for Android emulator"
+ 	help
 --- a/arch/mips/generic/Makefile
 +++ b/arch/mips/generic/Makefile
-@@ -12,4 +12,5 @@
+@@ -12,4 +12,5 @@ obj-$(CONFIG_YAMON_DT_SHIM)		+= yamon-dt
  obj-$(CONFIG_LEGACY_BOARD_SEAD3)	+= board-sead3.o
  obj-$(CONFIG_LEGACY_BOARD_OCELOT)	+= board-ocelot.o
  obj-$(CONFIG_MACH_INGENIC)			+= board-ingenic.o
