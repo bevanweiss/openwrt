@@ -28,6 +28,11 @@
 /* RTL838x */
 #define RTL838X_SWITCHCORE_BASE_ADDR    (0x1b000000)
 
+#define RTL838X_INT_RW_CTRL_REG         (0x0058)
+/* Reserved                                     31 - 2 */
+#define RTL838X_INT_RW_CTRL_WRITE_EN            BIT(1)
+#define RTL838X_INT_RW_CTRL_READ_EN             BIT(0)
+
 #define RTL838X_MODEL_NAME_INFO_REG     (0x00d4)
 #define RTL838X_MODEL_NAME_INFO_ID              GENMASK(31, 16)
 #define RTL838X_MODEL_NAME_INFO_MODEL0          GENMASK(15, 11)
@@ -388,6 +393,9 @@ static void __init rtl838x_unlock(void)
 {
 	rtl_otto_write(FIELD_PREP(RTL838X_CHIP_INFO_EN, RTL838X_CHIP_INFO_EN_KEY),
 	               RTL838X_SWITCHCORE_BASE_ADDR + RTL838X_CHIP_INFO_REG);
+
+	rtl_otto_write(RTL838X_INT_RW_CTRL_WRITE_EN | RTL838X_INT_RW_CTRL_READ_EN,
+	               RTL838X_SWITCHCORE_BASE_ADDR + RTL838X_INT_RW_CTRL_REG);
 }
 
 static void __init rtl839x_unlock(void)
