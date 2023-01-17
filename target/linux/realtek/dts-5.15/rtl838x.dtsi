@@ -278,10 +278,10 @@
 
 	sram0: sram@9f000000 {
 		compatible = "mmio-sram";
-		reg = <0x9f000000 0x10000>;
+		reg = <0x9f000000 0x20000>; /* 128 kiB */
 		#address-cells = <1>;
 		#size-cells = <1>;
-		ranges = <0 0x9f000000 0x10000>;
+		ranges = <0 0x9f000000 0x20000>;
 	};
 
 	switch0: switch@1b000000 {
