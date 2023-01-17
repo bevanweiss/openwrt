@@ -62,9 +62,11 @@
  * }
  */
 
+#include <asm/addrspace.h>
 #include <asm/cacheflush.h>
 #include <asm/mipsmtregs.h>
 #include <dt-bindings/clock/rtl83xx-clk.h>
+#include <linux/bitfield.h>
 #include <linux/clk.h>
 #include <linux/clk-provider.h>
 #include <linux/clkdev.h>
@@ -80,11 +82,14 @@
 
 #include "clk-rtl83xx.h"
 
-#define read_sw(reg)		ioread32(((void *)RTL_SW_CORE_BASE) + reg)
-#define read_soc(reg)		ioread32(((void *)RTL_SOC_BASE) + reg)
+#define RTL_SOC_BASE                    (0x18000000)
+#define RTL_SW_CORE_BASE                (0x1b000000)
 
-#define write_sw(val, reg)	iowrite32(val, ((void *)RTL_SW_CORE_BASE) + reg)
-#define write_soc(val, reg)	iowrite32(val, ((void *)RTL_SOC_BASE) + reg)
+#define read_sw(reg)		ioread32((void __iomem *)CKSEG1ADDR(RTL_SW_CORE_BASE + (reg)))
+#define read_soc(reg)		ioread32((void __iomem *)CKSEG1ADDR(RTL_SOC_BASE + (reg)))
+
+#define write_sw(val, reg)	iowrite32(val, (void __iomem *)CKSEG1ADDR(RTL_SW_CORE_BASE + (reg)))
+#define write_soc(val, reg)	iowrite32(val, (void __iomem *)CKSEG1ADDR(RTL_SOC_BASE + (reg)))
 
 /*
  * some hardware specific definitions
@@ -106,11 +111,25 @@
 
 static const int rtcl_regs[SOC_COUNT][REG_COUNT][CLK_COUNT] = {
 	{
-		{ RTL838X_PLL_CPU_CTRL0, RTL838X_PLL_MEM_CTRL0, RTL838X_PLL_LXB_CTRL0 },
-		{ RTL838X_PLL_CPU_CTRL1, RTL838X_PLL_MEM_CTRL1, RTL838X_PLL_LXB_CTRL1 },
-	}, {
-		{ RTL839X_PLL_CPU_CTRL0, RTL839X_PLL_MEM_CTRL0, RTL839X_PLL_LXB_CTRL0 },
-		{ RTL839X_PLL_CPU_CTRL1, RTL839X_PLL_MEM_CTRL1, RTL839X_PLL_LXB_CTRL1 },
+		{
+                        RTL838X_PLL_CPU_CTRL0_REG,
+                        RTL838X_PLL_MEM_CTRL0_REG,
+                        RTL838X_PLL_LXB_CTRL0_REG,
+                }, {
+                        RTL838X_PLL_CPU_CTRL1_REG,
+                        RTL838X_PLL_MEM_CTRL1_REG,
+                        RTL838X_PLL_LXB_CTRL1_REG,
+                },
+        }, {
+		{
+                        RTL839X_PLL_CPU_CTRL0_REG,
+                        RTL839X_PLL_MEM_CTRL0_REG,
+                        RTL839X_PLL_LXB_CTRL0_REG,
+                }, {
+                        RTL839X_PLL_CPU_CTRL1_REG,
+                        RTL839X_PLL_MEM_CTRL1_REG,
+                        RTL839X_PLL_LXB_CTRL1_REG,
+                },
 	}
 };
 
@@ -365,12 +384,12 @@ static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_ra
 		if ((ctrl0 == 0) && (ctrl1 == 0) && (clk->idx == CLK_LXB))
 			return 200000000;
 
-		cmu_divn2_selb = RTL838X_PLL_CTRL1_CMU_DIVN2_SELB(ctrl1);
-		cmu_divn3_sel = rtcl_divn3[RTL838X_PLL_CTRL1_CMU_DIVN3_SEL(ctrl1)];
+		cmu_divn2_selb = FIELD_GET(RTL838X_PLL_CTRL1_CMU_DIVN2_SELB, ctrl1);
+		cmu_divn3_sel = rtcl_divn3[FIELD_GET(RTL838X_PLL_CTRL1_CMU_DIVN3_SEL, ctrl1)];
 		break;
 	case SOC_RTL839X:
-		cmu_divn2_selb = RTL839X_PLL_CTRL1_CMU_DIVN2_SELB(ctrl1);
-		cmu_divn3_sel = rtcl_divn3[RTL839X_PLL_CTRL1_CMU_DIVN3_SEL(ctrl1)];
+		cmu_divn2_selb = FIELD_GET(RTL839X_PLL_CTRL1_CMU_DIVN2_SELB, ctrl1);
+		cmu_divn3_sel = rtcl_divn3[FIELD_GET(RTL839X_PLL_CTRL1_CMU_DIVN3_SEL, ctrl1)];
 		break;
 	}
 	div1 = cmu_divn2_selb ? cmu_divn3_sel : cmu_divn2;
@@ -428,7 +447,7 @@ static int rtcl_set_rate(struct clk_hw *hw, unsigned long rate, unsigned long pa
 	 * someone changes memory in this region and does not care about proper
 	 * allocation. So check if something might go wrong.
 	 */
-	if (unlikely(*rtcl_ccu->sram.pmark != RTL_SRAM_MARKER)) {
+	if (unlikely(*rtcl_ccu->sram.pmark != RTL_SRAM_SET_PLL_RATE_CANARY)) {
 		dev_err(&rtcl_ccu->pdev->dev, "SRAM code lost\n");
 		return -EINVAL;
 	}

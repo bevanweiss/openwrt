@@ -8,6 +8,9 @@
 
 #include "clk-rtl83xx.h"
 
+#define RTL838X_SWITCHCORE_BASE_ADDR    (0xbb000000) /* KSEG1(0x1b000000) */
+#define RTL838X_SRAM_BASE               (0x9f000000) /* KSEG0(0x1f000000) */
+
 #define rGLB	$t0
 #define rCTR	$t1
 #define rMSK	$t2
@@ -30,36 +33,36 @@ rtcl_838x_dram_set_rate:
 
 #ifdef CONFIG_RTL838X
 
-	li	rCTR, RTL_SW_CORE_BASE
-	addiu	rGLB, rCTR, RTL838X_PLL_GLB_CTRL
+	li	rCTR, RTL838X_SWITCHCORE_BASE_ADDR
+	addiu	rGLB, rCTR, RTL838X_PLL_GLB_CTRL_REG
 	ori	rTMP, $0, CLK_CPU
 	beq	$a0, rTMP, pre_cpu
-	ori	rTMP, $0, CLK_MEM
+	ori	rTMP, $0, CLK_MEM                  /* Note branch delay slot */
 	beq	$a0, rTMP, pre_mem
-	nop
+	nop                                        /* Note branch delay slot */
 pre_lxb:
-	ori	rSLP, $0, RTL838X_GLB_CTRL_LXB_PLL_READY_MASK
-	addiu	rCTR, rCTR, RTL838X_PLL_LXB_CTRL0
+	ori	rSLP, $0, RTL838X_PLL_GLB_CTRL_LXB_PLL_READY
+	addiu	rCTR, rCTR, RTL838X_PLL_LXB_CTRL0_REG
 	b	main_set
-	ori	rMSK, $0, RTL838X_GLB_CTRL_EN_LXB_PLL_MASK
+	ori	rMSK, $0, RTL838X_PLL_GLB_CTRL_EN_LXB_PLL /* Note branch delay slot */
 pre_mem:
 	/* simple 64K data cache flush to avoid unexpected memory access */
-	li	rMSK, RTL_SRAM_BASE
+	li	rMSK, RTL838X_SRAM_BASE
 	li	rTMP, 2048
 pre_flush:
 	lw	$0, 0(rMSK)
 	addiu	rMSK, rMSK, 32
 	addiu	rTMP, rTMP, -1
 	bne	rTMP, $0, pre_flush
-	lw	$0, -4(rMSK)
+	lw	$0, -4(rMSK)                       /* Note branch delay slot */
 
-	ori	rSLP, $0, RTL838X_GLB_CTRL_MEM_PLL_READY_MASK
-	addiu	rCTR, rCTR, RTL838X_PLL_MEM_CTRL0
+	ori	rSLP, $0, RTL838X_PLL_GLB_CTRL_MEM_PLL_READY
+	addiu	rCTR, rCTR, RTL838X_PLL_MEM_CTRL0_REG
 	b	main_set
-	ori	rMSK, $0, RTL838X_GLB_CTRL_EN_MEM_PLL_MASK
+	ori	rMSK, $0, RTL838X_PLL_GLB_CTRL_EN_MEM_PLL /* Note branch delay slot */
 pre_cpu:
 	/* switch CPU to LXB clock */
-	ori	rMSK, $0, RTL838X_GLB_CTRL_CPU_PLL_SC_MUX_MASK
+	ori	rMSK, $0, RTL838X_PLL_GLB_CTRL_CPU_PLL_SC_MUX
 	nor	rMSK, rMSK, $0
 	sync
 	lw	rTMP, 0(rGLB)
@@ -67,9 +70,9 @@ pre_cpu:
 	sw	rTMP, 0(rGLB)
 	sync
 
-	ori	rSLP, $0, RTL838X_GLB_CTRL_CPU_PLL_READY_MASK
-	addiu	rCTR, rCTR, RTL838X_PLL_CPU_CTRL0
-	ori	rMSK, $0, RTL838X_GLB_CTRL_EN_CPU_PLL_MASK
+	ori	rSLP, $0, RTL838X_PLL_GLB_CTRL_CPU_PLL_READY
+	addiu	rCTR, rCTR, RTL838X_PLL_CPU_CTRL0_REG
+	ori	rMSK, $0, RTL838X_PLL_GLB_CTRL_EN_CPU_PLL
 main_set:
 	/* disable PLL */
 	nor	rMSK, rMSK, 0
@@ -100,50 +103,48 @@ wait_ready:
 	lw	rTMP, 0(rGLB)
 	and	rTMP, rTMP, rSLP
 	bne	rTMP, $0, wait_ready
-	sync
+	sync                                       /* Note branch delay slot */
 
 	/* branch to post processing */
 	ori	rTMP, $0, CLK_CPU
 	beq	$a0, rTMP, post_cpu
-	ori	rTMP, $0, CLK_MEM
+	ori	rTMP, $0, CLK_MEM                  /* Note branch delay slot */
 	beq	$a0, rTMP, post_mem
-	nop
+	nop                                        /* Note branch delay slot */
 post_lxb:
 	jr	$ra
-	nop
+	nop                                        /* Note branch delay slot */
 post_mem:
 	jr	$ra
-	nop
+	nop                                        /* Note branch delay slot */
 post_cpu:
 	/* stabilize clock to avoid crash, empirically determined */
 	ori	rSLP, $0, 0x3000
 wait_cpu:
 	bnez	rSLP, wait_cpu
-	addiu	rSLP, rSLP, -1
+	addiu	rSLP, rSLP, -1                     /* Note branch delay slot */
 
 	/* switch CPU to PLL clock */
-	ori	rMSK, $0, RTL838X_GLB_CTRL_CPU_PLL_SC_MUX_MASK
+	ori	rMSK, $0, RTL838X_PLL_GLB_CTRL_CPU_PLL_SC_MUX
 	sync
 	lw	rTMP, 0(rGLB)
 	or	rTMP, rTMP, rMSK
 	sw	rTMP, 0(rGLB)
 	sync
 	jr	$ra
-	nop
+	nop                                        /* Note branch delay slot */
 
 #else /* !CONFIG_RTL838X */
 
 	jr	$ra
-	nop
+	nop                                        /* Note branch delay slot */
 
 #endif
 
 .end	rtcl_838x_dram_set_rate
 
-/*
- * End marker. Do not delete.
- */
-	.word RTL_SRAM_MARKER
+/* SRAM Corruption/Correctness detection canary. Do not delete. */
+	.word RTL_SRAM_SET_PLL_RATE_CANARY
 .globl	rtcl_838x_dram_size
 rtcl_838x_dram_size:
 	.word .-rtcl_838x_dram_start
