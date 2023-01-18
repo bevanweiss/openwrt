@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "rtl838x.dtsi"
+#include "rtl8380.dtsi"
 
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	compatible = "realtek,rtl838x-soc";
-
 	memory@0 {
 		device_type = "memory";
 		reg = <0x0 0x8000000>;

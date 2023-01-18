@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /dts-v1/;
 
-#include "rtl930x.dtsi"
+#include "rtl9302b.dtsi"
 
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/gpio/gpio.h>
@@ -9,7 +9,7 @@
 #include <dt-bindings/leds/leds-realtek.h>
 
 / {
-	compatible = "zyxel,xgs1250-12", "realtek,rtl838x-soc";
+	compatible = "zyxel,xgs1250-12", "realtek,rtl9302b-soc", "realtek,rtl9302-soc", "realtek,rtl930x-soc";
 	model = "Zyxel XGS1250-12 Switch";
 
 	aliases {

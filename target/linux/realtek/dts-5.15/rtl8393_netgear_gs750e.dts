@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
-#include "rtl839x.dtsi"
+#include "rtl8393.dtsi"
 
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	compatible = "netgear,gs750e", "realtek,rtl8393-soc";
+	compatible = "netgear,gs750e", "realtek,rtl8393-soc", "realtek,rtl839x-soc";
 	model = "Netgear GS750E";
 
 	aliases {

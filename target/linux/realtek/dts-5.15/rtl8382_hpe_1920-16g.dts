@@ -3,7 +3,7 @@
 #include "rtl8382_hpe_1920.dtsi"
 
 / {
-	compatible = "hpe,1920-16g", "realtek,rtl838x-soc";
+	compatible = "hpe,1920-16g", "realtek,rtl8382-soc", "realtek,rtl838x-soc";
 	model = "HPE 1920-16G (JG923A)";
 };
 

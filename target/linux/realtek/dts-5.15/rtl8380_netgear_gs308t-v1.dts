@@ -5,7 +5,7 @@
 #include <dt-bindings/leds/common.h>
 
 / {
-	compatible = "netgear,gs308t-v1", "realtek,rtl838x-soc";
+	compatible = "netgear,gs308t-v1", "realtek,rtl8380-soc", "realtek,rtl838x-soc";
 	model = "Netgear GS308T v1";
 
 	aliases {

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
-#include "rtl838x.dtsi"
+#include "rtl8380.dtsi"
 #include "rtl83xx_panasonic_mxxeg-pn28xx0k.dtsi"
 
 #include <dt-bindings/interrupt-controller/irq.h>
 
 / {
-	compatible = "panasonic,m8eg-pn28080k", "realtek,rtl8380-soc";
+	compatible = "panasonic,m8eg-pn28080k", "realtek,rtl8380-soc", "realtek,rtl838x-soc";
 	model = "Panasonic Switch-M8eG PN28080K";
 
 	aliases {

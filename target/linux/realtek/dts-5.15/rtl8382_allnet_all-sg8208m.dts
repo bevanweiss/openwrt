@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include "rtl838x.dtsi"
+#include "rtl8382.dtsi"
 
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	compatible = "allnet,all-sg8208m", "realtek,rtl838x-soc";
+	compatible = "allnet,all-sg8208m", "realtek,rtl8382-soc", "realtek,rtl838x-soc";
 	model = "ALLNET ALL-SG8208M";
 
 	aliases {

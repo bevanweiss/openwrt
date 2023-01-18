@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
-#include "rtl839x.dtsi"
+#include "rtl8393.dtsi"
 #include "rtl83xx_d-link_dgs-1210_common.dtsi"
 #include "rtl83xx_d-link_dgs-1210_gpio.dtsi"
 #include "rtl839x_d-link_dgs-1210_gpio.dtsi"
 
 / {
-	compatible = "d-link,dgs-1210-52", "realtek,rtl8393-soc";
+	compatible = "d-link,dgs-1210-52", "realtek,rtl8393-soc", "realtek,rtl839x-soc";
 	model = "D-Link DGS-1210-52";
 };
 

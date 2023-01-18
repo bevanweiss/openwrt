@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
-#include "rtl838x.dtsi"
+#include "rtl8380.dtsi"
 #include "rtl838x_hpe_1920.dtsi"
 
 / {
-	compatible = "hpe,1920-8g", "realtek,rtl838x-soc";
+	compatible = "hpe,1920-8g", "realtek,rtl8380-soc", "realtek,rtl838x-soc";
 	model = "HPE 1920-8G (JG920A)";
 
 	gpio1: rtl8231-gpio {

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
-#include "rtl839x.dtsi"
+#include "rtl8393.dtsi"
 
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/leds/common.h>
 
 / {
-	compatible = "tplink,sg2452p-v4", "realtek,rtl8393-soc";
+	compatible = "tplink,sg2452p-v4", "realtek,rtl8393-soc", "realtek,rtl839x-soc";
 	model = "TP-Link SG2452P v4";
 
 	memory@0 {
