@@ -7,7 +7,7 @@
 	model = "ZyXEL GS1900-24 v1";
 
 	memory@0 {
-		reg = <0x0 0x4000000>;
+		reg = <0x0 0x4000000>; /* 64 MiB */
 	};
 
 	/* i2c of the left SFP cage: port 25 */
