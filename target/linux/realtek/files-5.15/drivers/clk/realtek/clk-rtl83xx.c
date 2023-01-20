@@ -133,17 +133,19 @@ static const int rtcl_regs[SOC_COUNT][REG_COUNT][CLK_COUNT] = {
 	}
 };
 
-#define RTCL_REG_SET(_rate, _ctrl0, _ctrl1)	\
-	{					\
-		.rate = _rate,			\
-		.ctrl0 = _ctrl0,		\
-		.ctrl1 = _ctrl1,		\
+#define RTL_OTTO_PLL_SET(_rate, _divn2, _ncode_in, _sel, _selb)               \
+	{                                                                     \
+		.rate = _rate,                                                \
+		.divn2 = _divn2,                                              \
+		.ncode_in = _ncode_in,                                        \
+		.selb = _selb,                                                \
 	}
 
 struct rtcl_reg_set {
 	unsigned int rate;
-	unsigned int ctrl0;
-	unsigned int ctrl1;
+	u32 divn2;
+	u32 ncode_in;
+	bool selb;
 };
 
 /*
@@ -158,84 +160,83 @@ struct rtcl_reg_set {
  */
 
 static const struct rtcl_reg_set rtcl_838x_cpu_reg_set[] = {
-	RTCL_REG_SET(300000000, 0x045c8, 0x1414530e),
-	RTCL_REG_SET(325000000, 0x04648, 0x1414530e),
-	RTCL_REG_SET(350000000, 0x046c8, 0x1414530e),
-	RTCL_REG_SET(375000000, 0x04748, 0x1414530e),
-	RTCL_REG_SET(400000000, 0x045c8, 0x0c14530e),
-	RTCL_REG_SET(425000000, 0x04628, 0x0c14530e),
-	RTCL_REG_SET(450000000, 0x04688, 0x0c14530e),
-	RTCL_REG_SET(475000000, 0x046e8, 0x0c14530e),
-	RTCL_REG_SET(500000000, 0x04748, 0x0c14530e),
-	RTCL_REG_SET(525000000, 0x047a8, 0x0c14530e),
-	RTCL_REG_SET(550000000, 0x04808, 0x0c14530e),
-	RTCL_REG_SET(575000000, 0x04868, 0x0c14530e),
-	RTCL_REG_SET(600000000, 0x048c8, 0x0c14530e),
-	RTCL_REG_SET(625000000, 0x04928, 0x0c14530e)
+	RTL_OTTO_PLL_SET(300000000, 0x04, 0x5c, 0x2, true),
+	RTL_OTTO_PLL_SET(325000000, 0x04, 0x64, 0x2, true),
+	RTL_OTTO_PLL_SET(350000000, 0x04, 0x6c, 0x2, true),
+	RTL_OTTO_PLL_SET(375000000, 0x04, 0x74, 0x2, true),
+	RTL_OTTO_PLL_SET(400000000, 0x04, 0x5c, 0x1, true),
+	RTL_OTTO_PLL_SET(425000000, 0x04, 0x62, 0x1, true),
+	RTL_OTTO_PLL_SET(450000000, 0x04, 0x68, 0x1, true),
+	RTL_OTTO_PLL_SET(475000000, 0x04, 0x6e, 0x1, true),
+	RTL_OTTO_PLL_SET(500000000, 0x04, 0x74, 0x1, true),
+	RTL_OTTO_PLL_SET(525000000, 0x04, 0x7a, 0x1, true),
+	RTL_OTTO_PLL_SET(550000000, 0x04, 0x80, 0x1, true),
+	RTL_OTTO_PLL_SET(575000000, 0x04, 0x86, 0x1, true),
+	RTL_OTTO_PLL_SET(600000000, 0x04, 0x8c, 0x1, true),
+	RTL_OTTO_PLL_SET(625000000, 0x04, 0x92, 0x1, true),
 };
 
 static const struct rtcl_reg_set rtcl_838x_mem_reg_set[] = {
-	RTCL_REG_SET(200000000, 0x041bc, 0x14018C80),
-	RTCL_REG_SET(225000000, 0x0417c, 0x0c018C80),
-	RTCL_REG_SET(250000000, 0x041ac, 0x0c018C80),
-	RTCL_REG_SET(275000000, 0x0412c, 0x04018C80),
-	RTCL_REG_SET(300000000, 0x0414c, 0x04018c80),
-	RTCL_REG_SET(325000000, 0x0416c, 0x04018c80),
-	RTCL_REG_SET(350000000, 0x0418c, 0x04018c80),
-	RTCL_REG_SET(375000000, 0x041ac, 0x04018c80)
+	RTL_OTTO_PLL_SET(200000000, 0x04, 0x1b, 0x2, true),
+	RTL_OTTO_PLL_SET(225000000, 0x04, 0x17, 0x1, true),
+	RTL_OTTO_PLL_SET(250000000, 0x04, 0x1a, 0x1, true),
+	RTL_OTTO_PLL_SET(275000000, 0x04, 0x12, 0x0, true),
+	RTL_OTTO_PLL_SET(300000000, 0x04, 0x14, 0x0, true),
+	RTL_OTTO_PLL_SET(325000000, 0x04, 0x16, 0x0, true),
+	RTL_OTTO_PLL_SET(350000000, 0x04, 0x18, 0x0, true),
+	RTL_OTTO_PLL_SET(375000000, 0x04, 0x1a, 0x0, true),
 };
 
 static const struct rtcl_reg_set rtcl_838x_lxb_reg_set[] = {
-	RTCL_REG_SET(100000000, 0x043c8, 0x001ad30e),
-	RTCL_REG_SET(125000000, 0x043c8, 0x001ad30e),
-	RTCL_REG_SET(150000000, 0x04508, 0x1c1ad30e),
-	RTCL_REG_SET(175000000, 0x04508, 0x1c1ad30e),
-	RTCL_REG_SET(200000000, 0x047c8, 0x001ad30e)
+	RTL_OTTO_PLL_SET(100000000, 0x04, 0x3c, 0x0, false),
+	RTL_OTTO_PLL_SET(125000000, 0x04, 0x3c, 0x0, false),
+	RTL_OTTO_PLL_SET(150000000, 0x04, 0x50, 0x2, true),
+	RTL_OTTO_PLL_SET(175000000, 0x04, 0x50, 0x2, true),
+	RTL_OTTO_PLL_SET(200000000, 0x04, 0x7c, 0x0, false),
 };
 
 static const struct rtcl_reg_set rtcl_839x_cpu_reg_set[] = {
-	RTCL_REG_SET(400000000, 0x0414c, 0x00000005),
-	RTCL_REG_SET(425000000, 0x041ec, 0x00000006),
-	RTCL_REG_SET(450000000, 0x0417c, 0x00000005),
-	RTCL_REG_SET(475000000, 0x0422c, 0x00000006),
-	RTCL_REG_SET(500000000, 0x041ac, 0x00000005),
-	RTCL_REG_SET(525000000, 0x0426c, 0x00000006),
-	RTCL_REG_SET(550000000, 0x0412c, 0x00000004),
-	RTCL_REG_SET(575000000, 0x042ac, 0x00000006),
-	RTCL_REG_SET(600000000, 0x0414c, 0x00000004),
-	RTCL_REG_SET(625000000, 0x042ec, 0x00000006),
-	RTCL_REG_SET(650000000, 0x0416c, 0x00000004),
-	RTCL_REG_SET(675000000, 0x04324, 0x00000006),
-	RTCL_REG_SET(700000000, 0x0418c, 0x00000004),
-	RTCL_REG_SET(725000000, 0x0436c, 0x00000006),
-	RTCL_REG_SET(750000000, 0x0438c, 0x00000006),
-	RTCL_REG_SET(775000000, 0x043ac, 0x00000006),
-	RTCL_REG_SET(800000000, 0x043cc, 0x00000006),
-	RTCL_REG_SET(825000000, 0x043ec, 0x00000006),
-	RTCL_REG_SET(850000000, 0x0440c, 0x00000006)
+	RTL_OTTO_PLL_SET(400000000, 0x04, 0x14, 0x2, true),
+	RTL_OTTO_PLL_SET(425000000, 0x04, 0x1e, 0x3, false),
+	RTL_OTTO_PLL_SET(450000000, 0x04, 0x17, 0x2, true),
+	RTL_OTTO_PLL_SET(475000000, 0x04, 0x22, 0x3, false),
+	RTL_OTTO_PLL_SET(500000000, 0x04, 0x1a, 0x2, true),
+	RTL_OTTO_PLL_SET(525000000, 0x04, 0x26, 0x3, false),
+	RTL_OTTO_PLL_SET(550000000, 0x04, 0x12, 0x2, false),
+	RTL_OTTO_PLL_SET(575000000, 0x04, 0x2a, 0x3, false),
+	RTL_OTTO_PLL_SET(600000000, 0x04, 0x14, 0x2, false),
+	RTL_OTTO_PLL_SET(625000000, 0x04, 0x2e, 0x3, false),
+	RTL_OTTO_PLL_SET(650000000, 0x04, 0x16, 0x2, false),
+	RTL_OTTO_PLL_SET(675000000, 0x04, 0x32, 0x3, false),
+	RTL_OTTO_PLL_SET(700000000, 0x04, 0x18, 0x2, false),
+	RTL_OTTO_PLL_SET(725000000, 0x04, 0x36, 0x3, false),
+	RTL_OTTO_PLL_SET(750000000, 0x04, 0x38, 0x3, false),
+	RTL_OTTO_PLL_SET(775000000, 0x04, 0x3a, 0x3, false),
+	RTL_OTTO_PLL_SET(800000000, 0x04, 0x3c, 0x3, false),
+	RTL_OTTO_PLL_SET(825000000, 0x04, 0x3e, 0x3, false),
+	RTL_OTTO_PLL_SET(850000000, 0x04, 0x40, 0x3, false),
 };
 
 static const struct rtcl_reg_set rtcl_839x_mem_reg_set[] = {
-	RTCL_REG_SET(100000000, 0x041cc, 0x00000000),
-	RTCL_REG_SET(125000000, 0x041ac, 0x00000007),
-	RTCL_REG_SET(150000000, 0x0414c, 0x00000006),
-	RTCL_REG_SET(175000000, 0x0418c, 0x00000006),
-	RTCL_REG_SET(200000000, 0x041cc, 0x00000006),
-	RTCL_REG_SET(225000000, 0x0417c, 0x00000005),
-	RTCL_REG_SET(250000000, 0x041ac, 0x00000005),
-	RTCL_REG_SET(275000000, 0x0412c, 0x00000004),
-	RTCL_REG_SET(300000000, 0x0414c, 0x00000004),
-	RTCL_REG_SET(325000000, 0x0416c, 0x00000004),
-	RTCL_REG_SET(350000000, 0x0418c, 0x00000004),
-	RTCL_REG_SET(375000000, 0x041ac, 0x00000004),
-	RTCL_REG_SET(400000000, 0x041cc, 0x00000004)
+	RTL_OTTO_PLL_SET(125000000, 0x04, 0x1a, 0x3, true),
+	RTL_OTTO_PLL_SET(150000000, 0x04, 0x14, 0x3, false),
+	RTL_OTTO_PLL_SET(175000000, 0x04, 0x18, 0x3, false),
+	RTL_OTTO_PLL_SET(200000000, 0x04, 0x1c, 0x3, false),
+	RTL_OTTO_PLL_SET(225000000, 0x04, 0x17, 0x2, true),
+	RTL_OTTO_PLL_SET(250000000, 0x04, 0x1a, 0x2, true),
+	RTL_OTTO_PLL_SET(275000000, 0x04, 0x12, 0x2, true),
+	RTL_OTTO_PLL_SET(300000000, 0x04, 0x14, 0x2, false),
+	RTL_OTTO_PLL_SET(325000000, 0x04, 0x16, 0x2, false),
+	RTL_OTTO_PLL_SET(350000000, 0x04, 0x18, 0x2, false),
+	RTL_OTTO_PLL_SET(375000000, 0x04, 0x1a, 0x2, false),
+	RTL_OTTO_PLL_SET(400000000, 0x04, 0x1c, 0x2, false),
 };
 
 static const struct rtcl_reg_set rtcl_839x_lxb_reg_set[] = {
-	RTCL_REG_SET(50000000, 0x1414c, 0x00000003),
-	RTCL_REG_SET(100000000, 0x0814c, 0x00000003),
-	RTCL_REG_SET(150000000, 0x0414c, 0x00000003),
-	RTCL_REG_SET(200000000, 0x0414c, 0x00000007)
+	RTL_OTTO_PLL_SET( 50000000, 0x14, 0x14, 0x1, false),
+	RTL_OTTO_PLL_SET(100000000, 0x08, 0x14, 0x1, false),
+	RTL_OTTO_PLL_SET(150000000, 0x04, 0x14, 0x1, false),
+	RTL_OTTO_PLL_SET(200000000, 0x04, 0x14, 0x3, true),
 };
 
 struct rtcl_rtab_set {
@@ -401,14 +402,19 @@ static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_ra
 
 static int rtcl_838x_set_rate(int clk_idx, const struct rtcl_reg_set *reg)
 {
+	u32 ctrl0, ctrl1;
 	unsigned long irqflags;
 
+	ctrl0 = FIELD_PREP(RTL838X_PLL_CMU_CTRL0_DIVN2, reg->divn2) |
+	        FIELD_PREP(RTL838X_PLL_CMU_CTRL0_NCODE_IN, reg->ncode_in);
+	ctrl1 = FIELD_PREP(RTL838X_PLL_CMU_CTRL1_DIVN3_SEL, reg->selb) |
+	        reg->selb ? RTL838X_PLL_CMU_CTRL1_DIVN2_SELB : 0;
 	/*
 	 * Runtime of this function (including locking)
 	 * CPU: up to 14000 cycles / up to 56 us at 250 MHz (half default speed)
 	 */
 	spin_lock_irqsave(&rtcl_ccu->lock, irqflags);
-	rtcl_838x_sram_set_rate(clk_idx, reg->ctrl0, reg->ctrl1);
+	rtcl_838x_sram_set_rate(clk_idx, ctrl0, ctrl1);
 	spin_unlock_irqrestore(&rtcl_ccu->lock, irqflags);
 
 	return 0;
@@ -416,16 +422,21 @@ static int rtcl_838x_set_rate(int clk_idx, const struct rtcl_reg_set *reg)
 
 static int rtcl_839x_set_rate(int clk_idx, const struct rtcl_reg_set *reg)
 {
+	u32 ctrl0, ctrl1;
 	unsigned long vpflags;
 	unsigned long irqflags;
 
+	ctrl0 = FIELD_PREP(RTL839X_PLL_CMU_CTRL0_DIVN2, reg->divn2) |
+	        FIELD_PREP(RTL839X_PLL_CMU_CTRL0_NCODE_IN, reg->ncode_in);
+	ctrl1 = FIELD_PREP(RTL839X_PLL_CMU_CTRL1_DIVN3_SEL, reg->selb) |
+	        reg->selb ? RTL839X_PLL_CMU_CTRL1_DIVN2_SELB : 0;
 	/*
 	 * Runtime of this function (including locking)
 	 * CPU: up to 31000 cycles / up to 89 us at 350 MHz (half default speed)
 	 */
 	spin_lock_irqsave(&rtcl_ccu->lock, irqflags);
 	vpflags = dvpe();
-	rtcl_839x_sram_set_rate(clk_idx, reg->ctrl0, reg->ctrl1);
+	rtcl_839x_sram_set_rate(clk_idx, ctrl0, ctrl1);
 	evpe(vpflags);
 	spin_unlock_irqrestore(&rtcl_ccu->lock, irqflags);
 
