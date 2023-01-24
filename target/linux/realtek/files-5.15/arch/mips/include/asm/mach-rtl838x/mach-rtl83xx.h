@@ -7,6 +7,31 @@
 #define _MACH_RTL838X_H_
 
 #include <asm/types.h>
+#include <linux/bitops.h>
+
+/* The size of a register for the otto platform */
+#define REALTEK_REG_SIZE        BITS_PER_TYPE(u32)
+
+/* Register port offset. e.g. 16 config bits per port -> 2 ports per reg */
+#define REALTEK_REG_PORT_OFFSET(port, bits_per_port, offset) \
+        (((port) / (REALTEK_REG_SIZE / (bits_per_port))) * offset)
+
+/* Register port index. e.g. 3rd port is the first set of bits of the reg */
+#define REALTEK_REG_PORT_INDEX(port, bits_per_port) \
+        (((port) % (REALTEK_REG_SIZE / (bits_per_port))) * (bits_per_port))
+
+/* Size of array to hold all port config bits. E.g. 4 bits per port needs 2 elements (if port num < 32) */
+#define REALTEK_PORT_ARRAY_SIZE(port, bits_per_port) \
+        ((((port) / REALTEK_REG_SIZE) + 1) * bits_per_port)
+
+/* Index to element in array holding config bits. E.g. port 9 with 4 bits per port, yields index 1 */
+#define REALTEK_PORT_ARRAY_INDEX(port, bits_per_port) \
+        (((port) * (bits_per_port)) / REALTEK_REG_SIZE)
+
+/* Get (first) port matching an index. E.g. with 2 bits per port and array index 1 -> port 16 */
+#define REALTEK_INDEX_ARRAY_PORT(index, bits_per_port) \
+        ((index) * (REALTEK_REG_SIZE / (bits_per_port)))
+
 /*
  * Register access macros
  */
