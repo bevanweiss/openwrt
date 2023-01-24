@@ -383,10 +383,11 @@ static unsigned long rtcl_recalc_rate(struct clk_hw *hw, unsigned long parent_ra
 static int rtcl_838x_set_rate(int clk_idx, const struct rtcl_reg_set *reg)
 {
 	unsigned long irqflags;
-/*
- * Runtime of this function (including locking)
- * CPU: up to 14000 cycles / up to 56 us at 250 MHz (half default speed)
- */
+
+	/*
+	 * Runtime of this function (including locking)
+	 * CPU: up to 14000 cycles / up to 56 us at 250 MHz (half default speed)
+	 */
 	spin_lock_irqsave(&rtcl_ccu->lock, irqflags);
 	rtcl_838x_sram_set_rate(clk_idx, reg->ctrl0, reg->ctrl1);
 	spin_unlock_irqrestore(&rtcl_ccu->lock, irqflags);
@@ -398,10 +399,11 @@ static int rtcl_839x_set_rate(int clk_idx, const struct rtcl_reg_set *reg)
 {
 	unsigned long vpflags;
 	unsigned long irqflags;
-/*
- * Runtime of this function (including locking)
- * CPU: up to 31000 cycles / up to 89 us at 350 MHz (half default speed)
- */
+
+	/*
+	 * Runtime of this function (including locking)
+	 * CPU: up to 31000 cycles / up to 89 us at 350 MHz (half default speed)
+	 */
 	spin_lock_irqsave(&rtcl_ccu->lock, irqflags);
 	vpflags = dvpe();
 	rtcl_839x_sram_set_rate(clk_idx, reg->ctrl0, reg->ctrl1);
@@ -420,11 +422,12 @@ static int rtcl_set_rate(struct clk_hw *hw, unsigned long rate, unsigned long pa
 
 	if ((parent_rate != OSC_RATE) || (!rtcl_ccu->sram.vbase))
 		return -EINVAL;
-/*
- * Currently we do not know if SRAM is stable on these devices. Maybe someone
- * changes memory in this region and does not care about proper allocation. So
- * check if something might go wrong.
- */
+
+	/*
+	 * Currently we do not know if SRAM is stable on these devices. Maybe
+	 * someone changes memory in this region and does not care about proper
+	 * allocation. So check if something might go wrong.
+	 */
 	if (unlikely(*rtcl_ccu->sram.pmark != RTL_SRAM_MARKER)) {
 		dev_err(&rtcl_ccu->pdev->dev, "SRAM code lost\n");
 		return -EINVAL;
@@ -528,14 +531,15 @@ int rtcl_register_clkhw(int clk_idx)
 		rclk->max = rtcl_round_set[rtcl_ccu->soc][clk_idx].max;
 		break;
 	default:
-/*
- * TODO: This driver supports PLL reclocking and nothing else. Additional
- * required steps for non CPU PLLs are missing. E.g. if we want to change memory
- * clocks the right way we must adapt a lot of other settings. This includes
- * MCR and DTRx timing registers (0xb80001000, 0xb8001008, ...) and a DLL reset
- * so that hardware operates in the allowed limits. This is far too complex
- * without official support. Avoid this for now.
- */
+		/*
+		 * TODO: This driver supports PLL reclocking and nothing else.
+		 * Additional required steps for non CPU PLLs are missing.
+		 * E.g. if we want to change memory clocks the right way we must
+		 * adapt a lot of other settings. This includes MCR and DTRx
+		 * timing registers (0xb80001000, 0xb8001008, ...) and a DLL
+		 * reset so that hardware operates in the allowed limits. This
+		 * is far too complex without official support. Avoid for now.
+		 */
 		rclk->min = rclk->max = rclk->startup;
 		break;
 	}
