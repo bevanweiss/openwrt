@@ -24,6 +24,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 
+#include "../../memory/realtek_soc.h"
 #include "clk-rtl83xx.h"
 
 #define RTL_SOC_BASE                    (0x18000000)
