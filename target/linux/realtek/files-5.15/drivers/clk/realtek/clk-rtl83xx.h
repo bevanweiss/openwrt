@@ -50,22 +50,10 @@
 #define RTL839X_PLL_CTRL1_CMU_DIVN3_SEL(v)	(((v) >> 0) & 0x3)
 
 /*
- * Core registers (e.g. memory controller)
+ * Core registers
  */
 
 #define RTL_SOC_BASE				(0xB8000000)
-
-#define RTL_MC_MCR				(0x1000)
-#define RTL_MC_DCR				(0x1004)
-#define RTL_MC_DTR0				(0x1008)
-#define RTL_MC_DTR1				(0x100c)
-#define RTL_MC_DTR2				(0x1010)
-#define RTL_MC_DMCR				(0x101c)
-#define RTL_MC_DACCR				(0x1500)
-#define RTL_MC_DCDR				(0x1060)
-
-#define RTL_MC_MCR_DRAMTYPE(v)			((((v) >> 28) & 0xf) + 1)
-#define RTL_MC_DCR_BUSWIDTH(v)			(8 << (((v) >> 24) & 0xf))
 
 /*
  * Other stuff

@@ -304,11 +304,6 @@ static const struct rtcl_clk_info rtcl_clk_info[CLK_COUNT] = {
 	RTCL_CLK_INFO(CLK_LXB, "lxb_clk", "ref_clk", "LXB")
 };
 
-struct rtcl_dram {
-	int type;
-	int buswidth;
-};
-
 struct rtcl_sram {
 	int *pmark;
 	unsigned long vbase;
@@ -318,7 +313,6 @@ struct rtcl_ccu {
 	spinlock_t lock;
 	unsigned int soc;
 	struct rtcl_sram sram;
-	struct rtcl_dram dram;
 	struct device_node *np;
 	struct platform_device *pdev;
 	struct rtcl_clk clks[CLK_COUNT];
@@ -497,8 +491,6 @@ static int rtcl_ccu_create(struct device_node *np)
 
 	rtcl_ccu->np = np;
 	rtcl_ccu->soc = soc;
-	rtcl_ccu->dram.type = RTL_MC_MCR_DRAMTYPE(read_soc(RTL_MC_MCR));
-	rtcl_ccu->dram.buswidth = RTL_MC_DCR_BUSWIDTH(read_soc(RTL_MC_DCR));
 	spin_lock_init(&rtcl_ccu->lock);
 
 	return 0;
@@ -667,14 +659,11 @@ err_put_device:
 
 void rtcl_ccu_log_early(void)
 {
-	char meminfo[80], clkinfo[255], msg[255] = "rtl83xx-clk: initialized";
+	char clkinfo[255], msg[255] = "rtl83xx-clk: initialized";
 
-	sprintf(meminfo, " (%d Bit DDR%d)", rtcl_ccu->dram.buswidth, rtcl_ccu->dram.type);
 	for (int clk_idx = 0; clk_idx < CLK_COUNT; clk_idx++) {
 		sprintf(clkinfo, ", %s %lu MHz", rtcl_clk_info[clk_idx].display_name,
 			rtcl_ccu->clks[clk_idx].startup / 1000000);
-		if (clk_idx == CLK_MEM)
-			strcat(clkinfo, meminfo);
 		strcat(msg, clkinfo);
 	}
 	pr_info("%s\n", msg);
