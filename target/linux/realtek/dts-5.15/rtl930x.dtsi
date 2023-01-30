@@ -14,7 +14,7 @@
 	compatible = "realtek,rtl930x-soc";
 
 	ccu: clock-controller {
-		compatible = "realtek,rtl9300-clock";
+		compatible = "realtek,rtl930x-clock";
 		#clock-cells = <1>;
 		clocks = <&osc25M>;
 		clock-names = "ref_clk";

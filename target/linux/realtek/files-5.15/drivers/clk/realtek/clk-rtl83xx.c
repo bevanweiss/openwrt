@@ -758,11 +758,11 @@ static int rtcl_ccu_create(struct device_node *np)
 {
 	int soc;
 
-	if (of_device_is_compatible(np, "realtek,rtl8380-clock"))
+	if (of_device_is_compatible(np, "realtek,rtl838x-clock"))
 		soc = SOC_RTL838X;
-	else if (of_device_is_compatible(np, "realtek,rtl8390-clock"))
+	else if (of_device_is_compatible(np, "realtek,rtl839x-clock"))
 		soc = SOC_RTL839X;
-	else if (of_device_is_compatible(np, "realtek,rtl9300-clock"))
+	else if (of_device_is_compatible(np, "realtek,rtl930x-clock"))
 		soc = SOC_RTL930X;
 	else
 		return -ENXIO;
@@ -988,9 +988,9 @@ static void __init rtcl_probe_early(struct device_node *np)
 		rtcl_ccu_log_early();
 }
 
-CLK_OF_DECLARE_DRIVER(rtl838x_clk, "realtek,rtl8380-clock", rtcl_probe_early);
-CLK_OF_DECLARE_DRIVER(rtl839x_clk, "realtek,rtl8390-clock", rtcl_probe_early);
-CLK_OF_DECLARE_DRIVER(rtl930x_clk, "realtek,rtl9300-clock", rtcl_probe_early);
+CLK_OF_DECLARE_DRIVER(rtl838x_clk, "realtek,rtl838x-clock", rtcl_probe_early);
+CLK_OF_DECLARE_DRIVER(rtl839x_clk, "realtek,rtl839x-clock", rtcl_probe_early);
+CLK_OF_DECLARE_DRIVER(rtl930x_clk, "realtek,rtl930x-clock", rtcl_probe_early);
 
 /*
  * Late registration: Finally register as normal platform driver. At this point
@@ -998,10 +998,28 @@ CLK_OF_DECLARE_DRIVER(rtl930x_clk, "realtek,rtl9300-clock", rtcl_probe_early);
  */
 
 static const struct of_device_id rtcl_dt_ids[] = {
+	{ .compatible = "realtek,otto-clock" },
+	/* RTL838x */
+	{ .compatible = "realtek,maple-clock" },
+	{ .compatible = "realtek,rtl838x-clock" },
 	{ .compatible = "realtek,rtl8380-clock" },
+	{ .compatible = "realtek,rtl8381-clock" },
+	{ .compatible = "realtek,rtl8382-clock" },
+	/* RTL839x */
+	{ .compatible = "realtek,cypress-clock" },
+	{ .compatible = "realtek,rtl839x-clock" },
 	{ .compatible = "realtek,rtl8390-clock" },
-	{ .compatible = "realtek,rtl9300-clock" },
-	{}
+	{ .compatible = "realtek,rtl8391-clock" },
+	{ .compatible = "realtek,rtl8392-clock" },
+	{ .compatible = "realtek,rtl8393-clock" },
+	/* RTL930x */
+	{ .compatible = "realtek,longan-clock" },
+	{ .compatible = "realtek,rtl930x-clock" },
+	{ .compatible = "realtek,rtl9301-clock" },
+	{ .compatible = "realtek,rtl9302-clock" },
+	{ .compatible = "realtek,rtl9303-clock" },
+	/* RTL931x */
+	{ /* sentinel */ }
 };
 
 static int rtcl_probe_late(struct platform_device *pdev)
