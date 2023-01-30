@@ -73,6 +73,7 @@
 		#clock-cells = <1>;
 		clocks = <&osc>;
 		clock-names = "ref_clk";
+		pll-reclock-sram = <&sram0>;
 	};
 
 	cpus {

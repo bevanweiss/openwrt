@@ -607,16 +607,22 @@ err_hw_unregister:
 	return ret;
 }
 
-int rtcl_init_sram(void)
+int rtcl_init_sram(struct device *dev)
 {
 	struct gen_pool *sram_pool;
 	phys_addr_t sram_pbase;
 	unsigned long sram_vbase;
-	struct device_node *node;
+	struct device_node *node = dev->of_node;
 	struct platform_device *pdev = NULL;
 	void *dram_start;
 	int dram_size;
 	const char *wrn = ", rate setting disabled.\n";
+
+	sram_pool = of_gen_pool_get(node, "pll-reclock-sram", 0);
+	if (!sram_pool) {
+		dev_warn(dev, "SRAM pool 'pll-reclock-sram' not in dt%s", wrn);
+		return -ENXIO;
+        }
 
 	switch (rtcl_ccu->soc) {
 	case SOC_RTL838X:
@@ -631,30 +637,10 @@ int rtcl_init_sram(void)
 		return -ENXIO;
 	}
 
-	for_each_compatible_node(node, NULL, "mmio-sram") {
-		pdev = of_find_device_by_node(node);
-		if (pdev) {
-			of_node_put(node);
-			break;
-		}
-	}
-
-	if (!pdev) {
-		dev_warn(&rtcl_ccu->pdev->dev, "no SRAM device found%s", wrn);
-		return -ENXIO;
-	}
-
-	sram_pool = gen_pool_get(&pdev->dev, NULL); // TODO NULL -> "realtek, scratch_clk_pll"
-	if (!sram_pool) {
-		dev_warn(&rtcl_ccu->pdev->dev, "SRAM pool unavailable%s", wrn);
-		goto err_put_device;
-	}
-        dev_err(&rtcl_ccu->pdev->dev, "SRAM pool name: %s\n", sram_pool->name);
-
 	sram_vbase = gen_pool_alloc(sram_pool, dram_size);
 	if (!sram_vbase) {
-		dev_warn(&rtcl_ccu->pdev->dev, "can not allocate SRAM%s", wrn);
-		goto err_put_device;
+		dev_warn(dev, "can not allocate SRAM%s", wrn);
+		return -ENXIO;
 	}
 
 	sram_pbase = gen_pool_virt_to_phys(sram_pool, sram_vbase);
@@ -674,11 +660,6 @@ int rtcl_init_sram(void)
 	rtcl_ccu->sram.vbase = sram_vbase;
 
 	return 0;
-
-err_put_device:
-	put_device(&pdev->dev);
-
-	return -ENXIO;
 }
 
 void rtcl_ccu_log_early(void)
@@ -752,7 +733,7 @@ static int rtcl_probe_late(struct platform_device *pdev)
 		return -ENXIO;
 	}
 	rtcl_ccu->pdev = pdev;
-	ret = rtcl_init_sram();
+	ret = rtcl_init_sram(&pdev->dev);
 	if (ret)
 		return ret;
 
