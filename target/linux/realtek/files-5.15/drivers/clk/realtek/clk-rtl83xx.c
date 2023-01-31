@@ -449,7 +449,7 @@ static int rtcl_set_rate(struct clk_hw *hw, unsigned long rate, unsigned long pa
 	const struct rtcl_rtab_set *rtab = &rtcl_rtab_set[rtcl_ccu->soc][clk->idx];
 	const struct rtcl_round_set *round = &rtcl_round_set[rtcl_ccu->soc][clk->idx];
 
-	if ((parent_rate != OSC_RATE) || (!rtcl_ccu->sram.vbase))
+	if ((clk->idx != CLK_CPU) || (!rtcl_ccu->sram.vbase))
 		return -EINVAL;
 
 	/*
