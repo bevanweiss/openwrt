@@ -314,7 +314,6 @@ struct rtcl_clk {
 	unsigned int idx;
 	unsigned long min;
 	unsigned long max;
-	unsigned long rate;
 	unsigned long startup;
 };
 
@@ -466,8 +465,6 @@ static int rtcl_set_rate(struct clk_hw *hw, unsigned long rate, unsigned long pa
 	tab_idx = (rate - round->min) / round->step;
 	if ((tab_idx < 0) || (tab_idx >= rtab->count) || (rtab->rset[tab_idx].rate != rate))
 		return -EINVAL;
-
-	rtcl_ccu->clks[clk->idx].rate = rate;
 
 	switch (rtcl_ccu->soc) {
 	case SOC_RTL838X:
