@@ -781,18 +781,13 @@ static int rtcl_ccu_create(struct device_node *np)
 int rtcl_register_clkhw(int clk_idx)
 {
 	int ret;
-	struct clk *clk;
-	struct clk_init_data hw_init = { };
 	struct rtcl_clk *rclk = &rtcl_ccu->clks[clk_idx];
-	struct clk_parent_data parent_data = { .fw_name = rtcl_clk_info[clk_idx].parent_name[rtcl_ccu->soc] };
 
 	rclk->idx = clk_idx;
-	rclk->hw.init = &hw_init;
-
-	hw_init.num_parents = 1;
-	hw_init.ops = &rtcl_clk_ops;
-	hw_init.parent_data = &parent_data;
-	hw_init.name = rtcl_clk_info[clk_idx].name;
+	rclk->hw.init = CLK_HW_INIT(rtcl_clk_info[clk_idx].name,
+	                            rtcl_clk_info[clk_idx].parent_name[rtcl_ccu->soc],
+	                            &rtcl_clk_ops,
+	                            0);
 
 	ret = of_clk_hw_register(rtcl_ccu->np, &rclk->hw);
 	if (ret)
@@ -800,9 +795,7 @@ int rtcl_register_clkhw(int clk_idx)
 
 	clk_hw_register_clkdev(&rclk->hw, rtcl_clk_info[clk_idx].name, NULL);
 
-	clk = clk_get(NULL, rtcl_clk_info[clk_idx].name);
-	rclk->startup = clk_get_rate(clk);
-	clk_put(clk);
+	rclk->startup = clk_hw_get_rate(&rclk->hw);
 
 	switch (clk_idx) {
 	case CLK_CPU:
