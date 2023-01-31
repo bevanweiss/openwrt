@@ -62,16 +62,10 @@
 
 	compatible = "realtek,rtl839x-soc";
 
-	osc: oscillator {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency = <25000000>;
-	};
-
 	ccu: clock-controller {
 		compatible = "realtek,rtl8390-clock";
 		#clock-cells = <1>;
-		clocks = <&osc>;
+		clocks = <&osc25M>;
 		clock-names = "ref_clk";
 		pll-reclock-sram = <&sram0>;
 	};
@@ -257,6 +251,13 @@
 			interrupts = <19 4>, <18 4>;
 		};
 
+	};
+
+	osc25M: clk-25M {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <25000000>;
+		clock-output-names = "ref_clk";
 	};
 
 	pinmux@1b000004 {
