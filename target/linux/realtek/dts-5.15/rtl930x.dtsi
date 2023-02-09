@@ -125,6 +125,13 @@
 		#size-cells = <1>;
 		ranges = <0x0 0x18000000 0x10000>;
 
+		crypto0: crypto@c000 {
+			compatible = "realtek,realtek-crypto";
+			reg = <0xc000 0x10>;
+			interrupt-parent = <&intc>;
+			interrupts = <22 3>;
+		};
+
 		i2c0: i2c0@1b00036c {
 			reg = <0x1b00036c 0x1c>;
 			compatible = "realtek,rtl9300-i2c", "realtek,rtl930x-i2c";
