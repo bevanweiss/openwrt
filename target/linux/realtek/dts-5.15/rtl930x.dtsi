@@ -2,6 +2,8 @@
 
 /dts-v1/;
 
+#include <dt-bindings/clock/rtl83xx-clk.h>
+
 / {
 	#address-cells = <1>;
 	#size-cells = <1>;

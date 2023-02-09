@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+#include "rtl839x.dtsi"
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	compatible = "realtek,rtl8393-soc", "realtek,rtl839x-soc";
+};

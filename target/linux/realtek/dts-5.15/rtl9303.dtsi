@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+#include "rtl930x.dtsi"
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+
+	compatible = "realtek,rtl9303-soc", "realtek,rtl930x-soc";
+};
