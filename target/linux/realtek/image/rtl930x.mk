@@ -16,6 +16,24 @@ define Device/initramfs
     uImage lzma
 endef
 
+define Device/whitelabel_ws-sw-24p-4s_r1_v1.0
+  $(Device/kernel)
+  $(Device/initramfs)
+  DEVICE_MODEL := ws-sw-24p-4s-r1 v1.0
+  DEVICE_VENDOR := WhiteLabel
+  IMAGE_SIZE := 31808k
+  SOC := rtl9301
+  UIMAGE_MAGIC := 0x93000000
+endef
+TARGET_DEVICES += whitelabel_ws-sw-24p-4s_r1_v1.0
+
+define Device/whitelabel_ws-sw-24p-4s_r1_v1.0_oem
+  $(Device/whitelabel_ws-sw-24p-4s_r1_v1.0)
+  DEVICE_MODEL := ws-sw-24p-4s-r1 v1.0 (OEM)
+  IMAGE_SIZE := 13312k
+endef
+TARGET_DEVICES += whitelabel_ws-sw-24p-4s_r1_v1.0_oem
+
 define Device/zyxel_initramfs
   KERNEL_INITRAMFS := \
     kernel-bin | \
