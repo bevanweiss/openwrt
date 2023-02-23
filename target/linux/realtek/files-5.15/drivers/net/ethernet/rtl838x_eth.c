@@ -2015,55 +2015,6 @@ static int rtl838x_poll_rx(struct napi_struct *napi, int budget)
 	return work_done;
 }
 
-
-static void rtl838x_validate(struct phylink_config *config,
-			 unsigned long *supported,
-			 struct phylink_link_state *state)
-{
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
-
-	pr_debug("In %s\n", __func__);
-
-	if (!phy_interface_mode_is_rgmii(state->interface) &&
-	    state->interface != PHY_INTERFACE_MODE_1000BASEX &&
-	    state->interface != PHY_INTERFACE_MODE_MII &&
-	    state->interface != PHY_INTERFACE_MODE_REVMII &&
-	    state->interface != PHY_INTERFACE_MODE_GMII &&
-	    state->interface != PHY_INTERFACE_MODE_QSGMII &&
-	    state->interface != PHY_INTERFACE_MODE_INTERNAL &&
-	    state->interface != PHY_INTERFACE_MODE_SGMII) {
-		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		pr_err("Unsupported interface: %d\n", state->interface);
-		return;
-	}
-
-	/* Allow all the expected bits */
-	phylink_set(mask, Autoneg);
-	phylink_set_port_modes(mask);
-	phylink_set(mask, Pause);
-	phylink_set(mask, Asym_Pause);
-
-	/* With the exclusion of MII and Reverse MII, we support Gigabit,
-	 * including Half duplex
-	 */
-	if (state->interface != PHY_INTERFACE_MODE_MII &&
-	    state->interface != PHY_INTERFACE_MODE_REVMII) {
-		phylink_set(mask, 1000baseT_Full);
-		phylink_set(mask, 1000baseT_Half);
-	}
-
-	phylink_set(mask, 10baseT_Half);
-	phylink_set(mask, 10baseT_Full);
-	phylink_set(mask, 100baseT_Half);
-	phylink_set(mask, 100baseT_Full);
-
-	bitmap_and(supported, supported, mask,
-		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-	bitmap_and(state->advertising, state->advertising, mask,
-		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-}
-
-
 static void rtl838x_mac_config(struct phylink_config *config,
 			       unsigned int mode,
 			       const struct phylink_link_state *state)
@@ -2075,94 +2026,15 @@ static void rtl838x_mac_config(struct phylink_config *config,
 	pr_info("In %s, mode %x\n", __func__, mode);
 }
 
-static void rtl838x_mac_an_restart(struct phylink_config *config)
-{
-	struct net_device *dev = container_of(config->dev, struct net_device, dev);
-	struct rtl838x_eth_priv *priv = netdev_priv(dev);
-
-	/* This works only on RTL838x chips */
-	if (priv->family_id != RTL8380_FAMILY_ID)
-		return;
-
-	pr_debug("In %s\n", __func__);
-	sw_w32(RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_SEL |
-	       RTL838X_MAC_FORCE_MODE_CTRL_GLITE_PORT_TYPE |
-	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_SEL |
-	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_PORT_TYPE |
-	       RTL838X_MAC_FORCE_MODE_CTRL_FC_EN |
-	       FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL,
-	                  RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
-	       RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL |
-	       RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN |
-	       RTL838X_MAC_FORCE_MODE_CTRL_EN,
-	       priv->r->mac_force_mode_ctrl(priv->cpu_port));
-	msleep(20);
-	sw_w32(RTL838X_MAC_FORCE_MODE_CTRL_GLITE_MASTER_SLV_MANUAL_SEL |
-	       RTL838X_MAC_FORCE_MODE_CTRL_GLITE_PORT_TYPE |
-	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_MASTER_SLV_MANUAL_SEL |
-	       RTL838X_MAC_FORCE_MODE_CTRL_PHY_PORT_TYPE |
-	       RTL838X_MAC_FORCE_MODE_CTRL_FC_EN |
-	       FIELD_PREP(RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL,
-	                  RTL838X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
-	       RTL838X_MAC_FORCE_MODE_CTRL_DUP_SEL |
-	       RTL838X_MAC_FORCE_MODE_CTRL_NWAY_EN |
-	       RTL838X_MAC_FORCE_MODE_CTRL_LINK_EN |
-	       RTL838X_MAC_FORCE_MODE_CTRL_EN,
-	       priv->r->mac_force_mode_ctrl(priv->cpu_port));
-}
-
-static void rtl838x_mac_pcs_get_state(struct phylink_config *config,
-				  struct phylink_link_state *state)
-{
-	struct net_device *dev = container_of(config->dev, struct net_device, dev);
-	struct rtl838x_eth_priv *priv = netdev_priv(dev);
-	int port = priv->cpu_port;
-
-	pr_info("In %s\n", __func__);
-
-	state->duplex = priv->r->get_mac_link_dup_sts(port);
-
-	state->link = priv->r->get_mac_link_sts(port);
-
-	state->pause &= ~(MLO_PAUSE_TXRX_MASK);
-	state->pause |= priv->r->get_mac_rx_pause_sts(port);
-	state->pause |= priv->r->get_mac_tx_pause_sts(port);
-
-	state->speed = priv->r->get_mac_link_spd_sts(port);
-
-	pr_info("%s link status is %d\n", __func__, state->link);
-
-}
-
 static void rtl838x_mac_link_down(struct phylink_config *config,
 				  unsigned int mode,
 				  phy_interface_t interface)
 {
-	struct net_device *dev = container_of(config->dev, struct net_device, dev);
-	struct rtl838x_eth_priv *priv = netdev_priv(dev);
+        /* Our ethernet MAC has no controls for this, and purely relies
+         * on the other end, the MAC in the switch.
+         * */
 
-	pr_debug("In %s\n", __func__);
-	switch (priv->family_id) {
-	case RTL8380_FAMILY_ID:
-		sw_w32_mask(RTL838X_MAC_PORT_CTRL_TXRX_EN,
-			    0, priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	case RTL8390_FAMILY_ID:
-		sw_w32_mask(RTL839X_MAC_PORT_CTRL_TXRX_EN,
-			    0, priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	case RTL9300_FAMILY_ID:
-		sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
-			    0, priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	case RTL9310_FAMILY_ID:
-		sw_w32_mask(RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
-			    0, priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	default:
-		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
-		return;
-	}
+        pr_info("In %s, mode %x\n", __func__, mode);
 }
 
 static void rtl838x_mac_link_up(struct phylink_config *config,
@@ -2170,35 +2042,11 @@ static void rtl838x_mac_link_up(struct phylink_config *config,
 			    phy_interface_t interface, int speed, int duplex,
 			    bool tx_pause, bool rx_pause)
 {
-	struct net_device *dev = container_of(config->dev, struct net_device, dev);
-	struct rtl838x_eth_priv *priv = netdev_priv(dev);
+        /* Our ethernet MAC has no controls for this, and purely relies
+         * on the other end, the MAC in the switch.
+         * */
 
-	pr_debug("In %s\n", __func__);
-	switch (priv->family_id) {
-	case RTL8380_FAMILY_ID:
-		sw_w32_mask(0,
-		            RTL838X_MAC_PORT_CTRL_TXRX_EN,
-			    priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	case RTL8390_FAMILY_ID:
-		sw_w32_mask(0,
-		            RTL839X_MAC_PORT_CTRL_TXRX_EN,
-			    priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	case RTL9300_FAMILY_ID:
-		sw_w32_mask(0,
-		            RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
-			    priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	case RTL9310_FAMILY_ID:
-		sw_w32_mask(0,
-		            RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
-			    priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
-	default:
-		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
-		return;
-	}
+        pr_info("In %s, mode %x\n", __func__, mode);
 }
 
 static void rtl83xx_get_mac_hw(struct net_device *dev, u8 mac[])
@@ -3070,9 +2918,7 @@ static const struct net_device_ops rtl931x_eth_netdev_ops = {
 };
 
 static const struct phylink_mac_ops rtl838x_phylink_ops = {
-	.validate = rtl838x_validate,
-	.mac_pcs_get_state = rtl838x_mac_pcs_get_state,
-	.mac_an_restart = rtl838x_mac_an_restart,
+	.validate = phylink_generic_validate, /* Remove with 6.1 */
 	.mac_config = rtl838x_mac_config,
 	.mac_link_down = rtl838x_mac_link_down,
 	.mac_link_up = rtl838x_mac_link_up,
@@ -3287,13 +3133,21 @@ static int __init rtl838x_eth_probe(struct platform_device *pdev)
 
 	phy_mode = PHY_INTERFACE_MODE_NA;
 	err = of_get_phy_mode(dn, &phy_mode);
-	if (err < 0) {
+	if ((err < 0) || (phy_mode != PHY_INTERFACE_MODE_INTERNAL)) {
 		dev_err(&pdev->dev, "incorrect phy-mode\n");
 		err = -EINVAL;
 		goto err_free;
 	}
 	priv->phylink_config.dev = &dev->dev;
 	priv->phylink_config.type = PHYLINK_NETDEV;
+	priv->phylink_config.legacy_pre_march2020 = false;
+	priv->phylink_config.mac_managed_pm = false;
+	priv->phylink_config.ovr_an_inband = false;
+	priv->phylink_config.poll_fixed_state = false;
+	__set_bit(PHY_INTERFACE_MODE_INTERNAL, priv->phylink_config.supported_interfaces);
+	priv->phylink_config.mac_capabilities = MLO_AN_FIXED |
+	                                        MAC_SYM_PAUSE | MAC_ASYM_PAUSE |
+	                                        MAC_1000 | MAC_100 | MAC_10;
 
 	phylink = phylink_create(&priv->phylink_config, pdev->dev.fwnode,
 				 phy_mode, &rtl838x_phylink_ops);
