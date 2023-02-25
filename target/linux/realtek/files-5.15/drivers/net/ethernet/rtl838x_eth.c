@@ -2147,26 +2147,6 @@ static int rtl8380_init_mac(struct rtl838x_eth_priv *priv)
 	return 0;
 }
 
-static int rtl838x_get_link_ksettings(struct net_device *ndev,
-				      struct ethtool_link_ksettings *cmd)
-{
-	struct rtl838x_eth_priv *priv = netdev_priv(ndev);
-
-	pr_debug("%s called\n", __func__);
-
-	return phylink_ethtool_ksettings_get(priv->phylink, cmd);
-}
-
-static int rtl838x_set_link_ksettings(struct net_device *ndev,
-				      const struct ethtool_link_ksettings *cmd)
-{
-	struct rtl838x_eth_priv *priv = netdev_priv(ndev);
-
-	pr_debug("%s called\n", __func__);
-
-	return phylink_ethtool_ksettings_set(priv->phylink, cmd);
-}
-
 static int rtl838x_mdio_read_paged(struct mii_bus *bus, int mii_id, u16 page, int regnum)
 {
 	u32 val;
@@ -2862,8 +2842,8 @@ static const struct phylink_mac_ops rtl838x_phylink_ops = {
 };
 
 static const struct ethtool_ops rtl838x_ethtool_ops = {
-	.get_link_ksettings     = rtl838x_get_link_ksettings,
-	.set_link_ksettings     = rtl838x_set_link_ksettings,
+	.get_link_ksettings     = phy_ethtool_get_link_ksettings,
+	.set_link_ksettings     = phy_ethtool_set_link_ksettings,
 };
 
 static int __init rtl838x_eth_probe(struct platform_device *pdev)
