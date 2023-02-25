@@ -2807,61 +2807,6 @@ static int rtl838x_mdio_remove(struct rtl838x_eth_priv *priv)
 	return 0;
 }
 
-static netdev_features_t rtl838x_fix_features(struct net_device *dev,
-					  netdev_features_t features)
-{
-	return features;
-}
-
-static int rtl838x_set_features(struct net_device *dev, netdev_features_t features)
-{
-	struct rtl838x_eth_priv *priv = netdev_priv(dev);
-
-	if ((features ^ dev->features) & NETIF_F_RXCSUM) {
-		if (!(features & NETIF_F_RXCSUM))
-			sw_w32_mask(RTL838X_MAC_PORT_CTRL_RX_CHK_CRC_EN, 0, priv->r->mac_port_ctrl(priv->cpu_port));
-		else
-			sw_w32_mask(0, RTL838X_MAC_PORT_CTRL_RX_CHK_CRC_EN, priv->r->mac_port_ctrl(priv->cpu_port));
-	}
-
-	return 0;
-}
-
-static int rtl839x_set_features(struct net_device *dev, netdev_features_t features)
-{
-	struct rtl838x_eth_priv *priv = netdev_priv(dev);
-
-	if ((features ^ dev->features) & NETIF_F_RXCSUM) {
-		if (!(features & NETIF_F_RXCSUM))
-			sw_w32_mask(RTL839X_MAC_PORT_CTRL_RX_CHK_CRC_EN, 0, priv->r->mac_port_ctrl(priv->cpu_port));
-		else
-			sw_w32_mask(0, RTL839X_MAC_PORT_CTRL_RX_CHK_CRC_EN, priv->r->mac_port_ctrl(priv->cpu_port));
-	}
-
-	return 0;
-}
-
-static int rtl930x_set_features(struct net_device *dev, netdev_features_t features)
-{
-	struct rtl838x_eth_priv *priv = netdev_priv(dev);
-
-	if ((features ^ dev->features) & NETIF_F_RXCSUM) {
-		if (!(features & NETIF_F_RXCSUM))
-			sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_RX_CHK_CRC_EN, 0, priv->r->mac_port_ctrl(priv->cpu_port));
-		else
-			sw_w32_mask(0, RTL930X_MAC_L2_PORT_CTRL_RX_CHK_CRC_EN, priv->r->mac_port_ctrl(priv->cpu_port));
-	}
-
-	return 0;
-}
-
-static int rtl931x_set_features(struct net_device *dev, netdev_features_t features)
-{
-	/* RXCSUM not supported */
-
-	return 0;
-}
-
 static const struct net_device_ops rtl838x_eth_netdev_ops = {
 	.ndo_open = rtl838x_eth_open,
 	.ndo_stop = rtl838x_eth_stop,
@@ -2871,8 +2816,6 @@ static const struct net_device_ops rtl838x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl838x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl838x_set_features,
-	.ndo_fix_features = rtl838x_fix_features,
 	.ndo_setup_tc = rtl83xx_setup_tc,
 };
 
@@ -2885,8 +2828,6 @@ static const struct net_device_ops rtl839x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl839x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl839x_set_features,
-	.ndo_fix_features = rtl838x_fix_features,
 	.ndo_setup_tc = rtl83xx_setup_tc,
 };
 
@@ -2899,8 +2840,6 @@ static const struct net_device_ops rtl930x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl930x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl930x_set_features,
-	.ndo_fix_features = rtl838x_fix_features,
 	.ndo_setup_tc = rtl83xx_setup_tc,
 };
 
@@ -2913,8 +2852,6 @@ static const struct net_device_ops rtl931x_eth_netdev_ops = {
 	.ndo_validate_addr = eth_validate_addr,
 	.ndo_set_rx_mode = rtl931x_eth_set_multicast_list,
 	.ndo_tx_timeout = rtl838x_eth_tx_timeout,
-	.ndo_set_features = rtl931x_set_features,
-	.ndo_fix_features = rtl838x_fix_features,
 };
 
 static const struct phylink_mac_ops rtl838x_phylink_ops = {
