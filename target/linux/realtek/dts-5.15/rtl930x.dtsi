@@ -85,6 +85,184 @@
 		#size-cells = <1>;
 		ranges = <0x0 0x18000000 0x10000>;
 
+		i2c0: i2c0@1b00036c {
+			reg = <0x1b00036c 0x1c>;
+			compatible = "realtek,rtl9300-i2c", "realtek,rtl930x-i2c";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			scl-pin = <8>;
+
+			status = "disabled";
+		};
+
+		i2c1: i2c1@1b000388 {
+			reg = <0x1b000388 0x1c>;
+			compatible = "realtek,rtl9300-i2c", "realtek,rtl930x-i2c";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			scl-pin = <17>;
+
+			status = "disabled";
+		};
+
+		i2cmux0 {
+			compatible = "realtek,i2c-mux-rtl9300", "realtek,i2c-mux-rtl930x";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			i2c-parent = <&i2c0>;
+
+			i2c0_0: i2c0@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <9>;
+				status = "disabled";
+			};
+
+			i2c0_1: i2c0@1 {
+				reg = <1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <10>;
+				status = "disabled";
+			};
+
+			i2c0_2: i2c0@2 {
+				reg = <2>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <11>;
+				status = "disabled";
+			};
+
+			i2c0_3: i2c0@3 {
+				reg = <3>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <12>;
+				status = "disabled";
+			};
+
+			i2c0_4: i2c0@4 {
+				reg = <4>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <13>;
+				status = "disabled";
+			};
+
+			i2c0_5: i2c0@5 {
+				reg = <5>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <14>;
+				status = "disabled";
+			};
+
+			i2c0_6: i2c0@6 {
+				reg = <6>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <15>;
+				status = "disabled";
+			};
+
+			i2c0_7: i2c0@7 {
+				reg = <7>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <16>;
+				status = "disabled";
+			};
+		};
+
+		i2cmux1 {
+			compatible = "realtek,i2c-mux-rtl9300", "realtek,i2c-mux-rtl930x";
+			#address-cells = <1>;
+			#size-cells = <0>;
+			i2c-parent = <&i2c1>;
+
+			i2c1_0: i2c1@0 {
+				reg = <0>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <9>;
+				status = "disabled";
+			};
+
+			i2c1_1: i2c1@1 {
+				reg = <1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <10>;
+				status = "disabled";
+			};
+
+			i2c1_2: i2c1@2 {
+				reg = <2>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <11>;
+				status = "disabled";
+			};
+
+			i2c1_3: i2c1@3 {
+				reg = <3>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <12>;
+				status = "disabled";
+			};
+
+			i2c1_4: i2c1@4 {
+				reg = <4>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <13>;
+				status = "disabled";
+			};
+
+			i2c1_5: i2c0@5 {
+				reg = <5>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <14>;
+				status = "disabled";
+			};
+
+			i2c1_6: i2c1@6 {
+				reg = <6>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <15>;
+				status = "disabled";
+			};
+
+			i2c1_7: i2c1@7 {
+				reg = <7>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				sda-pin = <16>;
+				status = "disabled";
+			};
+		};
+
 		intc: interrupt-controller@3000 {
 			compatible = "realtek,rtl9300-intc", "realtek,rtl-intc";
 			reg = <0x3000 0x18>, <0x3018 0x18>;
