@@ -9,37 +9,25 @@
 #include "rtl9301_common_24p.dtsi"
 
 / {
-	compatible = "whitelabel,ws-sw-24p-4s+r1_v1.0", "realtek,rtl9301-soc", "realtek,rtl930x-soc";
-	model = "Whitelabel 24 POE+ 4 SFP+ v1.0 Switch";
-
-	i2c_gpio: i2c2 {
-		compatible = "i2c-gpio";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		scl-gpios = <&gpio0 7 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
-		sda-gpios = <&gpio0 8 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
-	};
+	compatible = "mestechs,msg9424", "realtek,rtl9301-soc", "realtek,rtl930x-soc";
+	model = "Mestechs MSG9424 Switch";
 
 	led_set {
 		compatible = "realtek,rtl9301-leds", "realtek,rtl930x-leds";
-		active-high;
 
 		led_set0 = /bits/ 16 <
 			/* LED0 */
 			(
 				RTL93XX_LED_SET_LINK_ACTIVITY |
 				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_2P_1G_LINK |
+				RTL93XX_LED_SET_1000M_LINK |
 				RTL93XX_LED_SET_500M_LINK |
 				RTL93XX_LED_SET_100M_LINK |
 				RTL93XX_LED_SET_10M_LINK
 			)
 			/* LED1 */
-			(
-				RTL93XX_LED_SET_LINK_ACTIVITY |
-				RTL93XX_LED_SET_LINK_UP_SOLID |
-				RTL93XX_LED_SET_2P_1G_LINK |
-				RTL93XX_LED_SET_1000M_LINK
-			)
+			RTL93XX_LED_SET_NONE
 			/* LED2 */
 			RTL93XX_LED_SET_NONE
 			/* LED3 */
@@ -50,14 +38,11 @@
 			(
 				RTL93XX_LED_SET_LINK_ACTIVITY |
 				RTL93XX_LED_SET_LINK_UP_SOLID |
-				RTL93XX_LED_SET_10G_LINK
-			)
-			/* LED1 */
-			(
-				RTL93XX_LED_SET_LINK_ACTIVITY |
-				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_10G_LINK |
 				RTL93XX_LED_SET_1000M_LINK
 			)
+			/* LED1 */
+			RTL93XX_LED_SET_NONE
 			/* LED2 */
 			RTL93XX_LED_SET_NONE
 			/* LED3 */
@@ -66,41 +51,61 @@
 	};
 
 	memory@0 {
-		reg = <0x0 0x10000000>; /* 256 MiB */
+		reg = <0x0 0x8000000>; /* 128 MiB */
 		device_type = "memory";
 	};
 
 	sfp0: sfp0 {
 		compatible = "sff,sfp";
-		i2c-bus = <&i2c_gpio>;
+		i2c-bus = <&i2c0_0>;
 		los-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
-		tx-disable-gpios = <&gpio0 12 GPIO_ACTIVE_LOW>;
+		tx-disable-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
 	};
 
 	sfp1: sfp1 {
 		compatible = "sff,sfp";
-//		i2c-bus = <&i2c0_1>;
-		los-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
-		tx-disable-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		i2c-bus = <&i2c0_1>;
+//		los-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+//		tx-disable-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
 	};
 
 	sfp2: sfp2 {
 		compatible = "sff,sfp";
-//		i2c-bus = <&i2c0_2>;
-		los-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
-		tx-disable-gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+		i2c-bus = <&i2c0_2>;
+//		los-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+//		tx-disable-gpios = <&gpio0 18 GPIO_ACTIVE_LOW>;
 	};
 
 	sfp3: sfp3 {
 		compatible = "sff,sfp";
-//		i2c-bus = <&i2c0_3>;
-		los-gpios = <&gpio0 19 GPIO_ACTIVE_HIGH>;
-		tx-disable-gpios = <&gpio0 18 GPIO_ACTIVE_LOW>;
+		i2c-bus = <&i2c0_3>;
+//		los-gpios = <&gpio0 19 GPIO_ACTIVE_HIGH>;
+//		tx-disable-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>;
 	};
 };
 
+&i2c0 {
+	status = "okay";
+};
+
+&i2c0_0 {
+	status = "okay";
+};
+
+&i2c0_1 {
+	status = "okay";
+};
+
+&i2c0_2 {
+	status = "okay";
+};
+
+&i2c0_3 {
+	status = "okay";
+};
+
 &reset_button {
-	gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+	gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
 
 	status = "okay";
 };
@@ -110,7 +115,7 @@
 
 	flash@0 {
 		reg = <0>;
-		compatible = "winbond,w25q256jv", "jedec,spi-nor";
+		compatible = "winbond,w25q128jv", "jedec,spi-nor";
 		spi-max-frequency = <133000000>;
 
 		partitions: partitions {
@@ -130,7 +135,7 @@
 			};
 
 			partition@f0000 {
-				reg = <0xf0000 0x1f10000>;
+				reg = <0xf0000 0xf10000>;
 				compatible = "openwrt,uimage", "denx,uimage";
 				label = "firmware";
 				openwrt,ih-magic = <0x93000000>;
@@ -152,8 +157,7 @@
 			reg = <0>;
 			label = "lan1";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy0>;
@@ -164,8 +168,7 @@
 			reg = <1>;
 			label = "lan2";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy1>;
@@ -176,8 +179,7 @@
 			reg = <2>;
 			label = "lan3";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy2>;
@@ -188,8 +190,7 @@
 			reg = <3>;
 			label = "lan4";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy3>;
@@ -200,8 +201,7 @@
 			reg = <4>;
 			label = "lan5";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy4>;
@@ -212,8 +212,7 @@
 			reg = <5>;
 			label = "lan6";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy5>;
@@ -224,8 +223,7 @@
 			reg = <6>;
 			label = "lan7";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy6>;
@@ -236,8 +234,7 @@
 			reg = <7>;
 			label = "lan8";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy7>;
@@ -248,8 +245,7 @@
 			reg = <8>;
 			label = "lan9";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy8>;
@@ -260,8 +256,7 @@
 			reg = <9>;
 			label = "lan10";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy9>;
@@ -272,8 +267,7 @@
 			reg = <10>;
 			label = "lan11";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy10>;
@@ -284,8 +278,7 @@
 			reg = <11>;
 			label = "lan12";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy11>;
@@ -296,8 +289,7 @@
 			reg = <12>;
 			label = "lan13";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy12>;
@@ -308,8 +300,7 @@
 			reg = <13>;
 			label = "lan14";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy13>;
@@ -320,8 +311,7 @@
 			reg = <14>;
 			label = "lan15";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy14>;
@@ -332,8 +322,7 @@
 			reg = <15>;
 			label = "lan16";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy15>;
@@ -344,8 +333,7 @@
 			reg = <16>;
 			label = "lan17";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy16>;
@@ -356,8 +344,7 @@
 			reg = <17>;
 			label = "lan18";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy17>;
@@ -368,8 +355,7 @@
 			reg = <18>;
 			label = "lan19";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy18>;
@@ -379,11 +365,10 @@
 		port@19 {
 			reg = <19>;
 			label = "lan20";
-			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
-			)>;
 			led-set = <0>;
+			led-num = <(
+				RTL93XX_LED_NUM0 /* Lime */
+			)>;
 			phy-handle = <&phy19>;
 			phy-mode = "xgmii";
 		};
@@ -392,8 +377,7 @@
 			reg = <20>;
 			label = "lan21";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy20>;
@@ -404,8 +388,7 @@
 			reg = <21>;
 			label = "lan22";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy21>;
@@ -416,8 +399,7 @@
 			reg = <22>;
 			label = "lan23";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy22>;
@@ -428,8 +410,7 @@
 			reg = <23>;
 			label = "lan24";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <0>;
 			phy-handle = <&phy23>;
@@ -440,8 +421,7 @@
 			reg = <24>;
 			label = "lan25";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <1>;
 			phy-handle = <&phy24>;
@@ -454,8 +434,7 @@
 			reg = <25>;
 			label = "lan26";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <1>;
 			phy-handle = <&phy25>;
@@ -468,8 +447,7 @@
 			reg = <26>;
 			label = "lan27";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <1>;
 			phy-handle = <&phy26>;
@@ -482,8 +460,7 @@
 			reg = <27>;
 			label = "lan28";
 			led-num = <(
-				RTL93XX_LED_NUM0 | /* Lime */
-				RTL93XX_LED_NUM1   /* Orange */
+				RTL93XX_LED_NUM0 /* Lime */
 			)>;
 			led-set = <1>;
 			phy-handle = <&phy27>;

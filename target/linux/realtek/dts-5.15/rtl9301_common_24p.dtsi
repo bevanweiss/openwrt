@@ -195,7 +195,3 @@
 		};
 	};
 };
-
-&status_led {
-	status = "okay";
-};

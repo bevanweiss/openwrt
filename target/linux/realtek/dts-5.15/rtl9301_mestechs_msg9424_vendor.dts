@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/dts-v1/;
+
+#include "rtl9301_mestechs_msg9424.dts"
+
+/ {
+	model = "Mestechs MSG9424 Switch (vendor)";
+};
+
+&partitions {
+	/delete-node/ partition@f0000;
+	partition@f0000 {
+		reg = <0xf0000 0x10000>;
+		label = "u-boot-sysenv";
+	};
+
+	partition@100000 {
+		reg = <0x100000 0x100000>;
+		label = "jffs2-cfg";
+	};
+
+	partition@200000 {
+		reg = <0x200000 0x100000>;
+		label = "jffs2-log";
+	};
+
+	partition@600000 {
+		reg = <0x300000 0xc00000>;
+		label = "firmware";
+	};
+
+	partition@1300000 {
+		reg = <0xf00000 0x10000>;
+		label = "oeminfo";
+	};
+};

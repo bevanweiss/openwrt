@@ -16,6 +16,24 @@ define Device/initramfs
     uImage lzma
 endef
 
+define Device/mestechs_msg9424
+  $(Device/kernel)
+  $(Device/initramfs)
+  DEVICE_MODEL := msg9424
+  DEVICE_VENDOR := Mestechs
+  IMAGE_SIZE := 31808k
+  SOC := rtl9301
+  UIMAGE_MAGIC := 0x93000000
+endef
+TARGET_DEVICES += mestechs_msg9424
+
+define Device/mestechs_msg9424_vendor
+  $(Device/mestechs_msg9424)
+  DEVICE_MODEL := MSG9424 (vendor)
+  IMAGE_SIZE := 7232k
+endef
+TARGET_DEVICES += mestechs_msg9424_vendor
+
 define Device/whitelabel_ws-sw-24p-4s_r1_v1.0
   $(Device/kernel)
   $(Device/initramfs)
