@@ -1024,15 +1024,8 @@ static void rtl838x_hw_reset(struct rtl838x_eth_priv *priv)
 		            0,
 		            priv->r->mac_port_ctrl(priv->cpu_port));
 		break;
-	case RTL9300_FAMILY_ID:
-		sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
-		            0,
-		            priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
+	case RTL9300_FAMILY_ID: fallthrough;
 	case RTL9310_FAMILY_ID:
-		sw_w32_mask(RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
-		            0,
-		            priv->r->mac_port_ctrl(priv->cpu_port));
 		break;
 	default:
 		pr_err("%s: Unsupported chip family: 0x%x\n", __func__, priv->family_id);
@@ -1272,40 +1265,10 @@ static void rtl93xx_hw_en_rxtx(struct rtl838x_eth_priv *priv)
 	            RTL930X_DMA_IF_CTRL_TX_EN,
 	            priv->r->dma_if_ctrl);
 
-	sw_w32_mask(0,
-	            RTL930X_MAC_L2_PORT_CTRL_TXRX_EN |
-	            RTL930X_MAC_L2_PORT_CTRL_RX_CHK_CRC_EN,
-	            priv->r->mac_port_ctrl(priv->cpu_port));
-
 	if (priv->family_id == RTL9300_FAMILY_ID)
 		sw_w32_mask(0, BIT(priv->cpu_port), RTL930X_L2_UNKN_UC_FLD_PMSK);
 	else
 		sw_w32_mask(0, BIT(priv->cpu_port), RTL931X_L2_UNKN_UC_FLD_PMSK);
-
-	switch (priv->family_id) {
-	case RTL9300_FAMILY_ID:
-		sw_w32(RTL930X_MAC_FORCE_MODE_CTRL_FC_EN |
-		       FIELD_PREP(RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL930X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
-		       RTL930X_MAC_FORCE_MODE_CTRL_DUP_SEL |
-		       RTL930X_MAC_FORCE_MODE_CTRL_LINK_EN |
-		       RTL930X_MAC_FORCE_MODE_CTRL_EN,
-		       priv->r->mac_force_mode_ctrl(priv->cpu_port));
-		break;
-	case RTL9310_FAMILY_ID:
-		sw_w32_mask(0, BIT(priv->cpu_port), RTL931X_L2_UNKN_UC_FLD_PMSK);
-		sw_w32(FIELD_PREP(RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL, RTL931X_MAC_FORCE_MODE_CTRL_SPD_SEL_1000M) |
-		       RTL931X_MAC_FORCE_MODE_CTRL_DUP_SEL |
-		       RTL931X_MAC_FORCE_MODE_CTRL_EN |
-		       RTL931X_MAC_FORCE_MODE_CTRL_FC_EN |
-		       RTL931X_MAC_FORCE_MODE_CTRL_SPD_EN |
-		       RTL931X_MAC_FORCE_MODE_CTRL_DUP_EN |
-		       RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN,
-		       priv->r->mac_force_mode_ctrl(priv->cpu_port));
-		break;
-	default:
-		pr_err("%s Unsupported chip family: %d\n", __func__, priv->family_id);
-		break;
-	}
 }
 
 static void rtl838x_setup_ring_buffer(struct rtl838x_eth_priv *priv, struct ring_b *ring)
@@ -1423,9 +1386,6 @@ static int rtl838x_eth_open(struct net_device *ndev)
 		/* Trap MLD and IGMP messages to CPU_PORT */
 		sw_w32((0x2 << 3) | 0x2,  RTL931X_VLAN_APP_PKT_CTRL);
 
-		/* Disable External CPU access to switch, clear EXT_CPU_EN */
-		sw_w32_mask(BIT(2), 0, RTL931X_MAC_L2_GLOBAL_CTRL2);
-
 		/* Set PCIE_PWR_DOWN */
 		sw_w32_mask(0, BIT(1), RTL931X_PS_SOC_CTRL);
 		break;
@@ -1452,13 +1412,8 @@ static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 		sw_w32_mask(RTL839X_MAC_PORT_CTRL_TXRX_EN,
 			    0, priv->r->mac_port_ctrl(priv->cpu_port));
 		break;
-	case RTL9300_FAMILY_ID:
-		sw_w32_mask(RTL930X_MAC_L2_PORT_CTRL_TXRX_EN,
-			    0, priv->r->mac_port_ctrl(priv->cpu_port));
-		break;
+	case RTL9300_FAMILY_ID: fallthrough;
 	case RTL9310_FAMILY_ID:
-		sw_w32_mask(RTL931X_MAC_L2_PORT_CTRL_TXRX_EN,
-			    0, priv->r->mac_port_ctrl(priv->cpu_port));
 		break;
 	default:
 		pr_err("%s: Unsupported chip family: %d\n", __func__, priv->family_id);
@@ -1538,15 +1493,8 @@ static void rtl838x_hw_stop(struct rtl838x_eth_priv *priv)
 		       RTL839X_MAC_FORCE_MODE_CTRL_EN,
 		       priv->r->mac_force_mode_ctrl(priv->cpu_port));
 		break;
-	case RTL9300_FAMILY_ID:
-		sw_w32_mask(RTL930X_MAC_FORCE_MODE_CTRL_EN |
-		            RTL930X_MAC_FORCE_MODE_CTRL_EN,
-		            0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
-		break;
+	case RTL9300_FAMILY_ID: fallthrough;
 	case RTL9310_FAMILY_ID:
-		sw_w32_mask(RTL931X_MAC_FORCE_MODE_CTRL_LINK_EN |
-		            RTL931X_MAC_FORCE_MODE_CTRL_EN,
-		            0, priv->r->mac_force_mode_ctrl(priv->cpu_port));
 		break;
 	default:
 		pr_warn("%s Unsupported chip family: %d\n", __func__, priv->family_id);
