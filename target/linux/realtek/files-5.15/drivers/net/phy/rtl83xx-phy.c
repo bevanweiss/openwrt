@@ -3988,7 +3988,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 	{
 		PHY_ID_MATCH_MODEL(PHY_ID_RTL9300_I),
 		.name		= "REALTEK RTL9300 SERDES",
-		.features	= PHY_GBIT_FIBRE_FEATURES,
+		.features	= PHY_10GBIT_FULL_FEATURES,
 		.flags		= PHY_HAS_REALTEK_PAGES,
 		.probe		= rtl9300_serdes_probe,
 		.suspend	= genphy_suspend,
