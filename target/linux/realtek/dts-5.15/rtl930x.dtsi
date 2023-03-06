@@ -133,8 +133,8 @@
 		};
 
 		i2c0: i2c0@1b00036c {
-			reg = <0x1b00036c 0x1c>;
-			compatible = "realtek,rtl9300-i2c", "realtek,rtl930x-i2c";
+			reg = <0x1b00036c 0x30>;
+			compatible = "realtek,rtl930x-i2c";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			scl-pin = <8>;
@@ -143,17 +143,18 @@
 		};
 
 		i2c1: i2c1@1b000388 {
-			reg = <0x1b000388 0x1c>;
-			compatible = "realtek,rtl9300-i2c", "realtek,rtl930x-i2c";
+			reg = <0x1b00036c 0x30>;
+			compatible = "realtek,rtl930x-i2c";
 			#address-cells = <1>;
-			#size-cells = <0>;
+			#size-cells = <1>;
 			scl-pin = <17>;
 
 			status = "disabled";
 		};
 
-		i2cmux0 {
-			compatible = "realtek,i2c-mux-rtl9300", "realtek,i2c-mux-rtl930x";
+		i2cmux0: i2cmux@0 {
+			reg = <0>;
+			compatible = "realtek,i2c-mux-rtl930x";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			i2c-parent = <&i2c0>;
@@ -231,8 +232,9 @@
 			};
 		};
 
-		i2cmux1 {
-			compatible = "realtek,i2c-mux-rtl9300", "realtek,i2c-mux-rtl930x";
+		i2cmux1: i2cmux@1 {
+			reg = <1>;
+			compatible = "realtek,i2c-mux-rtl930x";
 			#address-cells = <1>;
 			#size-cells = <0>;
 			i2c-parent = <&i2c1>;

@@ -434,7 +434,7 @@ static int rtl9300_i2c_remove(struct platform_device *pdev)
 	return 0;
 }
 
-struct i2c_drv_data rtl9300_i2c_drv_data = {
+struct i2c_drv_data rtl930x_i2c_drv_data = {
 	.scl0_pin = 8,
 	.scl1_pin = 17,
 	.sda0_pin = 9,
@@ -448,7 +448,7 @@ struct i2c_drv_data rtl9300_i2c_drv_data = {
 	.mst2_offset = 0x1c,
 };
 
-struct i2c_drv_data rtl9310_i2c_drv_data = {
+struct i2c_drv_data rtl931x_i2c_drv_data = {
 	.scl0_pin = 13,
 	.scl1_pin = 14,
 	.sda0_pin = 0,
@@ -462,24 +462,38 @@ struct i2c_drv_data rtl9310_i2c_drv_data = {
 	.mst2_offset = 0x18,
 };
 
-static const struct of_device_id i2c_rtl9300_dt_ids[] = {
-	{ .compatible = "realtek,rtl9300-i2c", .data = (void *) &rtl9300_i2c_drv_data },
-	{ .compatible = "realtek,rtl9310-i2c", .data = (void *) &rtl9310_i2c_drv_data },
+static const struct of_device_id i2c_rtl93xx_dt_ids[] = {
+	{ .compatible = "realtek,longan-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl930x-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9301-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9302-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9302a-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9302b-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9302c-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9302d-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9302e-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9302f-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9303-i2c", .data = &rtl930x_i2c_drv_data },
+	{ .compatible = "realtek,mango-i2c", .data = &rtl931x_i2c_drv_data },
+	{ .compatible = "realtek,rtl931x-i2c", .data = &rtl931x_i2c_drv_data },
+	{ .compatible = "realtek,rtl931x-i2c", .data = &rtl931x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9311-i2c", .data = &rtl931x_i2c_drv_data },
+	{ .compatible = "realtek,rtl9313-i2c", .data = &rtl931x_i2c_drv_data },
 	{ /* sentinel */ }
 };
-MODULE_DEVICE_TABLE(of, rtl838x_eth_of_ids);
+MODULE_DEVICE_TABLE(of, i2c_rtl93xx_dt_ids);
 
-static struct platform_driver rtl9300_i2c_driver = {
+static struct platform_driver rtl93xx_i2c_driver = {
 	.probe		= rtl9300_i2c_probe,
 	.remove		= rtl9300_i2c_remove,
 	.driver		= {
-		.name	= "i2c-rtl9300",
+		.name	= "i2c-rtl93xx",
 		.pm 	= NULL,
-		.of_match_table = i2c_rtl9300_dt_ids,
+		.of_match_table = i2c_rtl93xx_dt_ids,
 	},
 };
 
-module_platform_driver(rtl9300_i2c_driver);
+module_platform_driver(rtl93xx_i2c_driver);
 
 MODULE_AUTHOR("Birger Koblitz");
 MODULE_DESCRIPTION("RTL9300 I2C host driver");

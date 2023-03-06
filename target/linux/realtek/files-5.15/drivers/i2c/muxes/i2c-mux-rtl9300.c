@@ -123,9 +123,9 @@ static struct device_node *mux_parent_adapter(struct device *dev, struct rtl9300
 	if (!parent)
 		return ERR_PTR(-EPROBE_DEFER);
 
-	if (!(of_device_is_compatible(parent_np, "realtek,rtl9300-i2c") ||
-	    of_device_is_compatible(parent_np, "realtek,rtl9310-i2c"))){
-		dev_err(dev, "I2C parent not an RTL9300 I2C controller\n");
+	if (!(of_device_is_compatible(parent_np, "realtek,rtl930x-i2c") ||
+	    of_device_is_compatible(parent_np, "realtek,rtl931x-i2c"))){
+		dev_err(dev, "I2C parent not an RTL93xx I2C controller\n");
 		return ERR_PTR(-ENODEV);
 	}
 
@@ -156,13 +156,25 @@ struct i2c_mux_data rtl9310_i2c_mux_data = {
 	.sda_sel = rtl9310_sda_sel,
 };
 
-static const struct of_device_id rtl9300_i2c_mux_of_match[] = {
-	{ .compatible = "realtek,i2c-mux-rtl9300", .data = (void *) &rtl9300_i2c_mux_data},
-	{ .compatible = "realtek,i2c-mux-rtl9310", .data = (void *) &rtl9310_i2c_mux_data},
+static const struct of_device_id rtl93xx_i2c_mux_of_match[] = {
+	{ .compatible = "realtek,i2c-mux-longan", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl930x", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9301", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9302", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9302a", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9302b", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9302c", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9302e", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9302d", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9302f", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9303", .data = &rtl930x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-mango", .data = &rtl931x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl931x", .data = &rtl931x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9311", .data = &rtl931x_i2c_mux_data},
+	{ .compatible = "realtek,i2c-mux-rtl9313", .data = &rtl931x_i2c_mux_data},
 	{},
 };
-
-MODULE_DEVICE_TABLE(of, rtl9300_i2c_mux_of_match);
+MODULE_DEVICE_TABLE(of, rtl93xx_i2c_mux_of_match);
 
 static int rtl9300_i2c_mux_probe(struct platform_device *pdev)
 {
@@ -278,15 +290,15 @@ static int rtl9300_i2c_mux_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static struct platform_driver i2c_mux_driver = {
+static struct platform_driver rtl93xx_i2c_mux_driver = {
 	.probe	= rtl9300_i2c_mux_probe,
 	.remove	= rtl9300_i2c_mux_remove,
 	.driver	= {
-		.name	= "i2c-mux-rtl9300",
-		.of_match_table = rtl9300_i2c_mux_of_match,
+		.name	= "i2c-mux-rtl93xx",
+		.of_match_table = rtl93xx_i2c_mux_of_match,
 	},
 };
-module_platform_driver(i2c_mux_driver);
+module_platform_driver(rtl93xx_i2c_mux_driver);
 
 MODULE_DESCRIPTION("RTL9300 I2C multiplexer driver");
 MODULE_AUTHOR("Birger Koblitz");
