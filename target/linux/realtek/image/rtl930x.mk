@@ -58,6 +58,7 @@ define Device/ubiquiti-usw-aggregation
   DEVICE_MODEL := USW-Aggregation
   DEVICE_VENDOR := Ubiquiti
   IMAGE_SIZE := 15424k
+  SOC := rtl9303
   UIMAGE_MAGIC := 0x93001210
 endef
 TARGET_DEVICES += ubiquiti-usw-aggregation
