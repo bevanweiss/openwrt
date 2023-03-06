@@ -13,19 +13,9 @@
 
 #include "../busses/i2c-rtl9300.h"
 
-#define NUM_MASTERS		2
-#define NUM_BUSSES		8
-
 #define REG(mst, x)	(mux->base + x + (mst ? mux->i2c->mst2_offset : 0))
 #define REG_MASK(mst, clear, set, reg)	\
 			writel((readl(REG((mst),(reg))) & ~(clear)) | (set), REG((mst),(reg)))
-
-struct channel {
-	u8 sda_num;
-	u8 scl_num;
-};
-
-static struct channel channels[NUM_MASTERS * NUM_BUSSES];
 
 struct rtl9300_mux {
 	void __iomem *base;
@@ -35,10 +25,8 @@ struct rtl9300_mux {
 };
 
 struct i2c_mux_data  {
-	int scl0_pin;
-	int scl1_pin;
-	int sda0_pin;
-	int sda_pins;
+	int sda_first_pin;
+	int sda_last_pin;
 	int (*i2c_mux_select)(struct i2c_mux_core *muxc, u32 chan);
 	int (*i2c_mux_deselect)(struct i2c_mux_core *muxc, u32 chan);
 	void (*sda_sel)(struct i2c_mux_core *muxc, int pin);
@@ -48,16 +36,9 @@ static int rtl9300_i2c_mux_select(struct i2c_mux_core *muxc, u32 chan)
 {
 	struct rtl9300_mux *mux = i2c_mux_priv(muxc);
 
-	/* Set SCL pin */
-	REG_MASK(channels[chan].scl_num, 0,
-		 BIT(RTL9300_I2C_CTRL1_GPIO8_SCL_SEL), RTL9300_I2C_CTRL1);
-
 	/* Set SDA pin */
-	REG_MASK(channels[chan].scl_num, 0x7 << RTL9300_I2C_CTRL1_SDA_OUT_SEL,
-		 channels[chan].sda_num << RTL9300_I2C_CTRL1_SDA_OUT_SEL, RTL9300_I2C_CTRL1);
-
-	mux->i2c->sda_num = channels[chan].sda_num;
-	mux->i2c->scl_num = channels[chan].scl_num;
+	REG_MASK(mux->i2c->scl_num, RTL9300_I2C_CTRL1_SDA_OUT_SEL_MASK,
+		 chan << RTL9300_I2C_CTRL1_SDA_OUT_SEL, RTL9300_I2C_CTRL1);
 
 	return 0;
 }
@@ -66,16 +47,9 @@ static int rtl9310_i2c_mux_select(struct i2c_mux_core *muxc, u32 chan)
 {
 	struct rtl9300_mux *mux = i2c_mux_priv(muxc);
 
-	/* Set SCL pin */
-	REG_MASK(0, 0, BIT(RTL9310_I2C_MST_IF_SEL_GPIO_SCL_SEL + channels[chan].scl_num),
-		 RTL9310_I2C_MST_IF_SEL);
-
 	/* Set SDA pin */
-	REG_MASK(channels[chan].scl_num, 0xf << RTL9310_I2C_CTRL_SDA_OUT_SEL,
-		 channels[chan].sda_num << RTL9310_I2C_CTRL_SDA_OUT_SEL, RTL9310_I2C_CTRL);
-
-	mux->i2c->sda_num = channels[chan].sda_num;
-	mux->i2c->scl_num = channels[chan].scl_num;
+	REG_MASK(mux->i2c->scl_num, RTL9310_I2C_CTRL_SDA_OUT_SEL_MASK,
+		 chan << RTL9310_I2C_CTRL_SDA_OUT_SEL, RTL9310_I2C_CTRL);
 
 	return 0;
 }
@@ -136,21 +110,17 @@ static struct device_node *mux_parent_adapter(struct device *dev, struct rtl9300
 	return parent_np;
 }
 
-struct i2c_mux_data rtl9300_i2c_mux_data = {
-	.scl0_pin = 8,
-	.scl1_pin = 17,
-	.sda0_pin = 9,
-	.sda_pins = 8,
+struct i2c_mux_data rtl930x_i2c_mux_data = {
+	.sda_first_pin = 9,
+	.sda_last_pin = 16,
 	.i2c_mux_select = rtl9300_i2c_mux_select,
 	.i2c_mux_deselect = rtl9300_i2c_mux_deselect,
 	.sda_sel = rtl9300_sda_sel,
 };
 
-struct i2c_mux_data rtl9310_i2c_mux_data = {
-	.scl0_pin = 13,
-	.scl1_pin = 14,
-	.sda0_pin = 0,
-	.sda_pins = 16,
+struct i2c_mux_data rtl931x_i2c_mux_data = {
+	.sda_first_pin = 0,
+	.sda_last_pin = 16,
 	.i2c_mux_select = rtl9310_i2c_mux_select,
 	.i2c_mux_deselect = rtl9300_i2c_mux_deselect,
 	.sda_sel = rtl9310_sda_sel,
@@ -221,51 +191,26 @@ static int rtl9300_i2c_mux_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, muxc);
 
-	for_each_child_of_node(node, child) {
-		u32 chan;
+	for_each_available_child_of_node(node, child) {
 		u32 pin;
 
-		ret = of_property_read_u32(child, "reg", &chan);
-		if (ret < 0) {
-			dev_err(dev, "no reg property for node '%pOFn'\n",
-				child);
-			goto err_children;
-		}
-
-		if (chan >= NUM_MASTERS * NUM_BUSSES) {
-			dev_err(dev, "invalid reg %u\n", chan);
-			ret = -EINVAL;
-			goto err_children;
-		}
-
-		if (of_property_read_u32(child, "scl-pin", &pin)) {
-			dev_warn(dev, "SCL pin not found in DT, using default\n");
-			pin = mux_data->scl0_pin;
-		}
-		if (!(pin == mux_data->scl0_pin || pin == mux_data->scl1_pin)) {
-			dev_warn(dev, "SCL pin %d not supported\n", pin);
-			ret = -EINVAL;
-			goto err_children;
-		}
-		channels[chan].scl_num = pin == mux_data->scl0_pin ? 0 : 1;
-		pr_info("%s channel %d scl_num %d\n", __func__, chan, channels[chan].scl_num);
-
 		if (of_property_read_u32(child, "sda-pin", &pin)) {
-			dev_warn(dev, "SDA pin not found in DT, using default \n");
-			pin = mux_data->sda0_pin;
+			dev_warn(dev, "SDA pin not found in DT\n");
+			ret = -EINVAL;
+			goto err_children;
 		}
-		channels[chan].sda_num = pin - mux_data->sda0_pin;
-		if (channels[chan].sda_num < 0 || channels[chan].sda_num >= mux_data->sda_pins) {
+		if ((pin < mux_data->sda_first_pin) || (pin > mux_data->sda_last_pin)) {
 			dev_warn(dev, "SDA pin %d not supported\n", pin);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto err_children;
 		}
-		pr_info("%s channel %d sda_num %d\n", __func__, chan, channels[chan].sda_num);
+		mux_data->sda_sel(muxc, pin);
 
-		mux_data->sda_sel(muxc, channels[chan].sda_num);
-
-		ret = i2c_mux_add_adapter(muxc, 0, chan, 0);
+		ret = i2c_mux_add_adapter(muxc, 0, pin, 0);
 		if (ret)
 			goto err_children;
+
+		dev_info(dev, "mux sda_num %d configured\n", pin);
 	}
 
 	dev_info(dev, "%d-port mux on %s adapter\n", children, mux->parent->name);

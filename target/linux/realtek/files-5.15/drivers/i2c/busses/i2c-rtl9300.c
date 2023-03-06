@@ -11,7 +11,6 @@
 struct i2c_drv_data {
 	int scl0_pin;
 	int scl1_pin;
-	int sda0_pin;
 	struct i2c_algorithm *algo;
 	int (*read)(struct rtl9300_i2c *i2c, u8 *buf, int len);
 	int (*write)(struct rtl9300_i2c *i2c, u8 *buf, int len);
@@ -20,7 +19,7 @@ struct i2c_drv_data {
 	int (*execute_xfer)(struct rtl9300_i2c *i2c, char read_write, int size,
 			    union i2c_smbus_data * data, int len);
 	void (*writel)(struct rtl9300_i2c *i2c, u32 data);
-	void (*config_io)(struct rtl9300_i2c *i2c, int scl_num, int sda_num);
+	void (*config_io)(struct rtl9300_i2c *i2c, int scl_num);
 	u32 mst2_offset;
 };
 
@@ -47,38 +46,20 @@ static void rtl9310_i2c_reg_addr_set(struct rtl9300_i2c *i2c, u32 reg, u16 len)
 	writel(reg, REG(i2c, RTL9310_I2C_MEMADDR));
 }
 
-static void rtl9300_i2c_config_io(struct rtl9300_i2c *i2c, int scl_num, int sda_num)
+static void rtl9300_i2c_config_io(struct rtl9300_i2c *i2c, int scl_num)
 {
 	u32 v;
 
 	/* Set SCL pin */
 	REG_MASK(i2c, 0, BIT(RTL9300_I2C_CTRL1_GPIO8_SCL_SEL), RTL9300_I2C_CTRL1);
-
-	/* Set SDA pin */
-	REG_MASK(i2c, 0x7 << RTL9300_I2C_CTRL1_SDA_OUT_SEL,
-		 i2c->sda_num << RTL9300_I2C_CTRL1_SDA_OUT_SEL, RTL9300_I2C_CTRL1);
-
-	/* Set SDA pin to I2C functionality */
-	v = readl(i2c->base + RTL9300_I2C_MST_GLB_CTRL);
-	v |= BIT(i2c->sda_num);
-	writel(v, i2c->base + RTL9300_I2C_MST_GLB_CTRL);
 }
 
-static void rtl9310_i2c_config_io(struct rtl9300_i2c *i2c, int scl_num, int sda_num)
+static void rtl9310_i2c_config_io(struct rtl9300_i2c *i2c, int scl_num)
 {
 	u32 v;
 
 	/* Set SCL pin */
 	REG_MASK(i2c, 0, BIT(RTL9310_I2C_MST_IF_SEL_GPIO_SCL_SEL + scl_num), RTL9310_I2C_MST_IF_SEL);
-
-	/* Set SDA pin */
-	REG_MASK(i2c, 0x7 << RTL9310_I2C_CTRL_SDA_OUT_SEL,
-		 i2c->sda_num << RTL9310_I2C_CTRL_SDA_OUT_SEL, RTL9310_I2C_CTRL);
-
-	/* Set SDA pin to I2C functionality */
-	v = readl(i2c->base + RTL9310_I2C_MST_IF_SEL);
-	v |= BIT(i2c->sda_num);
-	writel(v, i2c->base + RTL9310_I2C_MST_IF_SEL);
 }
 
 static int rtl9300_i2c_config_xfer(struct rtl9300_i2c *i2c, u16 addr, u16 len)
@@ -386,8 +367,8 @@ static int rtl9300_i2c_probe(struct platform_device *pdev)
 	dev_info(&pdev->dev, "SCL speed %d, mode is %d\n", clock_freq, i2c->bus_freq);
 
 	if (of_property_read_u32(node, "scl-pin", &pin)) {
-		dev_warn(i2c->dev, "SCL pin not found in DT, using default\n");
-		pin = drv_data->scl0_pin;
+		dev_warn(i2c->dev, "SCL pin not found in DT, this is mandatory.\n");
+		return -EINVAL;
 	}
 	if (!(pin == drv_data->scl0_pin || pin == drv_data->scl1_pin)) {
 		dev_warn(i2c->dev, "SCL pin %d not supported\n", pin);
@@ -396,16 +377,10 @@ static int rtl9300_i2c_probe(struct platform_device *pdev)
 	i2c->scl_num = pin == drv_data->scl0_pin ? 0 : 1;
 	pr_info("%s scl_num %d\n", __func__, i2c->scl_num);
 
-	if (of_property_read_u32(node, "sda-pin", &pin)) {
-		dev_warn(i2c->dev, "SDA pin not found in DT, using default \n");
-		pin = drv_data->sda0_pin;
-	}
-	i2c->sda_num = pin - drv_data->sda0_pin;
-	if (i2c->sda_num < 0 || i2c->sda_num > 7) {
-		dev_warn(i2c->dev, "SDA pin %d not supported\n", pin);
+	if (of_get_next_child(node, NULL)) {
+		dev_err(i2c->dev, "may not contain children, always use the mux.\n");
 		return -EINVAL;
 	}
-	pr_info("%s sda_num %d\n", __func__, i2c->sda_num);
 
 	adap = &i2c->adap;
 	adap->owner = THIS_MODULE;
@@ -418,7 +393,7 @@ static int rtl9300_i2c_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, i2c);
 
-	drv_data->config_io(i2c, i2c->scl_num, i2c->sda_num);
+	drv_data->config_io(i2c, i2c->scl_num);
 
 	ret = i2c_add_adapter(adap);
 
@@ -437,7 +412,6 @@ static int rtl9300_i2c_remove(struct platform_device *pdev)
 struct i2c_drv_data rtl930x_i2c_drv_data = {
 	.scl0_pin = 8,
 	.scl1_pin = 17,
-	.sda0_pin = 9,
 	.read = rtl9300_i2c_read,
 	.read = rtl9300_i2c_write,
 	.reg_addr_set = rtl9300_i2c_reg_addr_set,
@@ -451,7 +425,6 @@ struct i2c_drv_data rtl930x_i2c_drv_data = {
 struct i2c_drv_data rtl931x_i2c_drv_data = {
 	.scl0_pin = 13,
 	.scl1_pin = 14,
-	.sda0_pin = 0,
 	.read = rtl9310_i2c_read,
 	.read = rtl9310_i2c_write,
 	.reg_addr_set = rtl9310_i2c_reg_addr_set,
