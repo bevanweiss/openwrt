@@ -6,16 +6,20 @@
 	#address-cells = <1>;
 	#size-cells = <1>;
 
-	compatible = "realtek,rtl838x-soc";
+	compatible = "realtek,rtl838x-soc", "realtek,rtl930x-soc";
 
 	cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		frequency = <800000000>;
+		mips-hpt-frequency = <800000000>;
 
 		cpu@0 {
+			device_type = "cpu";
 			compatible = "mips,mips34Kc";
 			reg = <0>;
+
+			clocks = <&cpu_clk>;
 		};
 	};
 
@@ -34,6 +38,44 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	ext_clk: ext_clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <25000000>;
+	};
+	cpu_clk: cpu_clk {
+		/*#clock-cells = <0>;
+		clocks = <&ext_clk>;
+		clock-names = "ref";
+		compatible = "realtek,rtl930x-pllclk";*/
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <800000000>;
+	};
+	lx_clk: lx_clk {
+		/*#clock-cells = <1>;
+		clocks = <&ext_clk>;
+		clock-names = "ref";
+		compatible = "realtek,rtl930x-pllclk";*/
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency  = <175000000>;
+	};
+	mem_clk: mem_clk {
+		/*#clock-cells = <1>;
+		clocks = <&ext_clk>;
+		clock-names = "ref";
+		compatible = "realtek,rtl930x-pllclk";*/
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <600000000>;
+	};
+	usb_clk: usb_clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency  = <30000000>;
+	};
+
 	cpuintc: cpuintc {
 		compatible = "mti,cpu-interrupt-controller";
 		#address-cells = <0>;
@@ -41,13 +83,7 @@
 		interrupt-controller;
 	};
 
-	lx_clk: lx_clk {
-		compatible = "fixed-clock";
-		#clock-cells = <0>;
-		clock-frequency  = <175000000>;
-	};
-
-	soc: soc {
+	soc: soc@18000000 {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -63,12 +99,25 @@
 			interrupts = <2>, <3>, <4>, <5>, <6>, <7>;
 		};
 
-		spi0: spi@1200 {
-			compatible = "realtek,rtl8380-spi";
+		qspi0: spi@1200 {
+			compatible = "realtek,rtl930x-spi";
 			reg = <0x1200 0x100>;
+			clocks = <&lx_clk>;
 
 			#address-cells = <1>;
 			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		i2c0: i2c-rtl9300@1b00036c {
+			compatible = "realtek,rtl9300-i2c";
+			reg = <0x1b00036c 0x3c>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <10>;
+			scl-pin = <8>;
+			clock-frequency = <100000>;
+			status = "disabled";
 		};
 
 		timer0: timer@3200 {
@@ -109,8 +158,6 @@
 			reg-shift = <2>;
 			fifo-size = <1>;
 			no-loopback-test;
-
-			status = "disabled";
 		};
 
 		watchdog0: watchdog@3260 {
@@ -141,9 +188,96 @@
 			interrupts = <13 1>;
 		};
 
+		usbh_ehci: usbh-ehci@21000 { 			// USBH EHCI controller
+			compatible = "generic-ehci";
+			reg = <0x21000 0x1000>;
+			clocks = <&usb_clk>;
+			/*resets = <&rcc USBH_R>;*/
+			interrupt-parent = <&intc>;
+			interrupts = <28 0>;
+			phys = <&usb_phy>;
+			status = "disabled";
+		};
+
+		usb_phy: usb-phy {
+			compatible = "realtek,rtl930x-usb-phy";
+			phy-names = "usb-phy";
+			status = "diabled";
+		};
 	};
 
-	pinmux_led: pinmux@1b00cc00 {
+	i2cmux {
+		compatible = "realtek,i2c-mux-rtl9300";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		i2c-parent = <&i2c0>;
+
+		i2c0_sda9: i2c-rtl9300-1@1 {
+			reg = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <9>;
+			scl-pin = <8>;
+		};
+
+		i2c0_sda10: i2c-rtl9300-2@2 {
+			reg = <2>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <10>;
+			scl-pin = <8>;
+		};
+
+		i2c0_sda11: i2c-rtl9300-3@3 {
+			reg = <3>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <11>;
+			scl-pin = <8>;
+		};
+
+		i2c0_sda12: i2c-rtl9300-4@4 {
+			reg = <4>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <12>;
+			scl-pin = <8>;
+		};
+
+		i2c0_sda13: i2c-rtl9300-5@5 {
+			reg = <5>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <13>;
+			scl-pin = <8>;
+		};
+
+		i2c0_sda14: i2c-rtl9300-6@6 {
+			reg = <6>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <14>;
+			scl-pin = <8>;
+		};
+
+		i2c0_sda15: i2c-rtl9300-7@7 {
+			reg = <7>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <15>;
+			scl-pin = <8>;
+		};
+
+		i2c0_sda16: i2c-rtl9300-8@8 {
+			reg = <8>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			sda-pin = <16>;
+			scl-pin = <8>;
+		};
+	};
+
+	pmx_led: pinmux@1b00cc00 {
 		compatible = "pinctrl-single";
 		reg = <0x1b00cc00 0x4>;
 
@@ -151,15 +285,11 @@
 		pinctrl-single,register-width = <32>;
 		pinctrl-single,function-mask = <0x1>;
 		#pinctrl-cells = <2>;
-
-		/* enable GPIO 0 */
-		pinmux_disable_sys_led: disable_sys_led {
-			pinctrl-single,bits = <0x0 0x0 0x1000>;
-		};
 	};
 
 	ethernet0: ethernet@1b00a300 {
-		compatible = "realtek,rtl838x-eth";
+		//TODO: Driver should be updated with compatible rtl930x
+		compatible = "realtek,rtl838x-eth","realtek,rtl930x-eth";
 		reg = <0x1b00a300 0x100>;
 
 		interrupt-parent = <&intc>;
@@ -171,13 +301,37 @@
 			speed = <1000>;
 			full-duplex;
 		};
+
+		mdio: mdio-bus {
+			//TODO: Driver should be updated with compatible rtl930x
+			compatible = "realtek,rtl838x-mdio","realtek,rtl930x-mdio";
+			regmap = <&ethernet0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
 	};
 
-	switch0: switch@1b000000 {
-		compatible = "realtek,rtl83xx-switch";
+	switch0: switch0 {
+		//TODO: Driver should be updated with compatible rtl930x
+		compatible = "realtek,rtl83xx-switch","realtek,rtl930x-switch";
 		status = "okay";
 
 		interrupt-parent = <&intc>;
 		interrupts = <23 2>;
+
+		switch0_ports: ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@28 {
+				ethernet = <&ethernet0>;
+				reg = <28>;
+				phy-mode = "internal";
+				fixed-link {
+					speed = <10000>;
+					full-duplex;
+				};
+			};
+		};
 	};
 };
