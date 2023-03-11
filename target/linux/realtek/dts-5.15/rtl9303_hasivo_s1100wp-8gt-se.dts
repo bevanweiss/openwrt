@@ -1,0 +1,225 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+/dts-v1/;
+
+#include "rtl9303.dtsi"
+
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/leds/common.h>
+
+/ {
+	compatible = "hasivo,s110pwp-8gt-se";
+	model = "Hasivo S1100WP-8GT-SE Switch";
+
+	aliases {
+		led-boot = &led_pwr;
+		led-failsafe = &led_sys;
+		led-running = &led_sys;
+		led-upgrade = &led_sys;
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		mode {
+			label = "reset";
+			gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_RESTART>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinmux_disable_sys_led>;
+
+		led_pwr: led-0 {
+			label = "green:power";
+			color = <LED_COLOR_ID_GREEN>;
+			function = LED_FUNCTION_POWER;
+			gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
+		};
+		led_sys: led-1 {
+			label = "green:system";
+			color = <LED_COLOR_ID_GREEN>;
+			function = LED_FUNCTION_STATUS;
+			gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	led_set: led_set@0 {
+		compatible = "realtek,rtl9300-leds";
+		led_set0 = <0xffff 0x0a01 0x0a01 0x0ba0>;
+	};
+
+	/* enable GPIO 0 */
+	pinmux_disable_sys_led: disable_sys_led {
+		pinctrl-single,bits = <0x0 0x0 0x1000>;
+	};
+
+};
+
+&qspi0 {
+	status = "okay";
+	flash: fm25q128@0 {
+		compatible = "jedec,spi-nor","fudan,fm25q128";
+		reg = <0>;
+		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <4>;
+		spi-max-frequency = <104000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x0 0xe0000>;
+				read-only;
+			};
+			partition@e0000 {
+				label = "u-boot-env";
+				reg = <0xe0000 0x10000>;
+			};
+			partition@f0000 {
+				label = "u-boot-env2";
+				reg = <0xf0000 0x10000>;
+				read-only;
+			};
+			partition@100000 {
+				label = "jffs2-cfg";
+				reg = <0x100000 0x100000>;
+			};
+			partition@200000 {
+				label = "jffs2-log";
+				reg = <0x200000 0x100000>;
+			};
+			partition@300000 {
+				label = "firmware";
+				reg = <0x300000 0xc00000>;
+				compatible = "openwrt,uimage", "denx,uimage";
+			};
+			partition@f00000 {
+				label = "oeminfo";
+				reg = <0xf00000 0x100000>;
+				read-only;
+			};
+		};
+	};
+};
+
+/*
+	gpio_hc595: gpio_spi@1 {
+		compatible = "fairchild,74hc595";
+		reg = <0>;
+		registers-number = <3>;
+		spi-max-frequency = <100000>;
+		enable-gpios = <&gpio 10/14 GPIO_ACTIVE_HIGH>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+};
+*/
+
+&i2c0_sda9 {
+		/* Port1 - Port4 */
+		hs104pti@1A {
+			compatible = "hasivo,hs104pti";
+			reg = <0x1A>;
+		};
+		/* Port5 - Port8 */
+		hs104pti@2A {
+			compatible = "hasivo,hs104pti";
+			reg = <0x2A>;
+		};
+};
+
+&mdio {
+	/* 8x RTL8221/RTL8226 PHYs */
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <0 0>;
+	};
+	phy8: ethernet-phy@8 {
+		reg = <8>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <0 1>;
+	};
+	phy16: ethernet-phy@16 {
+		reg = <16>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <0 2>;
+	};
+	phy20: ethernet-phy@20 {
+		reg = <20>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <0 3>;
+	};
+	phy24: ethernet-phy@24 {
+		reg = <24>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <1 0>;
+	};
+	phy25: ethernet-phy@25 {
+		reg = <25>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <1 1>;
+	};
+	phy26: ethernet-phy@26 {
+		reg = <26>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <1 2>;
+	};
+	phy27: ethernet-phy@27 {
+		reg = <27>;
+		compatible = "ethernet-phy-ieee802.3-c2","ethernet-phy-ieee802.3-c45";
+		rtl9300,smi-address = <1 3>;
+	};
+};
+
+&switch0_ports {
+	port@0 {
+		phy-handle = <&phy0>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+	port@8 {
+		phy-handle = <&phy8>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+	port@16 {
+		phy-handle = <&phy16>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+	port@20 {
+		phy-handle = <&phy20>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+	port@24 {
+		phy-handle = <&phy24>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+	port@25 {
+		phy-handle = <&phy25>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+	port@26 {
+		phy-handle = <&phy26>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+	port@27 {
+		phy-handle = <&phy27>;
+		phy-mode = "hsgmii";
+		led-set = <0>;
+	};
+};
