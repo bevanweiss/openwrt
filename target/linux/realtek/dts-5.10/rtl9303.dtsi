@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/dts-v1/;
+
+#include "rtl930x.dtsi"
+
+&switch0_ports {
+	port@0 {
+		reg = <0>;
+		label = "lan1";
+	};
+	port@8 {
+		reg = <8>;
+		label = "lan2";
+	};
+	port@16 {
+		reg = <16>;
+		label = "lan3";
+	};
+	port@20 {
+		reg = <20>;
+		label = "lan4";
+	};
+	port@24 {
+		reg = <24>;
+		label = "lan5";
+	};
+	port@25 {
+		reg = <25>;
+		label = "lan6";
+	};
+	port@26 {
+		reg = <26>;
+		label = "lan7";
+	};
+	port@27 {
+		reg = <27>;
+		label = "lan8";
+	};
+};
