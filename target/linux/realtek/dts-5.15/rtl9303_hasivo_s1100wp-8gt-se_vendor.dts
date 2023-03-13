@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/dts-v1/;
+
+#include "rtl9303_hasivo_s1100wp-8gt-se.dts"
+
+/ {
+	model = "Hasivo S1100WP-8GT_SE (vendor)";
+};
+
+&partitions {
+	/delete-node/ partition@f0000;
+
+		partition@f0000 {
+			label = "u-boot-env2";
+			reg = <0xf0000 0x10000>;
+			read-only;
+		};
+		partition@100000 {
+			label = "jffs2-cfg";
+			reg = <0x100000 0x100000>;
+		};
+		partition@200000 {
+			label = "jffs2-log";
+			reg = <0x200000 0x100000>;
+		};
+		partition@300000 {
+			label = "firmware";
+			reg = <0x300000 0xc00000>;
+			compatible = "openwrt,uimage", "denx,uimage";
+		};
+		partition@f00000 {
+			label = "oeminfo";
+			reg = <0xf00000 0x100000>;
+			read-only;
+		};
+};

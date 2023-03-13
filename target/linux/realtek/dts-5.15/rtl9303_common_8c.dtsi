@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+
+/ {
+
+};
+
+&ethernet0 {
+	mdio0: mdio-bus {
+		compatible = "realtek,rtl9303-mdio", "realtek,rtl930x-mdio", "realtek,rtl838x-mdio";
+		regmap = <&ethernet0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* 8 2.5GbE / 5GbE / 10GbE External PHYs */
+		phy0: ethernet-phy@0 {
+			reg = <0>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			sds = <2>;
+			rtl9300,smi-address = <0 0>;
+		};
+
+		phy8: ethernet-phy@8 {
+			compatible = "ethernet-phy-ieee802.3-c45";
+			reg = <8>;
+			sds = <3>;
+			rtl9300,smi-address = <0 1>;
+		};
+
+		phy16: ethernet-phy@16 {
+			reg = <16>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			sds = <4>;
+			rtl9300,smi-address = <0 2>;
+		};
+
+		phy20: ethernet-phy@20 {
+			reg = <20>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			sds = <5>;
+			rtl9300,smi-address = <0 3>;
+		};
+
+		phy24: ethernet-phy@24 {
+			reg = <24>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			sds = <6>;
+			rtl9300,smi-address = <1 0>;
+		};
+
+		phy25: ethernet-phy@25 {
+			reg = <25>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			sds = <7>;
+			rtl9300,smi-address = <1 1>;
+		};
+
+		phy26: ethernet-phy@26 {
+			reg = <26>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			sds = <8>;
+			rtl9300,smi-address = <1 2>;
+		};
+
+		phy27: ethernet-phy@27 {
+			reg = <27>;
+			compatible = "ethernet-phy-ieee802.3-c45";
+			sds = <9>;
+			rtl9300,smi-address = <1 3>;
+		};
+	};
+};

@@ -1,0 +1,237 @@
+// SPDX-License-Identifier: (GPL-2.0-or-later OR MIT)
+/dts-v1/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include <dt-bindings/leds/leds-realtek.h>
+
+#include "rtl9303.dtsi"
+#include "rtl9303_common_8c.dtsi"
+
+/ {
+	compatible = "hasivo,s1100wp-8gt_se", "realtek,rtl9303-soc", "realtek,rtl930x-soc";
+	model = "Hasivo S1100WP-8GT_SE Switch";
+
+/*
+	i2c_gpio {
+		compatible = "i2c-gpio";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		i2c-gpio,delay-us = <2>;
+		scl-gpios = <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+		sda-gpios = <&gpio0 23 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
+	};
+*/
+
+	led_set {
+		compatible = "realtek,rtl9303-leds", "realtek,rtl9300-leds";
+		active-high;
+		led_set0 = /bits/ 16 <
+			/* LED0 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_10G_LINK
+			)
+			/* LED1 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_2G5_LINK
+			)
+			/* LED2 */
+			(
+				RTL93XX_LED_SET_LINK_ACTIVITY |
+				RTL93XX_LED_SET_LINK_UP_SOLID |
+				RTL93XX_LED_SET_1000M_LINK |
+				RTL93XX_LED_SET_100M_LINK |
+				RTL93XX_LED_SET_10M_LINK
+			)
+		>;
+	};
+
+	memory@0 {
+		reg = <0x0 0x10000000>; /* 256 MiB */
+		device_type = "memory";
+	};
+
+	leds {
+		system_led: led_status {
+			color = <LED_COLOR_ID_GREEN>;
+			function = LED_FUNCTION_HEARTBEAT;
+			gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+			heartbeat;
+		};
+	};
+};
+/*
+&crypto0 {
+	status = "disabled";
+};
+*/
+&reset_button {
+	status = "okay";
+	gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
+};
+
+&status_led {
+	status = "okay";
+};
+
+&spi0 {
+	status = "okay";
+	flash@0 {
+		compatible = "fudan,fm25q128", "winbond,w25q256jv", "jedec,spi-nor";
+		reg = <0>;
+		/*spi-tx-width = <4>;*/
+		/*spi-rx-width = <4>;*/
+		/*spi-max-frequency = <104000000>;*/
+		spi-max-frequency = <10000000>;
+
+		partitions: partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				reg = <0x0 0xe0000>;
+				label = "u-boot";
+				read-only;
+			};
+
+			partition@e0000 {
+				reg = <0xe0000 0x10000>;
+				label = "u-boot-env";
+			};
+
+			partition@f0000 {
+				reg = <0xf0000 0x1f10000>;
+				compatible = "openwrt,uimage", "denx,uimage";
+				label = "firmware";
+			};
+		};
+	};
+};
+
+&switch0 {
+	switch0_ports: ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@0 {
+			reg = <0>;
+			label = "lan1";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy0>;
+			phy-mode = "hsgmii";
+		};
+
+		port@8 {
+			reg = <8>;
+			label = "lan2";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy8>;
+			phy-mode = "hsgmii";
+		};
+
+		port@16 {
+			reg = <16>;
+			label = "lan3";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy16>;
+			phy-mode = "hsgmii";
+		};
+
+		port@20 {
+			reg = <20>;
+			label = "lan4";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy20>;
+			phy-mode = "hsgmii";
+		};
+
+		port@24 {
+			reg = <24>;
+			label = "lan5";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy24>;
+			phy-mode = "hsgmii";
+		};
+
+		port@25 {
+			reg = <25>;
+			label = "lan6";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy25>;
+			phy-mode = "hsgmii";
+		};
+
+		port@26 {
+			reg = <26>;
+			label = "lan7";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy26>;
+			phy-mode = "hsgmii";
+		};
+
+		port@27 {
+			reg = <27>;
+			label = "lan8";
+			led-num = <(
+				RTL93XX_LED_NUM0 | /* Lime */
+				RTL93XX_LED_NUM1 | /* Lime */
+				RTL93XX_LED_NUM2   /* Lime */
+			)>;
+			led-set = <0>;
+			phy-handle = <&phy27>;
+			phy-mode = "hsgmii";
+		};
+
+		/* Internal SoC <-> Switch ethernet connection */
+		port@28 {
+			reg = <28>;
+			ethernet = <&ethernet0>;
+			phy-mode = "internal";
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+			};
+		};
+	};
+};

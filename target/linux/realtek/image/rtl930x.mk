@@ -16,6 +16,23 @@ define Device/initramfs
     uImage lzma
 endef
 
+define Device/hasivo_s1100wp-8gt-se
+  $(Device/kernel)
+  $(Device/initramfs)
+  DEVICE_VENDOR := Hasivo
+  DEVICE_MODEL := S1100WP-8GT-SE
+  IMAGE_SIZE := 8364k
+  SOC := rtl9303
+endef
+TARGET_DEVICES += hasivo_s1100wp-8gt-se
+
+define Device/hasivo_s1100wp-8gt-se_vendor
+  $(Device/hasivo_s1100wp-8gt-se)
+  DEVICE_MODEL := S1100WP-8GT-SE (vendor)
+  IMAGE_SIZE := 8364k
+endef
+TARGET_DEVICES += hasivo_s1100wp-8gt-se_vendor
+
 define Device/mestechs_msg9424
   $(Device/kernel)
   $(Device/initramfs)
