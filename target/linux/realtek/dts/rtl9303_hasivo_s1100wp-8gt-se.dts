@@ -85,6 +85,18 @@
 
 		clock-frequency = <100000>;
 
+		pse-hs104_0@0x0d {
+			compatible = "hasivo,hs104";
+			reg = <0x0d>;
+			status = "okay";
+		};
+
+		pse-hs104_1@0x15 {
+			compatible = "hasivo,hs104";
+			reg = <0x15>;
+			status = "okay";
+		};
+
 		stc8@4d {
 			compatible = "hasivo,stc8-mfd", "syscon";
 			reg = <0x4d>;
@@ -96,6 +108,7 @@
 				compatible = "register-bit-led";
 				reg = <0x01>;
 				mask = <0x08>;
+				trigger = "pse-hs104_0@0x0d:port0enabled";
 				label = "orange:lan1_poe";
 				status = "okay";
 			};
@@ -104,6 +117,7 @@
 				compatible = "register-bit-led";
 				reg = <0x01>;
 				mask = <0x04>;
+				trigger = "pse-hs104_0@0x0d:port1enabled";
 				label = "orange:lan2_poe";
 				status = "okay";
 			};
@@ -112,6 +126,7 @@
 				compatible = "register-bit-led";
 				reg = <0x01>;
 				mask = <0x02>;
+				trigger = "pse-hs104_0@0x0d:port2enabled";
 				label = "orange:lan3_poe";
 				status = "okay";
 			};
@@ -120,6 +135,7 @@
 				compatible = "register-bit-led";
 				reg = <0x01>;
 				mask = <0x01>;
+				trigger = "pse-hs104_0@0x0d:port3enabled";
 				label = "orange:lan4_poe";
 				status = "okay";
 			};
@@ -128,6 +144,7 @@
 				compatible = "register-bit-led";
 				reg = <0x02>;
 				mask = <0x08>;
+				trigger = "pse-hs104_1@0x15:port0enabled";
 				label = "orange:lan5_poe";
 				status = "okay";
 			};
@@ -136,6 +153,7 @@
 				compatible = "register-bit-led";
 				reg = <0x02>;
 				mask = <0x04>;
+				trigger = "pse-hs104_1@0x15:port1enabled";
 				label = "orange:lan6_poe";
 				status = "okay";
 			};
@@ -144,6 +162,7 @@
 				compatible = "register-bit-led";
 				reg = <0x02>;
 				mask = <0x02>;
+				trigger = "pse-hs104_1@0x15:port2enabled";
 				label = "orange:lan7_poe";
 				status = "okay";
 			};
@@ -152,6 +171,7 @@
 				compatible = "register-bit-led";
 				reg = <0x02>;
 				mask = <0x01>;
+				trigger = "pse-hs104_1@0x15:port3enabled";
 				label = "orange:lan8_poe";
 				status = "okay";
 			};
