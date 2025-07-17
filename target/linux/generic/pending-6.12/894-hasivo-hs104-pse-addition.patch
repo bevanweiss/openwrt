@@ -1,0 +1,22 @@
+
+--- a/drivers/net/pse-pd/Kconfig
++++ b/drivers/net/pse-pd/Kconfig
+@@ -42,3 +42,10 @@ config PSE_TPS23881
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called tps23881.
+ endif
++
++config PSE_HASIVO_HS104
++	tristate "Hasivo HS104 PoE PSE Controller"
++	depends on I2C
++	help
++	  Support for the Hasivo HS104 PoE PSE Controller chip.
++	  This driver allows control and monitoring of PoE ports via I2C.
+--- a/drivers/net/pse-pd/Makefile
++++ b/drivers/net/pse-pd/Makefile
+@@ -6,3 +6,4 @@ obj-$(CONFIG_PSE_CONTROLLER) += pse_core
+ obj-$(CONFIG_PSE_REGULATOR) += pse_regulator.o
+ obj-$(CONFIG_PSE_PD692X0) += pd692x0.o
+ obj-$(CONFIG_PSE_TPS23881) += tps23881.o
++obj-$(CONFIG_PSE_HASIVO_HS104) += hasivo_hs104.o
+\ No newline at end of file
