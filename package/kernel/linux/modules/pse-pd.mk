@@ -42,6 +42,24 @@ endef
 
 $(eval $(call KernelPackage,pse-regulator))
 
+
+define KernelPackage/pse-hasivo-hs104
+  SUBMENU:=$(PSE_MENU)
+  TITLE:=Hasivo HS104 PSE controller support
+  KCONFIG:=CONFIG_PSE_HASIVO_HS104
+  DEPENDS:=+kmod-i2c-core @TARGET_realtek
+  FILES:=$(LINUX_DIR)/drivers/net/pse-pd/hasivo_hs104.ko
+  AUTOLOAD:=$(call AutoProbe,hasivo_hs104)
+  $(call AddDepends/pse-pd)
+endef
+
+define KernelPackage/pse-hasivo-hs104/description
+ Kernel module for Hasivo HS104 PSE-PD chips
+endef
+
+$(eval $(call KernelPackage,pse-hasivo-hs104))
+
+
 define KernelPackage/pse-pd692x0
   SUBMENU:=$(PSE_MENU)
   TITLE:=PD692X0 PSE controller support
