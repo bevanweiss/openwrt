@@ -10,6 +10,17 @@ define Device/8devices_kiwi-dvk
 endef
 TARGET_DEVICES += 8devices_kiwi-dvk
 
+define Device/mercusys_mr47be_v1
+	$(call Device/FitImageLzma)
+	DEVICE_VENDOR := Mercusys
+	DEVICE_MODEL := MR47BEv1
+	DEVICE_DTS_CONFIG := config@mercusys-mr47be-v1
+	SOC := ipq9570
+	DEVICE_PACKAGES := kmod-ath12k ath12k-firmware-qcn9224 f2fsck mkf2fs kmod-sfp kmod-phy-maxlinear
+	IMAGE/factory.bin := qsdk-ipq-factory-nor
+endef
+TARGET_DEVICES += mercusys_mr47be_v1
+
 define Device/qcom_rdp433
 	$(call Device/FitImageLzma)
 	DEVICE_VENDOR := Qualcomm Technologies, Inc.
