@@ -413,4 +413,50 @@
 		#interrupt-cells = <3>;
 		interrupts = <GIC_SHARED 15 IRQ_TYPE_LEVEL_HIGH>;
 	};
+
+	usb_clk: usb_clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency  = <30000000>;
+		status = "okay";
+	};
+
+	usbh_ohci: usbh-ohci@20000  {
+		compatible = "generic-ohci";
+		reg = <0x1b020000 0x1000>;
+		clocks = <&usb_clk>;
+
+		interrupt-parent = <&intc>;
+		interrupts = <28 0>;
+
+		phys = <&usb_phy>;
+
+		status = "okay";
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+
+	usbh_ehci: usbh-ehci@21000 {
+		compatible = "generic-ehci";
+		reg = <0x1b021000 0x1000>;
+		clocks = <&usb_clk>;
+
+		/*resets = <&rcc USBH_R>;*/
+		interrupt-parent = <&intc>;
+		interrupts = <36 0>;
+
+		phys = <&usb_phy>;
+		status = "okay";
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+	};
+
+	usb_phy: usb-phy {
+		compatible = "realtek,rtl930x-usb-phy";
+		reg = <0x1b000500 0x000100>;
+		phy-names = "usb-phy";
+		status = "okay";
+	};
 };
