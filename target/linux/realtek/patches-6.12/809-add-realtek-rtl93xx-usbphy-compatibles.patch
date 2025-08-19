@@ -24,7 +24,50 @@
      items:
 --- a/drivers/phy/realtek/phy-rtk-usb2.c
 +++ b/drivers/phy/realtek/phy-rtk-usb2.c
-@@ -1284,6 +1284,70 @@ static const struct phy_cfg rtd1315e_phy
+@@ -194,7 +194,10 @@ static int rtk_phy_write(struct phy_reg
+ 	int ret = 0;
+ 
+ 	/* write data to VStatusOut2 (data output to phy) */
+-	writel((u32)data << shift_bits, reg_wrap_vstatus);
++	val = readl(reg_wrap_vstatus);
++	val &= ~(PHY_REG_DATA_MASK << shift_bits);
++	val |= ((u32)data << shift_bits);
++	writel(val, reg_wrap_vstatus);
+ 
+ 	ret = utmi_wait_register(reg_gusb2phyacc0, PHY_VSTS_BUSY, 0);
+ 	if (ret)
+@@ -975,6 +978,30 @@ static int parse_phy_data(struct rtk_phy
+ 		phy_parameter->phy_reg.reg_gusb2phyacc0 = of_iomap(np, 1) + index;
+ 		phy_parameter->phy_reg.vstatus_index = index;
+ 
++		// HACK, turn on reg_wrap_vstatus for reading phy register before phy initialization
++		writel(0x40000000, phy_parameter->phy_reg.reg_wrap_vstatus);
++
++		// HACK, align with vendor
++		void __iomem *phy_fm   = ioremap(0x18140210, 4); // USB_PHY_FM
++		void __iomem *ehci_cfg = ioremap(0x18140200, 4); // EHCI_EXT_CFG1
++		void __iomem *ehci_portsc = ioremap(0xb8021054, 4);;
++		if (phy_fm && ehci_cfg && ehci_portsc) {
++			writel(0x006A004A, phy_fm);     // vendor USB_PHY_FM
++			writel(0xF002CD11, ehci_cfg);   // vendor EHCI_EXT_CFG1
++			writel(0x00100000, ehci_portsc); // vendor EHCI_PORTSC
++		} else {
++			dev_err(rtk_phy->dev, "Failed to ioremap for phy_fm or ehci_cfg or ehci_portsc\n");
++		}
++
++		if (phy_fm)
++			iounmap(phy_fm);
++		if (ehci_cfg)
++			iounmap(ehci_cfg);
++		if (ehci_portsc)
++			iounmap(ehci_portsc);
++		// END HACK
++
++
+ 		if (of_property_read_bool(np, "realtek,inverse-hstx-sync-clock"))
+ 			phy_parameter->inverse_hstx_sync_clock = true;
+ 		else
+@@ -1284,6 +1311,70 @@ static const struct phy_cfg rtd1315e_phy
  	.is_double_sensitivity_mode = true,
  };
  
@@ -95,7 +138,7 @@
  static const struct of_device_id usbphy_rtk_dt_match[] = {
  	{ .compatible = "realtek,rtd1295-usb2phy", .data = &rtd1295_phy_cfg },
  	{ .compatible = "realtek,rtd1312c-usb2phy", .data = &rtd1312c_phy_cfg },
-@@ -1294,6 +1358,8 @@ static const struct of_device_id usbphy_
+@@ -1294,6 +1385,8 @@ static const struct of_device_id usbphy_
  	{ .compatible = "realtek,rtd1395-usb2phy-2port", .data = &rtd1395_phy_cfg_2port },
  	{ .compatible = "realtek,rtd1619-usb2phy", .data = &rtd1619_phy_cfg },
  	{ .compatible = "realtek,rtd1619b-usb2phy", .data = &rtd1619b_phy_cfg },
@@ -104,3 +147,14 @@
  	{},
  };
  MODULE_DEVICE_TABLE(of, usbphy_rtk_dt_match);
+--- a/drivers/phy/realtek/Kconfig
++++ b/drivers/phy/realtek/Kconfig
+@@ -3,7 +3,7 @@
+ # Phy drivers for Realtek platforms
+ #
+ 
+-if ARCH_REALTEK || COMPILE_TEST
++if ARCH_REALTEK || RTL930X || RTL931X || COMPILE_TEST
+ 
+ config PHY_RTK_RTD_USB2PHY
+ 	tristate "Realtek RTD USB2 PHY Transceiver Driver"
