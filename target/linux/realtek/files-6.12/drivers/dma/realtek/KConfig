@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Realtek DMA drivers
+#
+
+config DMA_RTL9300
+	tristate "Realtek RTL9300 BTG/DMA controller"
+	depends on MACH_REALTEK_RTL || COMPILE_TEST
+	select DMA_ENGINE
+	select DMA_VIRTUAL_CHANNELS
+	help
+	  This selects support for the DMA controller in Realtek RTL9300 SoCs.
+	  If you have a board based on such a SoC and wish to use DMA for
+	  devices which can use the DMA controller, say Y or M here.
