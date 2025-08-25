@@ -1650,6 +1650,7 @@ struct rtmdio_bus_priv {
 	bool smi_bus_isc45[RTMDIO_MAX_SMI_BUS];
 	bool phy_is_internal[RTMDIO_MAX_PORT];
 	phy_interface_t interfaces[RTMDIO_MAX_PORT];
+	void (*set_mdio_bus_c45mode)(int smi_bus, bool c45mode);
 	int (*read_mmd_phy)(u32 port, u32 addr, u32 reg, u32 *val);
 	int (*write_mmd_phy)(u32 port, u32 addr, u32 reg, u32 val);
 	int (*read_phy)(u32 port, u32 page, u32 reg, u32 *val);
@@ -2377,6 +2378,14 @@ static int rtmdio_930x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 	return err;
 }
 
+static void rtmdio_930x_set_mdio_bus_c45mode(int smi_bus, bool c45)
+{
+	if (c45)
+		sw_w32_mask(0, BIT(smi_bus + 16), RTL930X_SMI_GLB_CTRL);
+	else
+		sw_w32_mask(BIT(smi_bus + 16), 0, RTL930X_SMI_GLB_CTRL);
+}
+
 /* Read an mmd register of the PHY */
 static int rtmdio_930x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 {
@@ -2552,6 +2561,14 @@ static int rtmdio_931x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 	return 0;
 }
 
+static void rtmdio_931x_set_mdio_bus_c45mode(int smi_bus, bool c45)
+{
+	if(c45)
+		sw_w32_mask(0, 0x2 << (smi_bus * 2), RTL931X_SMI_GLB_CTRL0);
+	else
+		sw_w32_mask(0x2 << (smi_bus * 2), 0, RTL931X_SMI_GLB_CTRL0);
+}
+
 /* Read an mmd register of the PHY */
 static int rtmdio_931x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 {
@@ -2642,6 +2659,8 @@ static int rtmdio_read_c45(struct mii_bus *bus, int addr, int devnum, int regnum
 	if (addr >= priv->cpu_port)
 		return -ENODEV;
 
+	if(priv->set_mdio_bus_c45mode)
+		(*priv->set_mdio_bus_c45mode)(priv->smi_bus[addr], true);
 	err = (*priv->read_mmd_phy)(addr, devnum, regnum, &val);
 	pr_debug("rd_MMD(adr=%d, dev=%d, reg=%d) = %d, err = %d\n",
 		 addr, devnum, regnum, val, err);
@@ -2715,10 +2734,13 @@ static int rtmdio_read(struct mii_bus *bus, int addr, int regnum)
 		return priv->page[addr];
 
 	priv->raw[addr] = (priv->page[addr] == priv->rawpage);
-	if ((priv->phy_is_internal[addr]) && (priv->sds_id[addr] >= 0))
+	if ((priv->phy_is_internal[addr]) && (priv->sds_id[addr] >= 0)) {
 		return rtmdio_read_sds_phy(priv, priv->sds_id[addr],
 					   priv->page[addr], regnum);
+	}
 
+	if(priv->set_mdio_bus_c45mode)
+		(*priv->set_mdio_bus_c45mode)(priv->smi_bus[addr], false);
 	err = (*priv->read_phy)(addr, priv->page[addr], regnum, &val);
 	pr_debug("rd_PHY(adr=%d, pag=%d, reg=%d) = %d, err = %d\n",
 		 addr, priv->page[addr], regnum, val, err);
@@ -2745,6 +2767,8 @@ static int rtmdio_93xx_read(struct mii_bus *bus, int addr, int regnum)
 						priv->page[addr], regnum);
 	}
 
+	if(priv->set_mdio_bus_c45mode)
+		(*priv->set_mdio_bus_c45mode)(priv->smi_bus[addr], false);
 	err = (*priv->read_phy)(addr, priv->page[addr], regnum, &val);
 	pr_debug("rd_PHY(adr=%d, pag=%d, reg=%d) = %d, err = %d\n",
 		 addr, priv->page[addr], regnum, val, err);
@@ -2762,6 +2786,8 @@ static int rtmdio_write_c45(struct mii_bus *bus, int addr, int devnum, int regnu
 	if (addr >= priv->cpu_port)
 		return -ENODEV;
 
+	if(priv->set_mdio_bus_c45mode)
+		(*priv->set_mdio_bus_c45mode)(priv->smi_bus[addr], true);
 	err = (*priv->write_mmd_phy)(addr, devnum, regnum, val);
 	pr_debug("wr_MMD(adr=%d, dev=%d, reg=%d, val=%d) err = %d\n",
 		 addr, devnum, regnum, val, err);
@@ -2795,6 +2821,8 @@ static int rtmdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
 			return rtmdio_write_sds_phy(priv, priv->sds_id[addr],
 						    priv->page[addr], regnum, val);
 
+		if(priv->set_mdio_bus_c45mode)
+			(*priv->set_mdio_bus_c45mode)(priv->smi_bus[addr], false);
 		err = (*priv->write_phy)(addr, page, regnum, val);
 		pr_debug("wr_PHY(adr=%d, pag=%d, reg=%d, val=%d) err = %d\n",
 			 addr, page, regnum, val, err);
@@ -2833,6 +2861,8 @@ static int rtmdio_93xx_write(struct mii_bus *bus, int addr, int regnum, u16 val)
 							 page, regnum, val);
 		}
 
+		if(priv->set_mdio_bus_c45mode)
+			(*priv->set_mdio_bus_c45mode)(priv->smi_bus[addr], false);
 		err = (*priv->write_phy)(addr, page, regnum, val);
 		pr_debug("wr_PHY(adr=%d, pag=%d, reg=%d, val=%d) err = %d\n",
 			 addr, page, regnum, val, err);
@@ -2907,11 +2937,6 @@ static int rtmdio_930x_reset(struct mii_bus *bus)
 
 	/* Disable POLL_SEL for any SMI bus with a normal PHY (not RTL8295R for SFP+) */
 	sw_w32_mask(poll_ctrl, 0, RTL930X_SMI_GLB_CTRL);
-
-	/* Configure which SMI busses are polled in c45 based on a c45 PHY being on that bus */
-	for (int i = 0; i < RTMDIO_MAX_SMI_BUS; i++)
-		if (priv->smi_bus_isc45[i])
-			c45_mask |= BIT(i + 16);
 
 	pr_info("c45_mask: %08x\n", c45_mask);
 	sw_w32_mask(GENMASK(19, 16), c45_mask, RTL930X_SMI_GLB_CTRL);
@@ -3017,9 +3042,6 @@ static int rtmdio_931x_reset(struct mii_bus *bus)
 	pr_info("%s: WAS RTL931X_MAC_L2_GLOBAL_CTRL2 %08x\n", __func__, sw_r32(RTL931X_MAC_L2_GLOBAL_CTRL2));
 	pr_info("c45_mask: %08x, RTL931X_SMI_GLB_CTRL0 was %X", c45_mask, sw_r32(RTL931X_SMI_GLB_CTRL0));
 	for (int i = 0; i < RTMDIO_MAX_SMI_BUS; i++) {
-		/* bus is polled in c45 */
-		if (priv->smi_bus_isc45[i])
-			c45_mask |= 0x2 << (i * 2);  /* Std. C45, non-standard is 0x3 */
 		/* Enable bus access via MDC */
 		if (mdc_on[i])
 			sw_w32_mask(0, BIT(9 + i), RTL931X_MAC_L2_GLOBAL_CTRL2);
@@ -3145,6 +3167,7 @@ static int rtl838x_mdio_init(struct rtl838x_eth_priv *priv)
 		priv->mii_bus->reset = rtmdio_930x_reset;
 		bus_priv->read_sds_phy = rtmdio_930x_read_sds_phy;
 		bus_priv->write_sds_phy = rtmdio_930x_write_sds_phy;
+		bus_priv->set_mdio_bus_c45mode = rtmdio_930x_set_mdio_bus_c45mode;
 		bus_priv->read_mmd_phy = rtmdio_930x_read_mmd_phy;
 		bus_priv->write_mmd_phy = rtmdio_930x_write_mmd_phy;
 		bus_priv->read_phy = rtmdio_930x_read_phy;
@@ -3157,6 +3180,7 @@ static int rtl838x_mdio_init(struct rtl838x_eth_priv *priv)
 		priv->mii_bus->read = rtmdio_93xx_read;
 		priv->mii_bus->write = rtmdio_93xx_write;
 		priv->mii_bus->reset = rtmdio_931x_reset;
+		bus_priv->set_mdio_bus_c45mode = rtmdio_931x_set_mdio_bus_c45mode;
 		bus_priv->read_mmd_phy = rtmdio_931x_read_mmd_phy;
 		bus_priv->write_mmd_phy = rtmdio_931x_write_mmd_phy;
 		bus_priv->read_phy = rtmdio_931x_read_phy;
@@ -3203,8 +3227,6 @@ static int rtl838x_mdio_init(struct rtl838x_eth_priv *priv)
 
 		if (bus_priv->phy_is_internal[pn] && bus_priv->sds_id[pn] >= 0)
 			bus_priv->smi_bus[pn]= -1;
-		else if (of_device_is_compatible(dn, "ethernet-phy-ieee802.3-c45"))
-			bus_priv->smi_bus_isc45[bus_priv->smi_bus[pn]] = true;
 	}
 
 	dn = of_find_compatible_node(NULL, NULL, "realtek,rtl83xx-switch");
