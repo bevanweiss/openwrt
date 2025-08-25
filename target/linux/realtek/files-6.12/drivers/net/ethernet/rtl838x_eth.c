@@ -2295,8 +2295,11 @@ static int rtmdio_930x_write_phy(u32 port, u32 page, u32 reg, u32 val)
 
 	sw_w32(BIT(port), RTL930X_SMI_ACCESS_PHY_CTRL_0);
 	sw_w32_mask(0xffff << 16, val << 16, RTL930X_SMI_ACCESS_PHY_CTRL_2);
-	v = reg << 20 | page << 3 | 0x1f << 15 | BIT(2) | BIT(0);
+	v = reg << 20 | page << 3 | 0x1f << 15;
 	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32_mask( BIT(1) | BIT(0), BIT(2), RTL930X_SMI_ACCESS_PHY_CTRL_1); /* not MMD, WRITE */
+	barrier();
+	sw_w32_mask(0, BIT(0), RTL930X_SMI_ACCESS_PHY_CTRL_1); /* EXEC */
 
 	do {
 		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
@@ -2321,8 +2324,11 @@ static int rtmdio_930x_read_phy(u32 port, u32 page, u32 reg, u32 *val)
 	mutex_lock(&rtmdio_lock);
 
 	sw_w32_mask(0xffff << 16, port << 16, RTL930X_SMI_ACCESS_PHY_CTRL_2);
-	v = reg << 20 | page << 3 | 0x1f << 15 | 1;
+	v = reg << 20 | page << 3 | 0x1f << 15;
 	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32_mask(BIT(2) | BIT(1) | BIT(0), 0, RTL930X_SMI_ACCESS_PHY_CTRL_1); /* not MMD, not WRITE */
+	barrier();
+	sw_w32_mask(0, BIT(0), RTL930X_SMI_ACCESS_PHY_CTRL_1); /* EXEC */
 
 	do {
 		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
@@ -2358,8 +2364,9 @@ static int rtmdio_930x_write_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 val)
 	/* Set MMD device number and register to write to */
 	sw_w32(devnum << 16 | (regnum & 0xffff), RTL930X_SMI_ACCESS_PHY_CTRL_3);
 
-	v = BIT(2) | BIT(1) | BIT(0); /* WRITE | MMD-access | EXEC */
-	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32_mask(BIT(0), BIT(2) | BIT(1), RTL930X_SMI_ACCESS_PHY_CTRL_1); /* WRITE | MMD-access */
+	barrier();
+	sw_w32_mask(0, BIT(0), RTL930X_SMI_ACCESS_PHY_CTRL_1); /* EXEC */
 
 	do {
 		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
@@ -2384,8 +2391,9 @@ static int rtmdio_930x_read_mmd_phy(u32 port, u32 devnum, u32 regnum, u32 *val)
 	/* Set MMD device number and register to write to */
 	sw_w32(devnum << 16 | (regnum & 0xffff), RTL930X_SMI_ACCESS_PHY_CTRL_3);
 
-	v = BIT(1) | BIT(0); /* MMD-access | EXEC */
-	sw_w32(v, RTL930X_SMI_ACCESS_PHY_CTRL_1);
+	sw_w32_mask(BIT(2) | BIT(0), BIT(1), RTL930X_SMI_ACCESS_PHY_CTRL_1); /* MMD-access */
+	barrier();
+	sw_w32_mask(0, BIT(0), RTL930X_SMI_ACCESS_PHY_CTRL_1); /* EXEC */
 
 	do {
 		v = sw_r32(RTL930X_SMI_ACCESS_PHY_CTRL_1);
