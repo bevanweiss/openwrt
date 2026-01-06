@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: GPL-2.0
+# STC8 MFD binding for Hasivo switches
+# Defines properties for MFD regmap wrapper, LEDs, and PWM
+
+title: "STC8 multi-function device"
+description: |
+  This binding describes the Hasivo STC8 multi-function device.
+  This is an STC8 microcontroller with custom firmware used by Hasivo to
+  provide various functions on their managed switch products.
+  The main known functionality currently is to allow for discrete GPIO control
+  which turns on/off LEDs and controls PWM for fan speed.
+  It is known that for the discrete IO however, the host must send an execute
+  flag (0x40) along with the register write to have the STC8 apply the change.
+  This binding allows for specifying which registers require this execute flag
+  to be set automatically by the MFD driver.
+
+maintainers:
+  - bevan.weiss@gmail.com
+
+properties:
+  compatible:
+    description: >
+      Must be "hasivo,stc8" for the MFD driver to bind.
+    type: string
+    required: true
+
+  reg:
+    description: >
+      I2C address of the STC8 device.
+    type: array of integers
+    required: true
+
+  reg-names:
+    description: >
+      Names of register blocks for the device.
+    type: array of strings
+    required: true
+
+  hasivo,execute-bit-regs:
+    description: >
+      Array of registers for which the execute-bit (0x40) should be
+      automatically ORed on writes.
+    type: array of integers
+    required: false
+
+children:
