@@ -1,0 +1,84 @@
+From fa2f0454174c2f33005f5a6e6f70c7160a15b2a1 Mon Sep 17 00:00:00 2001
+From: "Kory Maincent (Dent Project)" <kory.maincent@bootlin.com>
+Date: Tue, 17 Jun 2025 14:12:00 +0200
+Subject: [PATCH 15/33] net: pse-pd: Introduce attached_phydev to pse control
+
+In preparation for reporting PSE events via ethtool notifications,
+introduce an attached_phydev field in the pse_control structure.
+This field stores the phy_device associated with the PSE PI,
+ensuring that notifications are sent to the correct network
+interface.
+
+The attached_phydev pointer is directly tied to the PHY lifecycle. It
+is set when the PHY is registered and cleared when the PHY is removed.
+There is no need to use a refcount, as doing so could interfere with
+the PHY removal process.
+
+Signed-off-by: Kory Maincent (Dent Project) <kory.maincent@bootlin.com>
+Reviewed-by: Oleksij Rempel <o.rempel@pengutronix.de>
+Link: https://patch.msgid.link/20250617-feature_poe_port_prio-v14-1-78a1a645e2ee@bootlin.com
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+---
+ drivers/net/pse-pd/pse_core.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/pse-pd/pse_core.c b/drivers/net/pse-pd/pse_core.c
+index 4602e26eb8c8..4610c1f0ddd6 100644
+--- a/drivers/net/pse-pd/pse_core.c
++++ b/drivers/net/pse-pd/pse_core.c
+@@ -23,6 +23,7 @@ static LIST_HEAD(pse_controller_list);
+  * @list: list entry for the pcdev's PSE controller list
+  * @id: ID of the PSE line in the PSE controller device
+  * @refcnt: Number of gets of this pse_control
++ * @attached_phydev: PHY device pointer attached by the PSE control
+  */
+ struct pse_control {
+ 	struct pse_controller_dev *pcdev;
+@@ -30,6 +31,7 @@ struct pse_control {
+ 	struct list_head list;
+ 	unsigned int id;
+ 	struct kref refcnt;
++	struct phy_device *attached_phydev;
+ };
+ 
+ static int of_load_single_pse_pi_pairset(struct device_node *node,
+@@ -599,7 +601,8 @@ void pse_control_put(struct pse_control *psec)
+ EXPORT_SYMBOL_GPL(pse_control_put);
+ 
+ static struct pse_control *
+-pse_control_get_internal(struct pse_controller_dev *pcdev, unsigned int index)
++pse_control_get_internal(struct pse_controller_dev *pcdev, unsigned int index,
++			 struct phy_device *phydev)
+ {
+ 	struct pse_control *psec;
+ 	int ret;
+@@ -638,6 +641,7 @@ pse_control_get_internal(struct pse_controller_dev *pcdev, unsigned int index)
+ 	psec->pcdev = pcdev;
+ 	list_add(&psec->list, &pcdev->pse_control_head);
+ 	psec->id = index;
++	psec->attached_phydev = phydev;
+ 	kref_init(&psec->refcnt);
+ 
+ 	return psec;
+@@ -693,7 +697,8 @@ static int psec_id_xlate(struct pse_controller_dev *pcdev,
+ 	return pse_spec->args[0];
+ }
+ 
+-struct pse_control *of_pse_control_get(struct device_node *node)
++struct pse_control *of_pse_control_get(struct device_node *node,
++				       struct phy_device *phydev)
+ {
+ 	struct pse_controller_dev *r, *pcdev;
+ 	struct of_phandle_args args;
+@@ -743,7 +748,7 @@ struct pse_control *of_pse_control_get(struct device_node *node)
+ 	}
+ 
+ 	/* pse_list_mutex also protects the pcdev's pse_control list */
+-	psec = pse_control_get_internal(pcdev, psec_id);
++	psec = pse_control_get_internal(pcdev, psec_id, phydev);
+ 
+ out:
+ 	mutex_unlock(&pse_list_mutex);
+-- 
+2.43.0
+

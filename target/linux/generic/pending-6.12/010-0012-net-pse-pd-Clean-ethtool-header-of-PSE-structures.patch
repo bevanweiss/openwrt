@@ -1,0 +1,30 @@
+From 5385f1e1923ca8131eb143567d509b101a344e06 Mon Sep 17 00:00:00 2001
+From: Kory Maincent <kory.maincent@bootlin.com>
+Date: Fri, 10 Jan 2025 10:40:31 +0100
+Subject: [PATCH 12/33] net: pse-pd: Clean ethtool header of PSE structures
+
+Remove PSE-specific structures from the ethtool header to improve code
+modularity, maintain independent headers, and reduce incremental build
+time.
+
+Signed-off-by: Kory Maincent <kory.maincent@bootlin.com>
+Signed-off-by: Paolo Abeni <pabeni@redhat.com>
+---
+ drivers/net/pse-pd/pse_core.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/pse-pd/pse_core.c b/drivers/net/pse-pd/pse_core.c
+index b0272616a861..4f2a54afc4d0 100644
+--- a/drivers/net/pse-pd/pse_core.c
++++ b/drivers/net/pse-pd/pse_core.c
+@@ -6,6 +6,7 @@
+ //
+ 
+ #include <linux/device.h>
++#include <linux/ethtool.h>
+ #include <linux/of.h>
+ #include <linux/pse-pd/pse.h>
+ #include <linux/regulator/driver.h>
+-- 
+2.43.0
+

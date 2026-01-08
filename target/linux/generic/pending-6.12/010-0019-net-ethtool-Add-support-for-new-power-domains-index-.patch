@@ -1,0 +1,34 @@
+From 1176978ed851952652ddea3685e2f71a0e5d61ff Mon Sep 17 00:00:00 2001
+From: "Kory Maincent (Dent Project)" <kory.maincent@bootlin.com>
+Date: Tue, 17 Jun 2025 14:12:04 +0200
+Subject: [PATCH 19/33] net: ethtool: Add support for new power domains index
+ description
+
+Report the index of the newly introduced PSE power domain to the user,
+enabling improved management of the power budget for PSE devices.
+
+Signed-off-by: Kory Maincent (Dent Project) <kory.maincent@bootlin.com>
+Reviewed-by: Oleksij Rempel <o.rempel@pengutronix.de>
+Link: https://patch.msgid.link/20250617-feature_poe_port_prio-v14-5-78a1a645e2ee@bootlin.com
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
+---
+ drivers/net/pse-pd/pse_core.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/net/pse-pd/pse_core.c b/drivers/net/pse-pd/pse_core.c
+index f2fb7ccbc4c2..7d424c22225e 100644
+--- a/drivers/net/pse-pd/pse_core.c
++++ b/drivers/net/pse-pd/pse_core.c
+@@ -1098,6 +1098,9 @@ int pse_ethtool_get_status(struct pse_control *psec,
+ 	pcdev = psec->pcdev;
+ 	ops = pcdev->ops;
+ 	mutex_lock(&pcdev->lock);
++	if (pcdev->pi[psec->id].pw_d)
++		status->pw_d_id = pcdev->pi[psec->id].pw_d->id;
++
+ 	ret = ops->pi_get_admin_state(pcdev, psec->id, &admin_state);
+ 	if (ret)
+ 		goto out;
+-- 
+2.43.0
+
