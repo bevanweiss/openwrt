@@ -1,0 +1,38 @@
+From: Jan Hoffmann @ 2026-01-13 20:55 UTC (permalink / raw)
+  To: Andrew Lunn, Heiner Kallweit, Russell King, David S. Miller,
+	Eric Dumazet, Jakub Kicinski, Paolo Abeni, Vladimir Oltean,
+	Michael Klein, Daniel Golle, Aleksander Jan Bajkowski, netdev,
+	linux-kernel
+  Cc: Jan Hoffmann
+
+It looks like the configuration of in-band AN only affects SGMII, and it
+is always disabled for 2500Base-X. Adjust the reported capabilities
+accordingly.
+
+This is based on testing using OpenWrt on Zyxel XGS1010-12 rev A1 with
+RTL8226-CG, and Zyxel XGS1210-12 rev B1 with RTL8221B-VB-CG. On these
+devices, 2500Base-X in-band AN is known to work with some SFP modules
+(containing an unknown PHY). However, with the built-in Realtek PHYs,
+no auto-negotiation takes place, irrespective of the configuration of
+the PHY.
+
+Fixes: 10fbd71fc5f9b ("net: phy: realtek: implement configuring in-band an")
+Signed-off-by: Jan Hoffmann <jan@3e8.eu>
+---
+ drivers/net/phy/realtek/realtek_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/phy/realtek/realtek_main.c b/drivers/net/phy/realtek/realtek_main.c
+index 5a7f472bf58e..7b7a48e5082a 100644
+--- a/drivers/net/phy/realtek/realtek_main.c
++++ b/drivers/net/phy/realtek/realtek_main.c
+@@ -1429,6 +1429,7 @@ static unsigned int rtl822x_inband_caps(struct phy_device *phydev,
+ {
+ 	switch (interface) {
+ 	case PHY_INTERFACE_MODE_2500BASEX:
++		return LINK_INBAND_DISABLE;
+	case PHY_INTERFACE_MODE_SGMII:
+ 		return LINK_INBAND_DISABLE | LINK_INBAND_ENABLE;
+ 	default:
+-- 
+2.52.0
