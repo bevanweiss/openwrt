@@ -1,5 +1,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
+define Device/hasivo_s1300wp-8xgt-2xgt-2splus
+  SOC := rtl9313
+  DEVICE_VENDOR := Hasivo
+  DEVICE_MODEL := S1300WP-8XGT-2XGT-2S+
+  DEVICE_PACKAGES += kmod-rtc-pcf8563 kmod-pse-hasivo-hs104 kmod-mfd-hasivo-stc8
+  IMAGE_SIZE := 12288k
+  $(Device/kernel-lzma)
+endef
+TARGET_DEVICES += hasivo_s1300wp-8xgt-2xgt-2splus
+
 define Device/plasmacloud-common
   SOC := rtl9312
   UIMAGE_MAGIC := 0x93100000
