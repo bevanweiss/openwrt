@@ -186,6 +186,9 @@
 		compatible = "fudan,fm25q128", "jedec,spi-nor";
 		reg = <0>;
 		spi-max-frequency = <10000000>;
+		/*spi-max-frequency = <104000000>;*/
+		spi-tx-width = <4>;
+		spi-rx-width = <4>;
 
 		partitions {
 			compatible = "fixed-partitions";
