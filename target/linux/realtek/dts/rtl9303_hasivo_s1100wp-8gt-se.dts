@@ -84,6 +84,78 @@
 		status = "okay";
 
 		clock-frequency = <100000>;
+
+		stc8@4d {
+			compatible = "hasivo,stc8-mfd", "syscon";
+			reg = <0x4d>;
+			hasivo,execute-bit = <0x40>;
+			hasivo,execute-bit-registers = <0x01 0x02>;
+			status = "okay";
+
+			led_lan1_poe {
+				compatible = "register-bit-led";
+				reg = <0x01>;
+				mask = <0x08>;
+				label = "orange:lan1_poe";
+				status = "okay";
+			};
+
+			led_lan2_poe {
+				compatible = "register-bit-led";
+				reg = <0x01>;
+				mask = <0x04>;
+				label = "orange:lan2_poe";
+				status = "okay";
+			};
+
+			led_lan3_poe {
+				compatible = "register-bit-led";
+				reg = <0x01>;
+				mask = <0x02>;
+				label = "orange:lan3_poe";
+				status = "okay";
+			};
+
+			led_lan4_poe {
+				compatible = "register-bit-led";
+				reg = <0x01>;
+				mask = <0x01>;
+				label = "orange:lan4_poe";
+				status = "okay";
+			};
+
+			led_lan5_poe {
+				compatible = "register-bit-led";
+				reg = <0x02>;
+				mask = <0x08>;
+				label = "orange:lan5_poe";
+				status = "okay";
+			};
+
+			led_lan6_poe {
+				compatible = "register-bit-led";
+				reg = <0x02>;
+				mask = <0x04>;
+				label = "orange:lan6_poe";
+				status = "okay";
+			};
+
+			led_lan7_poe {
+				compatible = "register-bit-led";
+				reg = <0x02>;
+				mask = <0x02>;
+				label = "orange:lan7_poe";
+				status = "okay";
+			};
+
+			led_lan8_poe {
+				compatible = "register-bit-led";
+				reg = <0x02>;
+				mask = <0x01>;
+				label = "orange:lan8_poe";
+				status = "okay";
+			};
+		};
 	};
 };
 
