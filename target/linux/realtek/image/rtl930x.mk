@@ -2,6 +2,20 @@
 
 include ./common.mk
 
+define Build/xikestor-nosimg
+  $(STAGING_DIR_HOST)/bin/nosimg-enc -i $@ -o $@.new
+  mv $@.new $@
+endef
+
+define Device/hasivo_fw1100wp-4xs-4xgt
+  SOC := rtl9303
+  DEVICE_VENDOR := Hasivo
+  DEVICE_MODEL := FW1100WP-4XS-4XGT
+  IMAGE_SIZE := 12288k
+  $(Device/kernel-lzma)
+endef
+TARGET_DEVICES += hasivo_fw1100wp-4xs-4xgt
+
 define Device/hasivo_s1100w-8xgt-se
   SOC := rtl9303
   DEVICE_VENDOR := Hasivo
