@@ -1,0 +1,106 @@
+--- a/Documentation/devicetree/bindings/phy/realtek,usb2phy.yaml
++++ b/Documentation/devicetree/bindings/phy/realtek,usb2phy.yaml
+@@ -57,6 +57,12 @@ description: |
+   XHCI controller#1 -- usb2phy -- phy#0
+   XHCI controller#2 -- usb2phy -- phy#0
+ 
++  RTL930x/RTL931x SoCs USB
++  The USB architecture includes one OHCI, and one EHCI controller.
++  There is one USB 2.0 PHY shared between them.
++  OHCI controller -|
++  EHCI controller -+- usb2phy -- phy#0
++
+ properties:
+   compatible:
+     enum:
+@@ -69,6 +75,8 @@ properties:
+       - realtek,rtd1395-usb2phy-2port
+       - realtek,rtd1619-usb2phy
+       - realtek,rtd1619b-usb2phy
++      - realtek,rtl930x-usb2phy
++      - realtek,rtl931x-usb2phy
+ 
+   reg:
+     items:
+--- a/drivers/phy/realtek/phy-rtk-usb2.c
++++ b/drivers/phy/realtek/phy-rtk-usb2.c
+@@ -1284,6 +1284,70 @@ static const struct phy_cfg rtd1315e_phy
+ 	.is_double_sensitivity_mode = true,
+ };
+ 
++static const struct phy_cfg rtl930x_phy_cfg = {
++	.page0_size = MAX_USB_PHY_PAGE0_DATA_SIZE,
++	.page0 = {
++		[0x02] = { 0xe2, 0x3f }, /* HS bias current */
++        [0x04] = { 0xe4, 0x6c }, /* HS drive strength */
++        [0x05] = { 0xe5, 0x55 }, /* Squelch threshold */
++        [0x06] = { 0xe6, 0x03 }, /* Disconnect detect */
++        [0x07] = { 0xe7, 0x81 }, /* HS eye / pre-emphasis */
++	},
++	.page1_size = 8,
++	.page1 = {
++		[0x00] = { 0xe0, 0x21 }, /* HS chirp timing */
++        [0x01] = { 0xe1, 0x44 }, /* FS/LS edge timing */
++        [0x02] = { 0xe2, 0x18 }, /* Elastic buffer */
++        [0x03] = { 0xe3, 0x6a }, /* Clock recovery */
++	},
++	.page2_size = 0,
++	.num_phy = 1,
++	.check_efuse = true,
++	.check_efuse_version = CHECK_EFUSE_V1,
++	.efuse_dc_driving_rate = 1,
++	.dc_driving_mask = 0xf,
++	.efuse_dc_disconnect_rate = EFUS_USB_DC_DIS_RATE,
++	.dc_disconnect_mask = 0xf,
++	.usb_dc_disconnect_at_page0 = true,
++	.do_toggle = true,
++	.do_toggle_driving = false,
++	.driving_updated_for_dev_dis = 0xf,
++	.use_default_parameter = false,
++	.is_double_sensitivity_mode = false,
++};
++
++static const struct phy_cfg rtl931x_phy_cfg = {
++	.page0_size = MAX_USB_PHY_PAGE0_DATA_SIZE,
++	.page0 = {
++		[0x02] = { 0xe2, 0x37 }, /* HS bias current (↓) */
++        [0x04] = { 0xe4, 0x68 }, /* HS drive strength (↓) */
++        [0x05] = { 0xe5, 0x55 }, /* Squelch threshold */
++        [0x06] = { 0xe6, 0x03 }, /* Disconnect detect */
++        [0x07] = { 0xe7, 0x81 }, /* HS eye / pre-emphasis */
++	},
++	.page1_size = 8,
++	.page1 = {
++		[0x00] = { 0xe0, 0x23 }, /* chirp timing (Δ) */
++        [0x01] = { 0xe1, 0x44 }, /* FS/LS edge timing */
++        [0x02] = { 0xe2, 0x18 }, /* Elastic buffer */
++        [0x03] = { 0xe3, 0x6a }, /* Clock recovery */
++	},
++	.page2_size = 0,
++	.num_phy = 1,
++	.check_efuse = true,
++	.check_efuse_version = CHECK_EFUSE_V1,
++	.efuse_dc_driving_rate = 1,
++	.dc_driving_mask = 0xf,
++	.efuse_dc_disconnect_rate = EFUS_USB_DC_DIS_RATE,
++	.dc_disconnect_mask = 0xf,
++	.usb_dc_disconnect_at_page0 = true,
++	.do_toggle = true,
++	.do_toggle_driving = false,
++	.driving_updated_for_dev_dis = 0xf,
++	.use_default_parameter = false,
++	.is_double_sensitivity_mode = false,
++};
++
+ static const struct of_device_id usbphy_rtk_dt_match[] = {
+ 	{ .compatible = "realtek,rtd1295-usb2phy", .data = &rtd1295_phy_cfg },
+ 	{ .compatible = "realtek,rtd1312c-usb2phy", .data = &rtd1312c_phy_cfg },
+@@ -1294,6 +1358,8 @@ static const struct of_device_id usbphy_
+ 	{ .compatible = "realtek,rtd1395-usb2phy-2port", .data = &rtd1395_phy_cfg_2port },
+ 	{ .compatible = "realtek,rtd1619-usb2phy", .data = &rtd1619_phy_cfg },
+ 	{ .compatible = "realtek,rtd1619b-usb2phy", .data = &rtd1619b_phy_cfg },
++	{ .compatible = "realtek,rtl930x-usb2phy", .data = &rtl930x_phy_cfg },
++	{ .compatible = "realtek,rtl931x-usb2phy", .data = &rtl931x_phy_cfg },
+ 	{},
+ };
+ MODULE_DEVICE_TABLE(of, usbphy_rtk_dt_match);
