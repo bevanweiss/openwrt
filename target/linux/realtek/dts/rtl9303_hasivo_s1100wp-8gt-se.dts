@@ -87,6 +87,19 @@
 	};
 };
 
+
+&usb_phy {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinmux_enable_usb_led>;
+	status = "okay";
+};
+&usb_ohci {
+	status = "okay";
+};
+&usb_ehci {
+	status = "okay";
+};
+
 &spi0 {
 	status = "okay";
 
