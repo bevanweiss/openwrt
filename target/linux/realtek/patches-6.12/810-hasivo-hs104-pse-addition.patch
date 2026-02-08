@@ -74,7 +74,7 @@
 \ No newline at end of file
 --- /dev/null
 +++ b/drivers/net/pse-pd/hasivo_hs104.c
-@@ -0,0 +1,445 @@
+@@ -0,0 +1,455 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Hasivo HS104 PoE PSE controller (I2C)
@@ -155,12 +155,14 @@
 +			   unsigned int reg, unsigned int step)
 +{
 +	int ret;
++	__be16 val;
 +
-+	ret = i2c_smbus_read_word_data(priv->client, reg);
-+	if (ret)
++	ret = i2c_smbus_read_i2c_block_data(priv->client, reg, 2, (u8 *)&val);
++	pr_info("%s: Read 0x%04x from reg 0x%02x*%d => %d\n", __func__, be16_to_cpu(val), reg, step, (be16_to_cpu(val) & 0x3fff) * step);
++	if (ret < 0)
 +		return ret;
 +
-+	return (ret & 0x3fff) * step;
++	return (be16_to_cpu(val) & 0x3fff) * step;
 +}
 +
 +static void
@@ -291,7 +293,7 @@
 +	int uV;
 +
 +	uV = hs104_read_be16(priv, HS104_REG_INPUT_V, HS104_uV_STEP);
-+	return (uV < 0) ? uV : 0;
++	return uV;
 +}
 +
 +static int
@@ -307,7 +309,7 @@
 +	mW = hs104_read_be16(priv,
 +			      HS104_REG_PORT0_POWER + 2*id,
 +			      HS104_mW_STEP);
-+	return (mW < 0) ? mW : 0;
++	return mW;
 +}
 +
 +static int
@@ -438,12 +440,15 @@
 +	struct hs104_priv *priv;
 +	int ret;
 +
++	dev_info(dev, "Probing Hasivo HS104 PoE PSE controller\n");
++
 +	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 +	if (!priv)
 +		return -ENOMEM;
 +
 +	priv->client = client;
 +
++	dev_info(dev, "Reading device ID\n");
 +	ret = i2c_smbus_read_byte_data(client, HS104_REG_DEVID);
 +	if (ret < 0)
 +		return ret;
@@ -453,10 +458,12 @@
 +		return -ENXIO;
 +	}
 +
++	dev_info(dev, "Checking for port enable delay property\n");
 +	if (dev->of_node)
 +		of_property_read_u32(dev->of_node, "hasivo,port-enable-delay-ms",
 +			     &priv->port_enable_delay_ms);
 +
++	dev_info(dev, "About to create LED triggers for '%s'\n", dev->of_node ? dev->of_node->name : dev_name(dev));
 +	for (int i = 0; i < HS104_MAX_PORTS; i++) {
 +		struct hs104_port_desc *pled = &priv->port[i];
 +
@@ -485,13 +492,16 @@
 +			return ret;
 +	}
 +
++	dev_info(dev, "Assigning private data\n");
 +	priv->np = dev->of_node;
 +	priv->pcdev.owner = THIS_MODULE;
 +	priv->pcdev.ops = &hs104_ops;
 +	priv->pcdev.dev = dev;
 +	priv->pcdev.types = ETHTOOL_PSE_C33;
 +	priv->pcdev.nr_lines = HS104_MAX_PORTS;
++	priv->pcdev.supp_budget_eval_strategies = PSE_BUDGET_EVAL_STRAT_STATIC;
 +
++	dev_info(dev, "Registering PSE controller\n");
 +	ret = devm_pse_controller_register(dev, &priv->pcdev);
 +	if (ret) {
 +		dev_err(dev, "Failed to register PSE controller: 0x%x\n", ret);

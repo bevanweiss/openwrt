@@ -74,6 +74,16 @@
 		>;
 	};
 
+	vpwr_52v: regulator-vpwr {
+		compatible = "regulator-fixed";
+		regulator-name = "vpwr_52v";
+
+		regulator-min-microvolt = <52000000>;
+		regulator-max-microvolt = <52000000>;
+
+		regulator-always-on;
+	};
+
 	i2c_scl23_sda22 {
 		compatible = "i2c-gpio";
 		#address-cells = <1>;
@@ -84,6 +94,22 @@
 		status = "okay";
 
 		clock-frequency = <100000>;
+
+		pse0: pse0@0x0d {
+			compatible = "hasivo,hs104pti";
+			reg = <0x0d>;
+			#pse-cells = <1>;
+			vpwr-supply = <&vpwr_52v>;
+			status = "okay";
+		};
+
+		pse1: pse1@0x15 {
+			compatible = "hasivo,hs104pti";
+			reg = <0x15>;
+			#pse-cells = <1>;
+			vpwr-supply = <&vpwr_52v>;
+			status = "okay";
+		};
 
 		stc8@4d {
 			compatible = "hasivo,stc8-mfd", "syscon";
@@ -97,6 +123,7 @@
 				reg = <0x01>;
 				mask = <0x08>;
 				label = "orange:lan1_poe";
+				linux,default-trigger = "pse0:port0delivering";
 				status = "okay";
 			};
 
@@ -105,6 +132,7 @@
 				reg = <0x01>;
 				mask = <0x04>;
 				label = "orange:lan2_poe";
+				linux,default-trigger = "pse0:port1delivering";
 				status = "okay";
 			};
 
@@ -113,6 +141,7 @@
 				reg = <0x01>;
 				mask = <0x02>;
 				label = "orange:lan3_poe";
+				linux,default-trigger = "pse0:port2delivering";
 				status = "okay";
 			};
 
@@ -121,6 +150,7 @@
 				reg = <0x01>;
 				mask = <0x01>;
 				label = "orange:lan4_poe";
+				linux,default-trigger = "pse0:port3delivering";
 				status = "okay";
 			};
 
@@ -129,6 +159,7 @@
 				reg = <0x02>;
 				mask = <0x08>;
 				label = "orange:lan5_poe";
+				linux,default-trigger = "pse1:port0delivering";
 				status = "okay";
 			};
 
@@ -137,6 +168,7 @@
 				reg = <0x02>;
 				mask = <0x04>;
 				label = "orange:lan6_poe";
+				linux,default-trigger = "pse1:port1delivering";
 				status = "okay";
 			};
 
@@ -145,6 +177,7 @@
 				reg = <0x02>;
 				mask = <0x02>;
 				label = "orange:lan7_poe";
+				linux,default-trigger = "pse1:port2delivering";
 				status = "okay";
 			};
 
@@ -153,6 +186,7 @@
 				reg = <0x02>;
 				mask = <0x01>;
 				label = "orange:lan8_poe";
+				linux,default-trigger = "pse1:port3delivering";
 				status = "okay";
 			};
 		};
@@ -165,7 +199,9 @@
 	flash@0 {
 		compatible = "fudan,fm25q128", "jedec,spi-nor";
 		reg = <0>;
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <50000000>;
+		spi-rx-bus-width = <4>;
+		spi-tx-bus-width = <1>;
 
 		partitions {
 			compatible = "fixed-partitions";
@@ -248,10 +284,11 @@
 
 &mdio_bus0 {
 	/* External RTL8221B PHY */
-	phy0: ethernet-phy@1 {
+	phy0: ethernet-phy@0 {
 		reg = <0>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <1>;
+		pse = <&pse0 0>;
 	};
 
 	/* External RTL8221B PHY */
@@ -259,6 +296,7 @@
 		reg = <8>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <2>;
+		pse = <&pse0 1>;
 	};
 
 	/* External RTL8221B PHY */
@@ -266,6 +304,7 @@
 		reg = <16>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <3>;
+		pse = <&pse0 2>;
 	};
 
 	/* External RTL8221B PHY */
@@ -273,6 +312,7 @@
 		reg = <20>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <4>;
+		pse = <&pse0 3>;
 	};
 };
 
@@ -282,6 +322,7 @@
 		reg = <24>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <1>;
+		pse = <&pse1 0>;
 	};
 
 	/* External RTL8221B PHY */
@@ -289,6 +330,7 @@
 		reg = <25>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <2>;
+		pse = <&pse1 1>;
 	};
 
 	/* External RTL8221B PHY */
@@ -296,6 +338,7 @@
 		reg = <26>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <3>;
+		pse = <&pse1 2>;
 	};
 
 	/* External RTL8221B PHY */
@@ -303,6 +346,7 @@
 		reg = <27>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 		realtek,smi-address = <4>;
+		pse = <&pse1 3>;
 	};
 };
 
@@ -398,7 +442,7 @@
 			phy-mode = "internal";
 
 			fixed-link {
-				speed = <10000>;
+				speed = <1000>;
 				full-duplex;
 			};
 		};
