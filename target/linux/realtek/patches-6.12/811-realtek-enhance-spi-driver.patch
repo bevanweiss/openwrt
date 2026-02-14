@@ -1,0 +1,538 @@
+--- a/drivers/spi/spi-realtek-rtl.c
++++ b/drivers/spi/spi-realtek-rtl.c
+@@ -1,125 +1,322 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ 
+ #include <linux/module.h>
+-#include <linux/platform_device.h>
++#include <linux/clk.h>
++#include <linux/completion.h>
++#include <linux/dma-mapping.h>
++#include <linux/interrupt.h>
+ #include <linux/mod_devicetable.h>
++#include <linux/platform_device.h>
++#include <linux/regmap.h>
+ #include <linux/spi/spi.h>
++#include <linux/spi/spi-mem.h>
+ 
+-struct rtspi {
+-	void __iomem *base;
++/* SPI Flash Configuration Register */
++#define RTL_SPI_SFCR			0x00		/* Used for PIO and MMIO */
++#define  RTL_SPI_MAX_CLK_DIV		16
++#define RTL_SPI_SFCR2			0x04		/* Used only for MMIO */
++#define RTL_SPI_SFCSR			0x08		/* Used for PIO and MMIO */
++#define RTL_SPI_SFDR			0x0C		/* Used only for PIO */
++#define RTL_SPI_SFDR2			0x10		/* Used only for MMIO */
++#define RTL_SPI_SFRDCR			0x14		/* Reserved */
++#define RTL_SPI_SFRDR			0x18		/* Used for PIO and MMIO */
++
++static const struct reg_default rtl_spi_reg_defaults[] = {
++	{ RTL_SPI_SFCR, 0xFFC00044 },
++	{ RTL_SPI_SFCR2, 0x03E00000 },
++	{ RTL_SPI_SFCSR, 0xF800C000 },
++	{ RTL_SPI_SFDR, 0x00000000 },
++	{ RTL_SPI_SFDR2, 0x00000000 },
++	{ RTL_SPI_SFRDCR, 0x00000000 },
++	{ RTL_SPI_SFRDR, 0x00000000 },
+ };
+ 
+-/* SPI Flash Configuration Register */
+-#define RTL_SPI_SFCR			0x00
+-#define RTL_SPI_SFCR_RBO		BIT(28)
+-#define RTL_SPI_SFCR_WBO		BIT(27)
++static const struct regmap_config rtl_spi_regmap_config = {
++	.name = "peripheral-registers",
++	.reg_bits = 32,
++	.val_bits = 32,
++	.reg_stride = 4,
++	.max_register = RTL_SPI_SFRDR,
++	.reg_defaults = rtl_spi_reg_defaults,
++	.num_reg_defaults = ARRAY_SIZE(rtl_spi_reg_defaults),
++};
+ 
+-/* SPI Flash Control and Status Register */
+-#define RTL_SPI_SFCSR			0x08
+-#define RTL_SPI_SFCSR_CSB0		BIT(31)
+-#define RTL_SPI_SFCSR_CSB1		BIT(30)
+-#define RTL_SPI_SFCSR_RDY		BIT(27)
+-#define RTL_SPI_SFCSR_CS		BIT(24)
+-#define RTL_SPI_SFCSR_LEN_MASK		~(0x03 << 28)
+-#define RTL_SPI_SFCSR_LEN1		(0x00 << 28)
+-#define RTL_SPI_SFCSR_LEN4		(0x03 << 28)
++enum rtl_spi_fields {
++	RTL_SPI_SFCR_SPI_CLK_DIV,
++	RTL_SPI_SFCR_RBO,
++	RTL_SPI_SFCR_WBO,
++	RTL_SPI_SFCR_SPI_TCS,
++	RTL_SPI_SFCR_DIV,
++	RTL_SPI_SFCR_SPI_RX_DLY,
++	RTL_SPI_SFCR_SPI_TCHSH,
++	RTL_SPI_SFCR_SPI_TSLCH,
++
++	RTL_SPI_SFCR2_SFCMD,
++	RTL_SPI_SFCR2_SFSIZE,
++	RTL_SPI_SFCR2_RDOPT,
++	RTL_SPI_SFCR2_CMD_IO,
++	RTL_SPI_SFCR2_ADDR_IO,
++	RTL_SPI_SFCR2_DUMMY_CYCLES,
++	RTL_SPI_SFCR2_DATA_IO,
++	RTL_SPI_SFCR2_HOLD_TILL_SFDR2,
++
++	RTL_SPI_SFCSR_CSB0,
++	RTL_SPI_SFCSR_CSB1,
++	RTL_SPI_SFCSR_LEN,
++	RTL_SPI_SFCSR_SPI_RDY,
++	RTL_SPI_SFCSR_IO_WIDTH,
++	RTL_SPI_SFCSR_CHIP_SEL,
++	RTL_SPI_SFCSR_CMD_BYTE,
++	RTL_SPI_SFCSR_CSB2,
++	RTL_SPI_SFCSR_CSB3,
++
++	RTL_SPI_SFDR_DATA,
++
++	RTL_SPI_SFDR2_DATA,
++
++	RTL_SPI_SFRDR_IO3_DELAY,
++	RTL_SPI_SFRDR_IO2_DELAY,
++	RTL_SPI_SFRDR_IO1_DELAY,
++	RTL_SPI_SFRDR_IO0_DELAY,
+ 
+-/* SPI Flash Data Register */
+-#define RTL_SPI_SFDR			0x0c
++	RTL_SPI_MAX_FIELDS
++};
+ 
+-#define REG(x)		(rtspi->base + x)
++static const struct reg_field rtl_spi_reg_fields[] = {
++	[RTL_SPI_SFCR_SPI_CLK_DIV] = REG_FIELD(RTL_SPI_SFCR, 29, 31),
++	[RTL_SPI_SFCR_RBO] = REG_FIELD(RTL_SPI_SFCR, 28, 28),
++	[RTL_SPI_SFCR_WBO] = REG_FIELD(RTL_SPI_SFCR, 27, 27),
++	[RTL_SPI_SFCR_SPI_TCS] = REG_FIELD(RTL_SPI_SFCR, 22, 26),
++	[RTL_SPI_SFCR_DIV] = REG_FIELD(RTL_SPI_SFCR, 21, 21),
++	[RTL_SPI_SFCR_SPI_RX_DLY] = REG_FIELD(RTL_SPI_SFCR, 16, 18),
++	[RTL_SPI_SFCR_SPI_TCHSH] = REG_FIELD(RTL_SPI_SFCR, 4, 7),
++	[RTL_SPI_SFCR_SPI_TSLCH] = REG_FIELD(RTL_SPI_SFCR, 0, 3),
++
++	[RTL_SPI_SFCR2_SFCMD] = REG_FIELD(RTL_SPI_SFCR2, 24, 31),
++	[RTL_SPI_SFCR2_SFSIZE] = REG_FIELD(RTL_SPI_SFCR2, 21, 23),
++	[RTL_SPI_SFCR2_RDOPT] = REG_FIELD(RTL_SPI_SFCR2, 20, 20),
++	[RTL_SPI_SFCR2_CMD_IO] = REG_FIELD(RTL_SPI_SFCR2, 18, 19),
++	[RTL_SPI_SFCR2_ADDR_IO] = REG_FIELD(RTL_SPI_SFCR2, 16, 17),
++	[RTL_SPI_SFCR2_DUMMY_CYCLES] = REG_FIELD(RTL_SPI_SFCR2, 13, 15),
++	[RTL_SPI_SFCR2_DATA_IO] = REG_FIELD(RTL_SPI_SFCR2, 11, 12),
++	[RTL_SPI_SFCR2_HOLD_TILL_SFDR2] = REG_FIELD(RTL_SPI_SFCR2, 10, 10),
++
++	[RTL_SPI_SFCSR_CSB0] = REG_FIELD(RTL_SPI_SFCSR, 31, 31),
++	[RTL_SPI_SFCSR_CSB1] = REG_FIELD(RTL_SPI_SFCSR, 30, 30),
++	[RTL_SPI_SFCSR_LEN] = REG_FIELD(RTL_SPI_SFCSR, 28, 29),
++	[RTL_SPI_SFCSR_SPI_RDY] = REG_FIELD(RTL_SPI_SFCSR, 27, 27),
++	[RTL_SPI_SFCSR_IO_WIDTH] = REG_FIELD(RTL_SPI_SFCSR, 25, 26),
++	[RTL_SPI_SFCSR_CHIP_SEL] = REG_FIELD(RTL_SPI_SFCSR, 24, 24),
++	[RTL_SPI_SFCSR_CMD_BYTE] = REG_FIELD(RTL_SPI_SFCSR, 16, 23),
++	[RTL_SPI_SFCSR_CSB2] = REG_FIELD(RTL_SPI_SFCSR, 15, 15),
++	[RTL_SPI_SFCSR_CSB3] = REG_FIELD(RTL_SPI_SFCSR, 14, 14),
++
++	[RTL_SPI_SFDR_DATA] = REG_FIELD(RTL_SPI_SFDR, 0, 31),
++
++	[RTL_SPI_SFDR2_DATA] = REG_FIELD(RTL_SPI_SFDR2, 0, 31),
++
++	[RTL_SPI_SFRDR_IO3_DELAY] = REG_FIELD(RTL_SPI_SFRDR, 24, 31),
++	[RTL_SPI_SFRDR_IO2_DELAY] = REG_FIELD(RTL_SPI_SFRDR, 16, 23),
++	[RTL_SPI_SFRDR_IO1_DELAY] = REG_FIELD(RTL_SPI_SFRDR, 8, 15),
++	[RTL_SPI_SFRDR_IO0_DELAY] = REG_FIELD(RTL_SPI_SFRDR, 0, 7),
++};
+ 
++struct rtlspi {
++	struct device *dev;
++	struct clk *pclk;
++	struct regmap *regmap;
++	struct regmap_field *r_fields[RTL_SPI_MAX_FIELDS];
++};
+ 
+-static void rt_set_cs(struct spi_device *spi, bool active)
++static inline void rtl_spi_wait_ready(struct rtlspi *rtlspi)
+ {
+-	struct rtspi *rtspi = spi_controller_get_devdata(spi->controller);
+-	u32 value;
+-
+-	/* CS0 bit is active low */
+-	value = readl(REG(RTL_SPI_SFCSR));
+-	if (active)
+-		value |= RTL_SPI_SFCSR_CSB0;
+-	else
+-		value &= ~RTL_SPI_SFCSR_CSB0;
+-	writel(value, REG(RTL_SPI_SFCSR));
++	int ret;
++	u32 val;
++	ret = regmap_field_read_poll_timeout(rtlspi->r_fields[RTL_SPI_SFCSR_SPI_RDY], val, val, 1000, 10000);
++	if (ret)
++		dev_err(rtlspi->dev, "SPI ready timeout\n");
+ }
+ 
+-static void set_size(struct rtspi *rtspi, int size)
++static void rtl_spi_set_cs(struct spi_device *spi, bool active)
+ {
+-	u32 value;
++	struct rtlspi *rtlspi = spi_controller_get_devdata(spi->controller);
++	bool cs_active = spi->mode & SPI_CS_HIGH ? !active : active;
++	u8 cs_num = spi_get_chipselect(spi,0);
++	struct regmap_field *native_cs_field = NULL;
++	struct gpio_desc *cs_gpiod = NULL;
++	switch (cs_num) {
++	case 0:
++		native_cs_field = rtlspi->r_fields[RTL_SPI_SFCSR_CSB0];
++		break;
++	case 1:
++		native_cs_field = rtlspi->r_fields[RTL_SPI_SFCSR_CSB1];
++		break;
++	case 2:
++		native_cs_field = rtlspi->r_fields[RTL_SPI_SFCSR_CSB2];
++		break;
++	case 3:
++		native_cs_field = rtlspi->r_fields[RTL_SPI_SFCSR_CSB3];
++		break;
++	default:
++		cs_gpiod = spi->cs_gpiod[cs_num];
++		return;
++	}
++
++	if (native_cs_field) {
++		rtl_spi_wait_ready(rtlspi);
++		regmap_field_write(native_cs_field, cs_active ? 1 : 0);
++		rtl_spi_wait_ready(rtlspi);
++		regmap_field_write(native_cs_field, cs_active ? 0 : 1);
++		rtl_spi_wait_ready(rtlspi);
++		regmap_field_write(native_cs_field, cs_active ? 1 : 0);
++		rtl_spi_wait_ready(rtlspi);
++	} else if (cs_gpiod){
++		gpiod_set_value(cs_gpiod, cs_active ? 1 : 0);
++	} else {
++		dev_err(rtlspi->dev, "Invalid CS%d configuration\n", cs_num);
++		return;
++	}
++	u32 val;
++	regmap_read(rtlspi->regmap, RTL_SPI_SFCSR, &val);
++	dev_info(rtlspi->dev, "Setting CS%d line to %s, SFCSR: %08X\n", cs_num, active ? "active" : "inactive", val);
++}
+ 
+-	value = readl(REG(RTL_SPI_SFCSR));
+-	value &= RTL_SPI_SFCSR_LEN_MASK;
+-	if (size == 4)
+-		value |= RTL_SPI_SFCSR_LEN4;
+-	else if (size == 1)
+-		value |= RTL_SPI_SFCSR_LEN1;
+-	writel(value, REG(RTL_SPI_SFCSR));
++static void rtl_spi_set_size(struct rtlspi *rtlspi, int size)
++{
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCSR_LEN], size-1);
++	u32 val;
++	regmap_read(rtlspi->regmap, RTL_SPI_SFCSR, &val);
++	dev_info(rtlspi->dev, "Setting SPI transfer size to %d bytes, SFCSR: %08X\n", size, val);
+ }
+ 
+-static inline void wait_ready(struct rtspi *rtspi)
++static void rtl_spi_send4(struct rtlspi *rtlspi, const u32 *buf)
+ {
+-	while (!(readl(REG(RTL_SPI_SFCSR)) & RTL_SPI_SFCSR_RDY))
+-		cpu_relax();
++	dev_info(rtlspi->dev, "Sending 4 bytes: %08X\n", *buf);
++	rtl_spi_wait_ready(rtlspi);
++	rtl_spi_set_size(rtlspi, 4);
++	regmap_write(rtlspi->regmap, RTL_SPI_SFDR, *buf);
+ }
+-static void send4(struct rtspi *rtspi, const u32 *buf)
++
++static void rtl_spi_send1(struct rtlspi *rtlspi, const u8 *buf)
+ {
+-	wait_ready(rtspi);
+-	set_size(rtspi, 4);
+-	writel(*buf, REG(RTL_SPI_SFDR));
++	dev_info(rtlspi->dev, "Sending 1 byte: %02X\n", *buf);
++	rtl_spi_wait_ready(rtlspi);
++	rtl_spi_set_size(rtlspi, 1);
++	regmap_write(rtlspi->regmap, RTL_SPI_SFDR, *buf << 24);
+ }
+ 
+-static void send1(struct rtspi *rtspi, const u8 *buf)
++static void rtl_spi_rcv4(struct rtlspi *rtlspi, u32 *buf)
+ {
+-	wait_ready(rtspi);
+-	set_size(rtspi, 1);
+-	writel(buf[0] << 24, REG(RTL_SPI_SFDR));
++	rtl_spi_wait_ready(rtlspi);
++	rtl_spi_set_size(rtlspi, 4);
++	regmap_read(rtlspi->regmap, RTL_SPI_SFDR, buf);
++	dev_info(rtlspi->dev, "Received 4 bytes: %08X\n", *buf);
+ }
+ 
+-static void rcv4(struct rtspi *rtspi, u32 *buf)
++static void rtl_spi_rcv1(struct rtlspi *rtlspi, u8 *buf)
+ {
+-	wait_ready(rtspi);
+-	set_size(rtspi, 4);
+-	*buf = readl(REG(RTL_SPI_SFDR));
++	u32 val;
++	rtl_spi_wait_ready(rtlspi);
++	rtl_spi_set_size(rtlspi, 1);
++	regmap_read(rtlspi->regmap, RTL_SPI_SFDR, &val);
++	*buf = val >> 24;
++	dev_info(rtlspi->dev, "Received 1 byte: %02X\n", *buf);
++}
++
++static int rtl_spi_clkdiv_setup(struct spi_device *spi, u32 rate)
++ {
++	const struct rtlspi *rtlspi = spi_controller_get_devdata(spi->controller);
++
++	/* Calculate the clock divider based on the desired rate and the input clock frequency */
++	if (rtlspi->pclk) {
++		u32 clk_div = DIV_ROUND_UP(clk_get_rate(rtlspi->pclk), rate);
++		if (clk_div < 0) {
++			clk_div = 0;
++			dev_info(&spi->dev, "Requested SPI clock rate is %d, disabling clock divider\n", rate);
++			regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCR_DIV], 1);
++		} else {
++			if (clk_div > RTL_SPI_MAX_CLK_DIV)
++				clk_div = RTL_SPI_MAX_CLK_DIV;
++			u32 value = DIV_ROUND_UP(clk_div, 2) - 1;
++			dev_info(&spi->dev, "Requested SPI clock rate is %d, enabling clock divider as /%d (value=%02X)\n", rate, clk_div, value);
++			regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCR_SPI_CLK_DIV], value);
++			regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCR_DIV], 0);
++		}
++	} else {
++		u32 value = DIV_ROUND_UP(RTL_SPI_MAX_CLK_DIV, 2) - 1;
++		dev_warn_once(&spi->dev, "No reference clock available, setting clock divider to slowest value as /%d (value=%02X)\n", RTL_SPI_MAX_CLK_DIV, value);
++		regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCR_SPI_CLK_DIV], value);
++		regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCR_DIV], 0);
++	}
++
++	return 0;
+ }
+ 
+-static void rcv1(struct rtspi *rtspi, u8 *buf)
++static int rtl_spi_iowidth_setup(struct spi_device *spi, u8 nbits)
++ {
++	struct rtlspi *rtlspi = spi_controller_get_devdata(spi->controller);
++	if (nbits == 1 || nbits == 2 || nbits == 4) {
++		return regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCSR_IO_WIDTH], nbits - 1);
++	} else {
++		dev_err(&spi->dev, "Invalid nbits: %d\n", nbits);
++		return -EINVAL;
++	}
++}
++
++static int rtl_spi_setup(struct spi_device *spi)
+ {
+-	wait_ready(rtspi);
+-	set_size(rtspi, 1);
+-	*buf = readl(REG(RTL_SPI_SFDR)) >> 24;
++	struct rtlspi *rtlspi = spi_controller_get_devdata(spi->controller);
++	dev_info(rtlspi->dev, "SPI Setup called\n");
++	//u32 value;
++
++	rtl_spi_clkdiv_setup(spi, spi->max_speed_hz);
++	return 0;
+ }
+ 
+-static int transfer_one(struct spi_controller *ctrl, struct spi_device *spi,
++/**
++ * rtl_spi_transfer_one - Initiates the SPI transfer
++ * @ctrl:	Pointer to spi_controller structure
++ * @spi:	Pointer to the spi_device structure
++ * @xfer:	Pointer to the spi_transfer structure which provides
++ *		information about next transfer parameters
++ *
++ * Return:	0 on success, 1 if transfer still underway, a negative value on error
++ */
++static int rtl_spi_transfer_one(struct spi_controller *ctrl, struct spi_device *spi,
+ 			struct spi_transfer *xfer)
+ {
+-	struct rtspi *rtspi = spi_controller_get_devdata(ctrl);
++	struct rtlspi *rtlspi = spi_controller_get_devdata(ctrl);
+ 	void *rx_buf;
+ 	const void *tx_buf;
+ 	int cnt;
++	dev_info(rtlspi->dev, "SPI Transfer called with %d bytes, speed: %d, rx_nbits: %d, tx_nbits: %d, bits_per_word: %d\n", xfer->len, xfer->speed_hz, xfer->rx_nbits, xfer->tx_nbits, xfer->bits_per_word);
+ 
+ 	tx_buf = xfer->tx_buf;
+ 	rx_buf = xfer->rx_buf;
+ 	cnt = xfer->len;
+ 	if (tx_buf) {
++		rtl_spi_iowidth_setup(spi, xfer->tx_nbits);
+ 		while (cnt >= 4) {
+-			send4(rtspi, tx_buf);
++			rtl_spi_send4(rtlspi, tx_buf);
+ 			tx_buf += 4;
+ 			cnt -= 4;
+ 		}
+ 		while (cnt) {
+-			send1(rtspi, tx_buf);
++			rtl_spi_send1(rtlspi, tx_buf);
+ 			tx_buf++;
+ 			cnt--;
+ 		}
++
++
+ 	} else if (rx_buf) {
++		rtl_spi_iowidth_setup(spi, xfer->rx_nbits);
+ 		while (cnt >= 4) {
+-			rcv4(rtspi, rx_buf);
++			rtl_spi_rcv4(rtlspi, rx_buf);
+ 			rx_buf += 4;
+ 			cnt -= 4;
+ 		}
+ 		while (cnt) {
+-			rcv1(rtspi, rx_buf);
++			rtl_spi_rcv1(rtlspi, rx_buf);
+ 			rx_buf++;
+ 			cnt--;
+ 		}
+@@ -130,80 +327,115 @@ static int transfer_one(struct spi_contr
+ 	return 0;
+ }
+ 
+-static void init_hw(struct rtspi *rtspi)
++static void rtl_spi_init_hw(struct rtlspi *rtlspi)
+ {
+-	u32 value;
++	int sfcr, sfcsr;
+ 
+-	/* Turn on big-endian byte ordering */
+-	value = readl(REG(RTL_SPI_SFCR));
+-	value |= RTL_SPI_SFCR_RBO | RTL_SPI_SFCR_WBO;
+-	writel(value, REG(RTL_SPI_SFCR));
+-
+-	value = readl(REG(RTL_SPI_SFCSR));
+-	/* Permanently disable CS1, since it's never used */
+-	value |= RTL_SPI_SFCSR_CSB1;
+-	/* Select CS0 for use */
+-	value &= RTL_SPI_SFCSR_CS;
+-	writel(value, REG(RTL_SPI_SFCSR));
++	/* We'll set up for both reads and writes as bit endian */
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCR_RBO], 1);
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCR_WBO], 1);
++
++	/* This is the default state of the Chip Select, but it's never modified*/
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCSR_CHIP_SEL], 0);
++
++	/* Not active is the typical chip select state, so we'll configure that */
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCSR_CSB0], 1);
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCSR_CSB1], 1);
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCSR_CSB2], 1);
++	regmap_field_write(rtlspi->r_fields[RTL_SPI_SFCSR_CSB3], 1);
++
++	regmap_read(rtlspi->regmap, RTL_SPI_SFCR, &sfcr);
++	regmap_read(rtlspi->regmap, RTL_SPI_SFCSR, &sfcsr);
++	dev_info(rtlspi->dev, "SPI controller initialized in PIO mode SFCR: %04X, SFCSR: %04X\n", sfcr, sfcsr);
+ }
+ 
+-static int realtek_rtl_spi_probe(struct platform_device *pdev)
++static int rtl_spi_probe(struct platform_device *pdev)
+ {
++	struct device *dev = &pdev->dev;
+ 	struct spi_controller *ctrl;
+-	struct rtspi *rtspi;
+-	int err;
++	struct rtlspi *rtlspi;
++	int ret;
++	void __iomem *spi_base;
+ 
+-	ctrl = devm_spi_alloc_host(&pdev->dev, sizeof(*rtspi));
++	ctrl = devm_spi_alloc_host(dev, sizeof(*rtlspi));
+ 	if (!ctrl) {
+-		dev_err(&pdev->dev, "Error allocating SPI controller\n");
++		dev_err(dev, "Error allocating SPI controller\n");
+ 		return -ENOMEM;
+ 	}
+ 	platform_set_drvdata(pdev, ctrl);
+-	rtspi = spi_controller_get_devdata(ctrl);
++	rtlspi = spi_controller_get_devdata(ctrl);
++	rtlspi->dev = dev;
+ 
+-	rtspi->base = devm_platform_get_and_ioremap_resource(pdev, 0, NULL);
+-	if (IS_ERR(rtspi->base)) {
+-		dev_err(&pdev->dev, "Could not map SPI register address");
++	spi_base = devm_platform_get_and_ioremap_resource(pdev, 0, NULL);
++	if (IS_ERR(spi_base)) {
++		dev_err(dev, "Could not map SPI register address");
+ 		return -ENOMEM;
+ 	}
+ 
+-	init_hw(rtspi);
++	rtlspi->regmap = devm_regmap_init_mmio(dev, spi_base, &rtl_spi_regmap_config);
++	if (IS_ERR(rtlspi->regmap))
++		return PTR_ERR(rtlspi->regmap);
++
++	ret = devm_regmap_field_bulk_alloc(dev, rtlspi->regmap, rtlspi->r_fields,
++					   rtl_spi_reg_fields, RTL_SPI_MAX_FIELDS);
++	if (ret)
++		return ret;
++
++	rtlspi->pclk = devm_clk_get_optional_enabled(dev, NULL);
++	if (IS_ERR(rtlspi->pclk)) {
++    	dev_err(dev, "Failed to get reference clock (pclk)\n");
++    	return PTR_ERR(rtlspi->pclk);
++	}
++
++	rtl_spi_init_hw(rtlspi);
+ 
+-	ctrl->dev.of_node = pdev->dev.of_node;
++	ctrl->dev.of_node = dev->of_node;
+ 	ctrl->flags = SPI_CONTROLLER_HALF_DUPLEX;
+-	ctrl->set_cs = rt_set_cs;
+-	ctrl->transfer_one = transfer_one;
++	ctrl->num_chipselect = 4;
++	ctrl->use_gpio_descriptors = true;
++	ctrl->set_cs = rtl_spi_set_cs;
++	ctrl->transfer_one = rtl_spi_transfer_one;
++	ctrl->setup = rtl_spi_setup;
++	ctrl->bits_per_word_mask = SPI_BPW_MASK(8);
++	ctrl->mode_bits = SPI_CS_HIGH | SPI_RX_DUAL | SPI_RX_QUAD | SPI_TX_DUAL | SPI_TX_QUAD | SPI_CPOL | SPI_CPHA;
++
++	if (rtlspi->pclk) {
++		unsigned long pclk_freq = clk_get_rate(rtlspi->pclk);
++		dev_info(dev, "Reference clock frequency: %lu Hz\n", pclk_freq);
++		//ctrl->min_speed_hz = pclk_freq / RTL_SPI_MAX_CLK_DIV;
++		//ctrl->max_speed_hz = pclk_freq; /* if divisor is disabled */
++	}
+ 
+-	err = devm_spi_register_controller(&pdev->dev, ctrl);
+-	if (err) {
+-		dev_err(&pdev->dev, "Could not register SPI controller\n");
++	ret = devm_spi_register_controller(dev, ctrl);
++	if (ret) {
++		dev_err(dev, "Could not register SPI controller\n");
+ 		return -ENODEV;
+ 	}
+ 
+ 	return 0;
+ }
+ 
+-
+ static const struct of_device_id realtek_rtl_spi_of_ids[] = {
+ 	{ .compatible = "realtek,rtl8380-spi" },
+ 	{ .compatible = "realtek,rtl8382-spi" },
+ 	{ .compatible = "realtek,rtl8391-spi" },
+ 	{ .compatible = "realtek,rtl8392-spi" },
+ 	{ .compatible = "realtek,rtl8393-spi" },
++	{ .compatible = "realtek,rtl930x-spi" },
++	{ .compatible = "realtek,rtl931x-spi" },
+ 	{ /* sentinel */ }
+ };
+ MODULE_DEVICE_TABLE(of, realtek_rtl_spi_of_ids);
+ 
+ static struct platform_driver realtek_rtl_spi_driver = {
+-	.probe = realtek_rtl_spi_probe,
++	.probe = rtl_spi_probe,
+ 	.driver = {
+ 		.name = "realtek-rtl-spi",
+ 		.of_match_table = realtek_rtl_spi_of_ids,
+ 	},
+ };
+-
+ module_platform_driver(realtek_rtl_spi_driver);
+ 
+ MODULE_LICENSE("GPL v2");
+-MODULE_AUTHOR("Bert Vermeulen <bert@biot.com>");
++MODULE_AUTHOR("Bevan Weiss <bevan.weiss@realtek.com>, Bert Vermeulen <bert@biot.com>");
+ MODULE_DESCRIPTION("Realtek RTL SPI driver");
