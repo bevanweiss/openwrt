@@ -22,6 +22,19 @@ endef
 
 $(eval $(call KernelPackage,leds-gpio))
 
+define KernelPackage/leds-syscon
+  SUBMENU:=$(LEDS_MENU)
+  TITLE:=SYSCON LED support
+  KCONFIG:=CONFIG_LEDS_SYSCON=y \
+  CONFIG_MFD_SYSCON=y
+endef
+
+define KernelPackage/leds-syscon/description
+ Kernel support for LEDs via SYSCON registers
+endef
+
+$(eval $(call KernelPackage,leds-syscon))
+
 LED_TRIGGER_DIR=$(LINUX_DIR)/drivers/leds/trigger
 
 define KernelPackage/leds-group-multicolor
