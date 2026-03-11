@@ -12,6 +12,15 @@ define Device/Default
 	append-rootfs | pad-rootfs | append-metadata
 endef
 
+define Device/ipcom-m10-poe
+  DEVICE_VENDOR := IPCOM
+  DEVICE_MODEL := M10 PoE
+  BOARD_NAME := ipcom,m10-poe
+  DEVICE_DTS := sf19a2890_ipcom_m10_poe
+  DEVICE_PACKAGES := kmod-dsa-motorcomm-yt921x
+endef
+TARGET_DEVICES += ipcom-m10-poe
+
 define Device/siflower_sf19a2890-evb
   DEVICE_VENDOR := Siflower
   DEVICE_MODEL := SF19A2890 EVB

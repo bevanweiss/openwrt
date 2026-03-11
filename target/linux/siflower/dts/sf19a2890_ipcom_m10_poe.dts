@@ -1,0 +1,271 @@
+/dts-v1/;
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include "sf19a2890.dtsi"
+
+/ {
+	model = "IP-COM M10 PoE";
+	compatible = "ipcom,m10-poe", "siflower,sf19a2890";
+
+	aliases {
+		led-boot = &led_pwr;
+		led-failsafe = &led_pwr;
+		led-running = &led_pwr;
+		led-upgrade = &led_pwr;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x4000000>;	// 64MB
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_pwr: pwr {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+
+		led_wan: wan {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+
+		led_net: net {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+
+		led_lan4: lan4 {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+
+		led_lan3: lan3 {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+
+		led_lan2: lan2 {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+
+		led_lan1: lan1 {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		reset {
+			label = "reset";
+			gpios = <&gpio 27 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_RESTART>;
+		};
+	};
+
+	yt9215s {
+		compatible = "motorcomm,yt9215s";
+		mii-bus = <&mdio>;
+		phy-id = <0>;
+	};
+};
+
+&gmac {
+	status = "okay";
+	phy-mode = "rgmii-id";
+	snps,ps-speed = <1000>;
+	nvmem-cells = <&macaddr_factory_0>, <&rgmii_delay_factory_b2>;
+	nvmem-cell-names = "mac-address", "rgmii-delay";
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+		pause;
+	};
+};
+
+&mdio {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	switch@1d {
+		compatible = "motorcomm,yt9215";
+		reg = <0x1d>;
+		switchid = <0>;
+		/*reset-gpios = <&gpio 39 GPIO_ACTIVE_LOW>;*/
+
+		mdio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			// MAC0 -> Phy0 -> LAN1
+			sw_phy0: phy@0 {
+				reg = <0x0>;
+			};
+
+			// MAC1 -> Phy1 -> LAN2/WAN4
+			sw_phy1: phy@1 {
+				reg = <0x1>;
+			};
+
+			// MAC2 -> Phy2 -> LAN3/WAN3
+			sw_phy2: phy@2 {
+				reg = <0x2>;
+			};
+
+			// MAC3 -> Phy3 -> LAN4/WAN2
+			sw_phy3: phy@3 {
+				reg = <0x3>;
+			};
+
+			// MAC4 -> Phy4 -> WAN1
+			sw_phy4: phy@4 {
+				reg = <0x4>;
+			};
+		};
+
+		mdio-external {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			phy1: phy@b {
+				reg = <0xb>;
+			};
+		};
+
+		ethernet-ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			ethernet-port@0 {
+				reg = <0>;
+				label = "lan1";
+				phy-mode = "internal";
+				phy-handle = <&sw_phy0>;
+			};
+
+			ethernet-port@1 {
+				reg = <1>;
+				label = "lan2";
+				phy-mode = "internal";
+				phy-handle = <&sw_phy1>;
+			};
+
+			ethernet-port@2 {
+				reg = <2>;
+				label = "lan3";
+				phy-mode = "internal";
+				phy-handle = <&sw_phy2>;
+			};
+
+			ethernet-port@3 {
+				reg = <3>;
+				label = "lan4";
+				phy-mode = "internal";
+				phy-handle = <&sw_phy3>;
+			};
+
+			ethernet-port@4 {
+				reg = <4>;
+				label = "lan5";
+				phy-mode = "internal";
+				phy-handle = <&sw_phy4>;
+			};
+
+			/* CPU port */
+			ethernet-port@8 {
+				reg = <8>;
+				phy-mode = "rgmii";
+				ethernet = <&gmac>;
+
+				fixed-link {
+					speed = <1000>;
+					full-duplex;
+				};
+			};
+
+			/* if external phy is connected to a MAC */
+			ethernet-port@9 {
+				reg = <9>;
+				label = "wan";
+				phy-mode = "rgmii-id";
+				phy-handle = <&phy1>;
+			};
+		};
+	};
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&spi {
+	status = "okay";
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <30000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "spl-loader";
+				reg = <0x0 0x8000>; /* 32k */
+				read-only;
+			};
+
+			partition@8000 {
+				label = "u-boot";
+				reg = <0x8000 0x50000>; /* 320k */
+			};
+
+			partition@58000 {
+				label = "u-boot-env";
+				reg = <0x58000 0x2000>; /* 8k */
+			};
+
+			factory:partition@60000 {
+				label = "factory";
+				reg = <0x60000 0x10000>; /* 64k */
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					macaddr_factory_0: macaddr@0 {
+						reg = <0x0 0x6>;
+					};
+
+					rgmii_delay_factory_b2: rgmii-delay@b2 {
+						reg = <0xb2 0x4>;
+					};
+				};
+			};
+
+			partition@70000 {
+				compatible = "denx,uimage";
+				label = "firmware";
+				reg = <0x70000 0x0>; /* 448k- */
+			};
+		};
+	};
+};
